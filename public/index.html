@@ -2834,7 +2834,7 @@ async function drawBluprintCard(d){
   x.lineWidth=1;for(let v=0;v<=W;v+=30){x.strokeStyle=ln(v%150?.022:.05);x.beginPath();x.moveTo(v+.5,0);x.lineTo(v+.5,H);x.stroke()}
   for(let v=0;v<=H;v+=30){x.strokeStyle=ln(v%150?.022:.05);x.beginPath();x.moveTo(0,v+.5);x.lineTo(W,v+.5);x.stroke()}
   // the hole
-  const hx=392,hy=196,hw=660,hh=940;
+  const hx=432,hy=188,hw=618,hh=880;
   const img=await new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(holePlanSVG({}))});
   if(img){const oc=document.createElement('canvas');oc.width=hw;oc.height=hh;const o=oc.getContext('2d');o.drawImage(img,0,0,hw,hh);o.globalCompositeOperation='destination-in';
     {const g=o.createLinearGradient(0,0,hw,0);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.36,'rgba(0,0,0,1)');g.addColorStop(.94,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');o.fillStyle=g;o.fillRect(0,0,hw,hh)}
@@ -2844,12 +2844,12 @@ async function drawBluprintCard(d){
   x.strokeStyle=ln(.32);x.strokeRect(36.5,36.5,W-73,H-73);x.strokeStyle=ln(.12);x.strokeRect(48.5,48.5,W-97,H-97);
   const reg=(px,py)=>{x.strokeStyle=ln(.45);x.beginPath();x.moveTo(px-14,py);x.lineTo(px+14,py);x.moveTo(px,py-14);x.lineTo(px,py+14);x.stroke();x.beginPath();x.arc(px,py,6,0,Math.PI*2);x.stroke()};
   [[36,36],[W-36,36],[36,H-36],[W-36,H-36],[W/2,36],[W/2,H-36],[36,H/2],[W-36,H/2]].forEach(p=>reg(p[0]+.5,p[1]+.5));
-  x.strokeStyle=ln(.28);x.beginPath();x.moveTo(1010,300);x.lineTo(1010,1020);for(let t=300;t<=1020;t+=24){x.moveTo(1010,t+.5);x.lineTo(t%120===60?994:1002,t+.5)}x.stroke();
+  x.strokeStyle=ln(.28);x.beginPath();x.moveTo(1010,300);x.lineTo(1010,948);for(let t=300;t<=948;t+=24){x.moveTo(1010,t+.5);x.lineTo(t%120===60?994:1002,t+.5)}x.stroke();
   // north arrow + plate label
-  x.strokeStyle=ln(.5);x.beginPath();x.arc(968,1076,22,0,Math.PI*2);x.stroke();x.beginPath();x.moveTo(968,1046);x.lineTo(968,1106);x.moveTo(938,1076);x.lineTo(998,1076);x.stroke();
-  x.fillStyle=ln(.7);x.beginPath();x.moveTo(968,1050);x.lineTo(961,1072);x.lineTo(975,1072);x.closePath();x.fill();
-  x.font='500 18px "JetBrains Mono", monospace';x.fillStyle=ln(.6);sp('N',968,1040,0,'center');
-  x.font='500 17px "JetBrains Mono", monospace';x.fillStyle=ln(.42);sp('PLATE 01 · MASTER PLAN',M,1112,4);
+  x.strokeStyle=ln(.5);x.beginPath();x.arc(968,1016,22,0,Math.PI*2);x.stroke();x.beginPath();x.moveTo(968,986);x.lineTo(968,1046);x.moveTo(938,1016);x.lineTo(998,1016);x.stroke();
+  x.fillStyle=ln(.7);x.beginPath();x.moveTo(968,990);x.lineTo(961,1012);x.lineTo(975,1012);x.closePath();x.fill();
+  x.font='500 18px "JetBrains Mono", monospace';x.fillStyle=ln(.6);sp('N',968,980,0,'center');
+  x.font='500 17px "JetBrains Mono", monospace';x.fillStyle=ln(.42);sp('PLATE 01 · MASTER PLAN',M,1052,4);
   // header
   x.textBaseline='alphabetic';x.font='700 38px "Sora", sans-serif';x.fillStyle=IV;sp('BLUPRINT',M,132,7);
   const bw='letterSpacing' in x?(x.letterSpacing='7px',x.measureText('BLUPRINT').width):x.measureText('BLUPRINT').width+7*8;if('letterSpacing' in x)x.letterSpacing='0px';
@@ -2867,25 +2867,30 @@ async function drawBluprintCard(d){
   if(d.handicap!=null){x.font='500 20px "JetBrains Mono", monospace';x.fillStyle=MU;sp(d.verified?'HANDICAP · VERIFIED':'HANDICAP',M,yy,6);
     x.font='700 78px "Sora", sans-serif';x.fillStyle=G;x.textAlign='left';x.fillText(d.handicap,M-2,yy+84);yy+=128}
   if(d.handle){x.font='500 26px "JetBrains Mono", monospace';x.fillStyle=ln(.7);sp('@'+d.handle,M,yy,2);yy+=40}
-  // specs row
-  const top=1180,ph=330;x.strokeStyle=ln(.2);x.strokeRect(M+.5,top+.5,W-2*M,ph);
-  const colW=(W-2*M)/3;x.strokeStyle=ln(.14);for(let i=1;i<3;i++){x.beginPath();x.moveTo(M+colW*i+.5,top+28);x.lineTo(M+colW*i+.5,top+ph-28);x.stroke()}
-  [[M,top],[W-M,top],[M,top+ph],[W-M,top+ph]].forEach(([px,py])=>{x.strokeStyle=ln(.5);x.beginPath();x.moveTo(px-8,py+.5);x.lineTo(px+8,py+.5);x.moveTo(px+.5,py-8);x.lineTo(px+.5,py+8);x.stroke()});
-  const imgs=await Promise.all(bs.map((b,i)=>hexImg(b,(i?150:180)*2)));
-  bs.forEach((b,i)=>{const cx=M+colW*i+colW/2,s=i?150:180,cy=top+30+90;
-    if(!i){const g=x.createRadialGradient(cx,cy,10,cx,cy,140);g.addColorStop(0,'rgba(47,208,115,.22)');g.addColorStop(1,'rgba(47,208,115,0)');x.fillStyle=g;x.fillRect(cx-150,cy-150,300,300)}
-    if(imgs[i])x.drawImage(imgs[i],cx-s/2,cy-s/2,s,s);
-    x.font=`700 ${i?24:26}px "Sora", sans-serif`;x.fillStyle=IV;const nm=b.name.toUpperCase();
-    let fsz=i?24:26;while(fsz>18){x.font=`700 ${fsz}px "Sora", sans-serif`;if(x.measureText(nm).width+nm.length*3<colW-30)break;fsz--}
-    sp(nm,cx,top+238,3,'center');
-    x.font='500 17px "JetBrains Mono", monospace';x.fillStyle=i?MU:G;sp(i?`SPEC 0${i+1}`:'PRIMARY SPEC',cx,top+276,5,'center')});
-  // identity statement
-  if(d.statement){x.font='italic 400 30px "Inter", sans-serif';x.fillStyle='rgba(244,241,234,.78)';const words=d.statement.split(' ');const L=[];let cur='';for(const w of words){const t=cur?cur+' '+w:w;if(x.measureText(t).width>W-2*M-40&&cur){L.push(cur);cur=w}else cur=t}L.push(cur);
-    L.slice(0,2).forEach((l,i)=>{x.textAlign='center';x.fillText(l,W/2,top+ph+70+i*42)})}
+  // specs: triangle, primary on top (mirrors the profile ID card)
+  const T0=1092,T1=1606;
+  [[M,T0],[W-M,T0],[M,T1],[W-M,T1]].forEach(([px,py])=>{x.strokeStyle=ln(.45);x.beginPath();x.moveTo(px+(px<W/2?0:-22),py+.5);x.lineTo(px+(px<W/2?22:0),py+.5);x.moveTo(px+.5,py+(py<1300?0:-22));x.lineTo(px+.5,py+(py<1300?22:0));x.stroke()});
+  x.font='500 17px "JetBrains Mono", monospace';x.fillStyle=ln(.5);sp('SPEC SHEET',W/2,T0+6,8,'center');
+  x.strokeStyle=ln(.16);x.beginPath();x.moveTo(M+40,T0+.5);x.lineTo(W/2-110,T0+.5);x.moveTo(W/2+110,T0+.5);x.lineTo(W-M-40,T0+.5);x.stroke();
+  const PS=290,SS=204,pc=[W/2,1270],sc=[[W/2-282,1396],[W/2+282,1396]];
+  const imgs=await Promise.all(bs.map((b,i)=>hexImg(b,(i?SS:PS)*2)));
+  const pos=bs.map((b,i)=>i?sc[bs.length===2?1:i-1]:pc);
+  if(bs.length>1){x.save();x.setLineDash([3,7]);x.strokeStyle=ln(.22);x.beginPath();x.moveTo(pos[0][0],pos[0][1]);pos.slice(1).forEach(p=>x.lineTo(p[0],p[1]));if(bs.length===3)x.closePath();x.stroke();x.restore()}
+  {const g=x.createRadialGradient(pc[0],pc[1],20,pc[0],pc[1],230);g.addColorStop(0,'rgba(47,208,115,.24)');g.addColorStop(1,'rgba(47,208,115,0)');x.fillStyle=g;x.fillRect(pc[0]-240,pc[1]-240,480,480)}
+  const fitTxt=(t,max,sz,min,tr)=>{for(;sz>min;sz--){x.font=`700 ${sz}px "Sora", sans-serif`;if(x.measureText(t).width+t.length*tr<=max)break}return sz};
+  bs.forEach((b,i)=>{const [cx,cy]=pos[i],s=i?SS:PS;
+    if(imgs[i]){x.save();x.shadowColor=i?'rgba(0,0,0,.55)':'rgba(47,208,115,.35)';x.shadowBlur=i?16:34;x.drawImage(imgs[i],cx-s/2,cy-s/2,s,s);x.restore()}
+    const nm=b.name.toUpperCase();
+    if(!i){fitTxt(nm,340,34,22,3);x.fillStyle=IV;sp(nm,cx,cy+s/2+50,3,'center');x.font='600 17px "JetBrains Mono", monospace';x.fillStyle=G;sp('PRIMARY SPEC',cx,cy+s/2+86,6,'center')}
+    else{fitTxt(nm,270,26,17,3);x.fillStyle=IV;sp(nm,cx,cy+s/2+46,3,'center');x.font='500 16px "JetBrains Mono", monospace';x.fillStyle=MU;sp(`SPEC 0${i+1}`,cx,cy+s/2+78,6,'center')}});
+  // identity statement, centred in the band between the spec sheet and the footer
+  if(d.statement){x.font='italic 400 32px "Inter", sans-serif';x.fillStyle='rgba(244,241,234,.82)';const words=d.statement.split(' ');const L=[];let cur='';for(const w of words){const t=cur?cur+' '+w:w;if(x.measureText(t).width>780&&cur){L.push(cur);cur=w}else cur=t}L.push(cur);
+    const ls=L.slice(0,2),mid=(T1+1724)/2+11;ls.forEach((l,i)=>{x.textAlign='center';x.fillText(l,W/2,mid+(i-(ls.length-1)/2)*44)})}
   // footer
-  const fy=1660;x.strokeStyle=ln(.2);x.beginPath();x.moveTo(M,fy+.5);x.lineTo(W-M,fy+.5);x.stroke();
-  x.font='800 40px "Sora", sans-serif';x.fillStyle=IV;sp("WHAT'S YOUR BLUPRINT?",W/2,fy+78,2,'center');
-  x.font='600 22px "JetBrains Mono", monospace';x.fillStyle=G;sp('BLUPRINTGOLF.COM',W/2,fy+122,8,'center');
+  const fy=1724;x.strokeStyle=ln(.22);x.beginPath();x.moveTo(W/2-160,fy+.5);x.lineTo(W/2-14,fy+.5);x.moveTo(W/2+14,fy+.5);x.lineTo(W/2+160,fy+.5);x.stroke();
+  x.fillStyle=G;x.beginPath();x.moveTo(W/2,fy-6);x.lineTo(W/2+6,fy);x.lineTo(W/2,fy+6);x.lineTo(W/2-6,fy);x.closePath();x.fill();
+  x.font='800 44px "Sora", sans-serif';x.fillStyle=IV;sp("WHAT'S YOUR BLUPRINT?",W/2,fy+74,2,'center');
+  x.font='600 22px "JetBrains Mono", monospace';x.fillStyle=G;sp('BLUPRINTGOLF.COM',W/2,fy+116,8,'center');
   x.textAlign='left';
   return await new Promise(r=>cv.toBlob(r,'image/png'));
 }
