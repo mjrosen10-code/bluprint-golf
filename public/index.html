@@ -2468,11 +2468,15 @@ function monthTargets(c,aim){
    ['toPar','Score',1,true,'',d=>`${d} strokes lower`,['This comes from the stats above. Fix those and the score follows.','Turn par 5s and short approaches into birdie chances.'][aim<8?1:0]]];
   const sg=(k,v)=>k==='toPar'?(v>0?'+':v<0?'−':'')+fmt(Math.abs(v),1):null;
   const rows=defs.map(([k,l,dp,lower,u,act,how])=>{const v=Y[k],gl=G[k];if(v==null||gl==null)return null;
-    const ahead=lower?v<=gl:v>=gl;const step=dp?.1:1;const nxt=Math.round((v+(gl-v)*f)/step)*step;
+    // compare on the numbers the golfer actually sees, so 4.4 vs 4.4 is never "behind"
+    const step=dp?.1:1;const rd=x=>Math.round(x/step)*step;const rv=rd(v),rg=rd(gl);
+    const ahead=lower?rv<=rg+1e-9:rv>=rg-1e-9;
+    // next step always moves at least one visible unit toward the goal and never past it
+    const dir=Math.sign(rg-rv);const nxt=ahead?rv:(dir>0?Math.min(rg,Math.max(rv+step,Math.ceil((v+(gl-v)*f)/step-1e-9)*step)):Math.max(rg,Math.min(rv-step,Math.floor((v+(gl-v)*f)/step+1e-9)*step)));
     const wv=W[k]!=null?W[k]:v;const lo=lower?Math.max(v,wv,gl):Math.min(v,wv,gl),hi=gl;const span=(hi-lo)||1;
     const pos=v=>clamp(100*(v-lo)/span,0,100);const pct=ahead?100:pos(v),npct=ahead?100:pos(nxt);
     const show=x=>sg(k,x)||fmt(x,dp)+u;
-    return {k,l,dp,u,v,gl,nxt,ahead,pct,npct,how,show,line:ahead?'Hold it, tracking':act(fmt(Math.abs(gl-v),dp)),gap:Math.abs(gl-v)/(Math.abs(gl)||1)}}).filter(Boolean);
+    return {k,l,dp,u,v,gl,nxt,ahead,pct,npct,how,show,line:ahead?'Hold it, tracking':act(fmt(Math.abs(rg-rv),dp)),gap:Math.abs(gl-v)/(Math.abs(gl)||1)}}).filter(Boolean);
   const pick=[...rows.filter(r=>!r.ahead).sort((a,b)=>(a.k==='toPar')-(b.k==='toPar')||b.gap-a.gap),...rows.filter(r=>r.ahead)].slice(0,6);
   const behind=pick.filter(r=>!r.ahead).length;
   return `<section class="sect panel"><div class="sect-head"><h3>Road to ${an} ${A}</h3><span class="small muted">Last ${Math.min(10,c.rs.length)} rounds · per 18</span></div>
