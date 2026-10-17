@@ -2854,19 +2854,23 @@ async function drawBluprintCard(d){
   x.textBaseline='alphabetic';x.font='700 38px "Sora", sans-serif';x.fillStyle=IV;sp('BLUPRINT',M,132,7);
   const bw='letterSpacing' in x?(x.letterSpacing='7px',x.measureText('BLUPRINT').width):x.measureText('BLUPRINT').width+7*8;if('letterSpacing' in x)x.letterSpacing='0px';
   x.fillStyle=G;sp('GOLF',M+bw,132,7);
+  x.font='500 17px "JetBrains Mono", monospace';x.fillStyle=ln(.55);sp('BUILD BETTER GOLF',M+2,166,9);
   x.font='500 19px "JetBrains Mono", monospace';x.fillStyle=ln(.75);sp(d.label||'MY BLUPRINT',W-M,110,6,'right');
   x.fillStyle=ln(.45);sp(d.date||'',W-M,140,6,'right');
-  x.strokeStyle=ln(.18);x.beginPath();x.moveTo(M,176.5);x.lineTo(W-M,176.5);x.stroke();
+  x.strokeStyle=ln(.18);x.beginPath();x.moveTo(M,196.5);x.lineTo(W-M,196.5);x.stroke();
   // identity
   x.font='600 22px "JetBrains Mono", monospace';x.fillStyle=G;sp('YOUR BLUPRINT',M,292,9);
   let size=124,lines;const fit=sz=>{x.font=`800 ${sz}px "Sora", sans-serif`;const out=[];let cur='';for(const w of String(name).split(' ')){const t=cur?cur+' '+w:w;if(x.measureText(t).width>560&&cur){out.push(cur);cur=w}else cur=t}out.push(cur);return out};
   for(;;){lines=fit(size);const widest=Math.max(...lines.map(l=>x.measureText(l).width));if((lines.length<=3&&widest<=640)||size<=72)break;size-=6}
   x.fillStyle=IV;x.shadowColor='rgba(0,0,0,.55)';x.shadowBlur=18;const lh=size*1.0;lines.forEach((l,i)=>{x.textAlign='left';x.fillText(l,M-4,300+size*.95+i*lh)});x.shadowBlur=0;
-  let yy=300+size*.95+(lines.length-1)*lh+70;
-  x.strokeStyle=ln(.35);x.beginPath();x.moveTo(M,yy);x.lineTo(M+120,yy);x.stroke();yy+=58;
-  if(d.handicap!=null){x.font='500 20px "JetBrains Mono", monospace';x.fillStyle=MU;sp(d.verified?'HANDICAP · VERIFIED':'HANDICAP',M,yy,6);
-    x.font='700 78px "Sora", sans-serif';x.fillStyle=G;x.textAlign='left';x.fillText(d.handicap,M-2,yy+84);yy+=128}
-  if(d.handle){x.font='500 26px "JetBrains Mono", monospace';x.fillStyle=ln(.7);sp('@'+d.handle,M,yy,2);yy+=40}
+  // handicap block, anchored to the bottom of the plate so it fills the column under the name
+  const nameEnd=300+size*.95+(lines.length-1)*lh;const hb=1000;
+  if(d.handle){x.font='500 28px "JetBrains Mono", monospace';x.fillStyle=ln(.72);sp('@'+d.handle,M,hb,2)}
+  if(d.handicap!=null){const room=(d.handle?hb-52:hb)-(nameEnd+150);const hs=Math.max(110,Math.min(190,room/0.78));
+    const nb=d.handle?hb-58:hb;x.font=`800 ${hs}px "Sora", sans-serif`;x.fillStyle=G;x.textAlign='left';x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=22;x.fillText(d.handicap,M-6,nb);x.shadowBlur=0;
+    const top=nb-hs*.74;x.font='600 22px "JetBrains Mono", monospace';x.fillStyle=ln(.7);sp(d.verified?'HANDICAP · VERIFIED':'HANDICAP INDEX',M,top-30,7);
+    x.strokeStyle=ln(.35);x.beginPath();x.moveTo(M,top-78.5);x.lineTo(M+120,top-78.5);x.stroke()}
+  else{x.strokeStyle=ln(.35);x.beginPath();x.moveTo(M,nameEnd+70.5);x.lineTo(M+120,nameEnd+70.5);x.stroke()}
   // specs: triangle, primary on top (mirrors the profile ID card)
   const T0=1092,T1=1606;
   [[M,T0],[W-M,T0],[M,T1],[W-M,T1]].forEach(([px,py])=>{x.strokeStyle=ln(.45);x.beginPath();x.moveTo(px+(px<W/2?0:-22),py+.5);x.lineTo(px+(px<W/2?22:0),py+.5);x.moveTo(px+.5,py+(py<1300?0:-22));x.lineTo(px+.5,py+(py<1300?22:0));x.stroke()});
