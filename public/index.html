@@ -317,6 +317,17 @@ body.web-noclub #nav button[data-view="clubhouse"]{display:none}body.web-noclub 
 .rv2-specs span.new{border-color:rgba(47,208,115,.6);background:rgba(47,208,115,.08)}.rv2-specs i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.14em;color:var(--sage)}.rv2-specs em{font-style:normal;font-size:.6rem;color:var(--volt);letter-spacing:.1em}
 .rv2-act{display:flex;flex-direction:column;gap:10px;width:100%;margin-top:6px;animation:rise .5s ease 1.15s both}.rv2-share{min-height:52px;font-size:1.02rem;display:flex;align-items:center;justify-content:center;gap:8px}
 @media (prefers-reduced-motion:reduce){.rv2-rays,.rv2-ring,.rv2-spark{animation:none!important}}
+.rv2 .rv2-stage{width:340px;height:397px;max-width:92vw;margin:0}
+.rv2-golfer{position:absolute;inset:0;width:100%;height:100%}
+.rv2-golfer .gs-draw path,.rv2-golfer .gs-draw ellipse,.rv2-golfer .gs-draw circle{stroke-dasharray:900;stroke-dashoffset:900;animation:gsdraw 1.4s ease-out var(--dl,0s) forwards}
+@keyframes gsdraw{to{stroke-dashoffset:0}}
+.rv2-leads{position:absolute;inset:0;width:100%;height:100%;opacity:0;animation:fadein .4s ease 1.15s forwards}
+.rv2-call{position:absolute;display:flex;flex-direction:column;align-items:center;gap:1px;animation:rvpop .6s cubic-bezier(.2,1.4,.3,1) var(--d) both;text-align:center}
+.rv2-call i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.14em;color:var(--volt)}.rv2-call b{font-size:.8rem;line-height:1.1;max-width:110px;color:var(--ivory)}
+.rv2-call.c0{right:-6px;top:28px}.rv2-call.c0 .badgehex{filter:drop-shadow(0 0 22px rgba(47,208,115,.55))}
+.rv2-call.c1{left:-4px;top:176px}.rv2-call.c2{right:4px;top:226px}
+.rv2-ring{left:50%;top:50%;margin:-85px 0 0 -85px}
+.rv2-new{font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.08em;color:var(--volt);border:1px solid rgba(47,208,115,.5);border-radius:99px;padding:4px 12px;animation:rise .5s ease 1.6s both}
 .chtop{display:flex;flex-direction:column;gap:12px}
 @media(max-width:520px){.cht-row .small.muted{display:none}}
 .cht-row{display:flex;justify-content:space-between;align-items:center;gap:12px}.cht-title{margin:0;font-family:var(--display);font-size:1.5rem;letter-spacing:-.01em}
@@ -1524,6 +1535,8 @@ function playerBuilds(rounds,hc,diffs,todayStr){
   {const dy=typeof S!=='undefined'&&S.profile&&S.profile.caddie&&S.profile.caddie.yardages?parseFloat(S.profile.caddie.yardages.Driver):NaN;const T=[[0,262],[5,242],[10,225],[15,223],[20,219],[25,212],[54,180]];const h=Math.max(0,Math.min(54,hc));let i=0;while(i<T.length-2&&h>T[i+1][0])i++;const bd=T[i][1]+(T[i+1][1]-T[i][1])*(h-T[i][0])/(T[i+1][0]-T[i][0]);x.bomb=isFinite(dy)&&dy>120?(dy-bd)/15:null}
   const all=BUILDS.map(B=>{const sc=B.test(y,b,x);return sc!=null&&isFinite(sc)?{id:B.id,code:B.code,name:B.name,desc:B.desc,score:Math.round(sc*100)/100}:null}).filter(Boolean);
   const out=all.filter(o=>o.score>=1).sort((a,b2)=>b2.score-a.score);const top=out.slice(0,3);
+  // Always three specs: once a primary qualifies, fill the rest with the next-best attributes.
+  if(top.length)for(const o of all.filter(o=>!top.includes(o)).sort((a,b2)=>b2.score-a.score)){if(top.length>=3)break;top.push(o)}
   const near=all.filter(o=>!top.includes(o)&&o.score>=0.5).sort((a,b2)=>b2.score-a.score).slice(0,2).map(o=>({code:o.code,name:o.name,pct:Math.round(Math.min(0.99,o.score)*100)}));
   return {locked:false,builds:top,near};
 }
@@ -2745,23 +2758,21 @@ async function drawBluprint(builds){
   if(lines.length>2){x.font='700 84px "Sora", sans-serif';lines=[];cur='';for(const w of words){const t=cur?cur+' '+w:w;if(x.measureText(t).width>W-2*M&&cur){lines.push(cur);cur=w}else cur=t}lines.push(cur)}
   const lh=lines.length>2?92:112;lines.forEach((l,i)=>x.fillText(l,M,372+i*lh));
   const top=372+(lines.length-1)*lh+70;
-  // drawing: primary centre, two below, construction lines
-  const P={x:540,y:top+230},S1={x:250,y:top+560},S2={x:830,y:top+560};
-  x.setLineDash([14,6,3,6]);x.strokeStyle=ln(.28);x.lineWidth=1.5;
-  [S1,S2].slice(0,bs.length-1).forEach(s=>{x.beginPath();x.moveTo(P.x,P.y);x.lineTo(s.x,s.y);x.stroke()});
-  x.setLineDash([6,8]);x.strokeStyle=ln(.16);x.beginPath();x.arc(P.x,P.y,230,0,Math.PI*2);x.stroke();
-  x.setLineDash([]);x.strokeStyle=ln(.22);x.beginPath();x.moveTo(P.x-280,P.y);x.lineTo(P.x+280,P.y);x.moveTo(P.x,P.y-260);x.lineTo(P.x,P.y+260);x.stroke();
-  // dimension arrow across the primary
-  const arrow=(x1,y1,x2,y2)=>{x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();const a=Math.atan2(y2-y1,x2-x1);[[x2,y2,a],[x1,y1,a+Math.PI]].forEach(([px,py,an])=>{x.beginPath();x.moveTo(px-14*Math.cos(an-0.4),py-14*Math.sin(an-0.4));x.lineTo(px,py);x.lineTo(px-14*Math.cos(an+0.4),py-14*Math.sin(an+0.4));x.stroke()})};
-  x.strokeStyle=ln(.4);x.lineWidth=1.5;arrow(P.x-180,P.y-212,P.x+180,P.y-212);
-  x.font='500 22px "JetBrains Mono", monospace';x.fillStyle=ln(.7);x.textAlign='center';x.fillText('PRIMARY SPEC',P.x,P.y-232);
-  const imgs=await Promise.all(bs.map((b,i)=>hexImg(b,i?220:330)));
-  const pos=[P,S1,S2];imgs.forEach((im,i)=>{if(!im)return;const s=i?220:330;x.drawImage(im,pos[i].x-s/2,pos[i].y-s/2,s,s)});
-  // callouts
-  bs.forEach((b,i)=>{const p=pos[i],s=i?220:330,y=p.y+s/2+50;
-    x.font='600 22px "JetBrains Mono", monospace';x.fillStyle=G;x.fillText(`SPEC 0${i+1}`,p.x,y);
-    x.font=`700 ${i?38:46}px "Sora", sans-serif`;x.fillStyle=IV;x.fillText(b.name,p.x,y+(i?46:56))});
-  x.textAlign='left';
+  // drawing: a golfer being built, with the three specs as callouts
+  const gImg=await new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(golferSketch({}))});
+  const gx=40,gy=top-10,gw=620,gh=gw*700/600;if(gImg)x.drawImage(gImg,gx,gy,gw,gh);
+  const gp=(px,py)=>({x:gx+px*gw/600,y:gy+py*gh/700});
+  const imgs=await Promise.all(bs.map((b,i)=>hexImg(b,i?136:200)));
+  const calls=[{x:850,y:top+100,s:200,to:gp(392,66)},{x:840,y:top+410,s:136,to:gp(306,250)},{x:840,y:top+660,s:136,to:gp(366,500)}];
+  bs.forEach((b,i)=>{const c=calls[i];if(!c)return;
+    x.setLineDash([8,8]);x.strokeStyle='rgba(47,208,115,.7)';x.lineWidth=2;x.beginPath();x.moveTo(c.x-c.s/2-10,c.y);x.lineTo(c.to.x,c.to.y);x.stroke();x.setLineDash([]);
+    x.fillStyle=G;x.beginPath();x.arc(c.to.x,c.to.y,7,0,Math.PI*2);x.fill();
+    if(imgs[i])x.drawImage(imgs[i],c.x-c.s/2,c.y-c.s/2,c.s,c.s);
+    x.textAlign='center';x.font='600 22px "JetBrains Mono", monospace';x.fillStyle=G;x.fillText(i?`SPEC 0${i+1}`:'PRIMARY SPEC',c.x,c.y+c.s/2+34);
+    x.font=`700 ${i?34:40}px "Sora", sans-serif`;x.fillStyle=IV;
+    const wds=b.name.split(' ');let l1=b.name,l2='';if(x.measureText(b.name).width>300&&wds.length>1){l1=wds.slice(0,Math.ceil(wds.length/2)).join(' ');l2=wds.slice(Math.ceil(wds.length/2)).join(' ')}
+    x.fillText(l1,c.x,c.y+c.s/2+(i?76:84));if(l2)x.fillText(l2,c.x,c.y+c.s/2+(i?114:128));x.textAlign='left'});
+  const S1={y:top+575};
   // story
   let y=S1.y+300;x.strokeStyle=ln(.22);x.beginPath();x.moveTo(M,y-62);x.lineTo(W-M,y-60);x.stroke();
   x.font='400 32px "Inter", sans-serif';x.fillStyle='rgba(244,245,243,.82)';
@@ -3073,6 +3084,39 @@ function buildStory(builds,other){const b=(builds||[]).slice(0,3);if(!b.length)r
   if(other)out=out.replace(/\bYou're\b/g,"They're").replace(/\byou're\b/g,"they're").replace(/\bYou've\b/g,"They've").replace(/\byou've\b/g,"they've").replace(/\byourself\b/g,'themselves').replace(/\b(on|for|than|to|with|sets|beat) you\b/g,'$1 them').replace(/\bYour\b/g,'Their').replace(/\byour\b/g,'their').replace(/\bYou\b/g,'They').replace(/\byou\b/g,'they');
   return out}
 // Full-screen unlock moment after a round: new build or new achievement tiers
+// A golfer at the top of the backswing, drawn as an architect's construction sketch (viewBox 0 0 600 700).
+function golferSketch(o){o=o||{};const L=o.line||'#CFE8DA',G=o.green||'#2FD073',anim=!!o.anim;
+  const P={head:[300,118],neck:[302,168],lsh:[345,196],rsh:[256,190],pel:[312,362],lhip:[350,366],rhip:[276,360],lkn:[366,500],rkn:[252,494],lft:[380,628],rft:[222,628],lel:[262,148],rel:[208,168],hands:[196,100],club:[392,66]};
+  const ln=(a,b,w,op,cls)=>`<path class="${cls||''}" d="M${P[a][0]} ${P[a][1]}L${P[b][0]} ${P[b][1]}" stroke="${L}" stroke-opacity="${op}" stroke-width="${w}"/>`;
+  const dot=(k,r)=>`<circle cx="${P[k][0]}" cy="${P[k][1]}" r="${r||5}" fill="#0B1110" stroke="${G}" stroke-width="2"/>`;
+  const T=(x,y,t,a)=>`<text x="${x}" y="${y}" fill="${L}" fill-opacity=".55" font-family="JetBrains Mono, monospace" font-size="15" letter-spacing="2" ${a?`text-anchor="${a}"`:''}>${t}</text>`;
+  const d=anim?' class="gs-draw"':'';
+  return `<svg viewBox="0 0 600 700" xmlns="http://www.w3.org/2000/svg" ${o.cls?`class="${o.cls}"`:''} aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <g${d}>
+    <path d="M40 640H560" stroke="${L}" stroke-opacity=".35" stroke-width="1.5"/>
+    <path d="M300 30V650" stroke="${L}" stroke-opacity=".14" stroke-dasharray="4 8"/>
+    <path d="M110 640A300 300 0 0 1 392 66" stroke="${G}" stroke-opacity=".45" stroke-width="2" stroke-dasharray="10 9"/>
+    <path d="M300 640A300 300 0 0 1 520 520" stroke="${L}" stroke-opacity=".18" stroke-dasharray="4 8"/>
+    <path d="M296 70L322 420" stroke="${G}" stroke-opacity=".5" stroke-width="1.5" stroke-dasharray="14 6 3 6"/>
+    <path d="M300 300A60 60 0 0 1 318 296" stroke="${L}" stroke-opacity=".5"/>
+    <path d="M230 186L372 200" stroke="${L}" stroke-opacity=".3" stroke-dasharray="3 6"/>
+    <path d="M222 664H380" stroke="${L}" stroke-opacity=".5"/><path d="M222 656v16M380 656v16" stroke="${L}" stroke-opacity=".5"/>
+  </g>
+  <g${d} style="--dl:.25s">
+    <ellipse cx="306" cy="270" rx="52" ry="98" stroke="${L}" stroke-opacity=".22" stroke-width="1.5"/>
+    <ellipse cx="312" cy="372" rx="44" ry="22" stroke="${L}" stroke-opacity=".22" stroke-width="1.5"/>
+    <circle cx="${P.head[0]}" cy="${P.head[1]}" r="40" stroke="${L}" stroke-opacity=".85" stroke-width="3"/>
+    ${ln('neck','pel',3,.85)}${ln('lsh','rsh',3,.85)}${ln('lhip','rhip',3,.85)}
+    ${ln('lhip','lkn',3,.85)}${ln('lkn','lft',3,.85)}${ln('rhip','rkn',3,.85)}${ln('rkn','rft',3,.85)}
+    ${ln('lsh','lel',3,.85)}${ln('lel','hands',3,.85)}${ln('rsh','rel',3,.85)}${ln('rel','hands',3,.85)}
+    <path d="M${P.hands[0]} ${P.hands[1]}L${P.club[0]} ${P.club[1]}" stroke="${L}" stroke-width="3.5" stroke-opacity=".95"/>
+    <path d="M${P.club[0]} ${P.club[1]}l18 -6" stroke="${L}" stroke-width="6" stroke-opacity=".95"/>
+    <path d="M212 628h-26M388 628h26" stroke="${L}" stroke-width="4" stroke-opacity=".85"/>
+  </g>
+  <circle cx="300" cy="631" r="8" stroke="${L}" stroke-opacity=".9" stroke-width="2"/>
+  ${['head','neck','lsh','rsh','lel','rel','hands','pel','lhip','rhip','lkn','rkn'].map(k=>dot(k,k==='hands'?7:5)).join('')}
+  ${T(330,300,'SPINE 8°')}${T(388,210,'TURN 90°')}${T(301,690,'STANCE',"middle")}${T(408,58,'CLUB')}
+  </g></svg>`}
 const IG_IC='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>';
 function revealView(){const R=S.reveal;if(!R)return '';
   if(R.kind==='build'){const id=buildIdentity(R.builds);const bs=id.builds.slice(0,3);const name=bs.length>1?id.name:(bs[0]||{}).name||'';
@@ -3083,12 +3127,13 @@ function revealView(){const R=S.reveal;if(!R)return '';
     return `<div class="reveal rv2" role="dialog" aria-label="${first?'Your BluPrint is ready':'Your BluPrint evolved'}"><div class="rv2-grid"></div><div class="rv-glow"></div>
       <div class="rv-in">
         <span class="rv2-stamp">${first?'BLUPRINT UNLOCKED':evolved?'BLUPRINT EVOLVED':'BLUPRINT UPDATED'}</span>
-        <div class="rv2-stage"><div class="rv2-rays"></div><div class="rv2-ring"></div><div class="rv2-ring r2"></div>
-          <div class="rv2-hexes">${order.map((i,k)=>bs[i]?`<span class="rv2-h ${i===0?'main':'side'}" style="--d:${i===0?250:600+k*120}ms">${hexBuild(bs[i],i===0?150:84)}</span>`:'').join('')}</div>
-          ${[...Array(10)].map((_,i)=>`<i class="rv2-spark" style="--a:${i*36}deg;--d:${400+i*30}ms"></i>`).join('')}</div>
+        <div class="rv2-stage"><div class="rv2-rays"></div>${golferSketch({anim:true,cls:'rv2-golfer'})}
+          <svg class="rv2-leads" viewBox="0 0 340 397" aria-hidden="true"><g fill="none" stroke="#2FD073" stroke-width="1.5" stroke-dasharray="4 4"><path d="M282 92L224 40"/>${bs[1]?'<path d="M62 214L168 158"/>':''}${bs[2]?'<path d="M282 262L208 284"/>':''}</g><g fill="#2FD073"><circle cx="224" cy="40" r="3.5"/>${bs[1]?'<circle cx="168" cy="158" r="3.5"/>':''}${bs[2]?'<circle cx="208" cy="284" r="3.5"/>':''}</g></svg>
+          ${bs.map((x,i)=>`<span class="rv2-call c${i}" style="--d:${[1200,1500,1700][i]}ms"><span class="rv2-h">${hexBuild(x,i?66:100)}</span><i>${i?'SPEC 0'+(i+1):'PRIMARY'}</i><b>${esc(x.name)}</b></span>`).join('')}
+          <div class="rv2-ring"></div></div>
         ${evolved?`<span class="rv2-was">was <s>${esc(prev)}</s></span>`:''}
         <b class="rv-name rv2-name">${esc(name)}</b>
-        <div class="rv2-specs">${bs.map((x,i)=>`<span class="${R.fresh&&R.fresh.includes(x.code)?'new':''}"><i>${i?'SPEC 0'+(i+1):'PRIMARY'}</i>${esc(x.name)}${R.fresh&&R.fresh.includes(x.code)&&!first?' <em>NEW</em>':''}</span>`).join('')}</div>
+        ${!first&&R.fresh&&R.fresh.length?`<span class="rv2-new">New spec: ${esc(bs.filter(x=>R.fresh.includes(x.code)).map(x=>x.name).join(', '))}</span>`:''}
         <p class="rv-story">${esc(buildStory(bs))}</p>
         <div class="rv2-act"><button class="btn primary block rv2-share" data-act="revealStory">${IG_IC} Share to your story</button>
           <div class="row" style="gap:10px;justify-content:center">${socialOk()?`<button class="btn" data-act="revealShare">Post to Clubhouse</button>`:''}<button class="btn" data-act="revealProfile">See my BluPrint</button><button class="btn ghost" data-act="revealClose">Close</button></div></div>
