@@ -3,8 +3,13 @@
 (function () {
   'use strict';
   window.BP_WEB = { clubhouse: false };
+  // Session: an HttpOnly cookie, plus the same token kept on this device for browsers that drop the cookie.
+  const TK = 'bp_t';
+  const getTok = () => { try { return localStorage.getItem(TK) || ''; } catch (e) { return ''; } };
+  const setTok = t => { try { t ? localStorage.setItem(TK, t) : localStorage.removeItem(TK); } catch (e) {} };
+  const authHeaders = () => { const t = getTok(); return t ? { authorization: 'Bearer ' + t } : {}; };
   const api = async (method, url, payload) => {
-    const r = await fetch(url, { method, credentials: 'same-origin', headers: payload ? { 'content-type': 'application/json' } : {}, body: payload ? JSON.stringify(payload) : undefined });
+    const r = await fetch(url, { method, credentials: 'same-origin', headers: { ...authHeaders(), ...(payload ? { 'content-type': 'application/json' } : {}) }, body: payload ? JSON.stringify(payload) : undefined });
     let d = null; try { d = await r.json(); } catch (e) {}
     if (!r.ok) throw { code: (d && d.code) || (r.status === 401 ? 'not_granted' : 'unavailable'), message: (d && d.error) || 'Request failed', status: r.status };
     return d;
@@ -15,9 +20,9 @@
   const auth = {
     async me() { if (session !== null) return session; try { const d = await api('GET', '/auth/me'); session = d.user || false; } catch (e) { session = false; } return session; },
     start: email => api('POST', '/auth/start', { email }),
-    async verify(email, code) { const d = await api('POST', '/auth/verify', { email, code }); session = d.user; return d.user; },
-    async logout() { try { await api('POST', '/auth/logout', {}); } catch (e) {} session = false; },
-    async deleteAccount() { await api('POST', '/auth/delete', {}); session = false; }
+    async verify(email, code) { const d = await api('POST', '/auth/verify', { email, code }); if (d.token) setTok(d.token); session = d.user; return d.user; },
+    async logout() { try { await api('POST', '/auth/logout', {}); } catch (e) {} setTok(''); session = false; },
+    async deleteAccount() { await api('POST', '/auth/delete', {}); setTok(''); session = false; }
   };
   window.BP_AUTH = auth;
 
@@ -80,7 +85,7 @@
     opts = opts || {};
     const p = await prep(input, opts);
     if (!opts.onText) { const d = await api('POST', '/api/ai', p); return { text: d.text, truncated: !!d.truncated }; }
-    const r = await fetch('/api/ai', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...p, stream: true }), signal: opts.signal });
+    const r = await fetch('/api/ai', { method: 'POST', credentials: 'same-origin', headers: { ...authHeaders(), 'content-type': 'application/json' }, body: JSON.stringify({ ...p, stream: true }), signal: opts.signal });
     if (!r.ok) { let d = null; try { d = await r.json(); } catch (e) {} throw { code: (d && d.code) || 'unavailable', message: (d && d.error) || 'AI request failed' }; }
     const reader = r.body.getReader(); const dec = new TextDecoder(); let text = '';
     for (;;) { const { done, value } = await reader.read(); if (done) break; const delta = dec.decode(value, { stream: true }); text += delta; try { opts.onText({ text, delta }); } catch (e) {} }

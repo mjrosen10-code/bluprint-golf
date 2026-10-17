@@ -136,13 +136,18 @@ async function authVerify(req, env) {
   const token = randomToken(32);
   const expires = Date.now() + SESSION_DAYS * 864e5;
   await env.DB.prepare('INSERT INTO sessions(token_hash, user_id, expires) VALUES(?,?,?)').bind(await sha256(token), user.id, expires).run();
-  return json({ user: { id: user.id, email: user.email } }, 200, {
+  return json({ user: { id: user.id, email: user.email }, token }, 200, {
     'set-cookie': `bp_s=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_DAYS * 86400}`
   });
 }
 
+function sessionToken(req) {
+  const h = req.headers.get('authorization') || '';
+  if (h.startsWith('Bearer ')) return h.slice(7).trim();
+  return cookie(req, 'bp_s');
+}
 async function currentUser(req, env) {
-  const t = cookie(req, 'bp_s');
+  const t = sessionToken(req);
   if (!t) return null;
   const s = await env.DB.prepare('SELECT u.id, u.email, s.expires FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=?').bind(await sha256(t)).first();
   if (!s || s.expires < Date.now()) return null;
@@ -153,7 +158,7 @@ async function authMe(req, env) {
   return u ? json({ user: u }) : json({ user: null }, 200);
 }
 async function authLogout(req, env) {
-  const t = cookie(req, 'bp_s');
+  const t = sessionToken(req);
   if (t) await env.DB.prepare('DELETE FROM sessions WHERE token_hash=?').bind(await sha256(t)).run();
   return json({ ok: true }, 200, { 'set-cookie': 'bp_s=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0' });
 }
