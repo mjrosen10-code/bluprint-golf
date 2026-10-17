@@ -1567,7 +1567,8 @@ function fallbackLocal(){
 function writeErr(e){
   if(e&&e.code==='invalid_argument'){S.readOnly=true;render();return 'Your access is view-only, so nothing can be saved. Ask the owner to invite you as an Editor.'}
   if(e&&e.code==='quota_exceeded') return 'Storage is full. Delete a few old rounds and try again.';
-  return 'Could not save. Check your connection and try again.';
+  try{console.error('save failed',e)}catch(_){}
+  return 'Could not save. Check your connection and try again.'+(window.BP_WEB&&e&&(e.status||e.code)?` (${[e.status,e.code].filter(Boolean).join(' ')})`:'');
 }
 const clean=o=>JSON.parse(JSON.stringify(o));
 async function putRound(r){
@@ -3909,7 +3910,7 @@ document.addEventListener('click',async e=>{
   if(act==='signup'){const su=S.signup;const n=su.name.trim();const iv=su.index.trim();const idx=iv===''?null:Number(iv);
     if(iv!==''&&(isNaN(idx)||idx<-10||idx>54)){su.err='Enter an index between +10 and 54, or leave it blank.';render();return}
     su.busy=true;su.err='';render();
-    try{await claimUsername(n,idx);syncPlayer().catch(()=>{});initSocial();S.view='clubhouse';toast('Welcome, @'+n)}catch(e){su.err=e&&e.msg?e.msg:writeErr(e)}
+    try{await claimUsername(n,idx);if(!window.BP_WEB){syncPlayer().catch(()=>{});initSocial()}S.view=window.BP_WEB?'home':'clubhouse';toast('Welcome, @'+n)}catch(e){su.err=e&&e.msg?e.msg:writeErr(e)}
     su.busy=false;render();return}
   if(act==='saveAbout'){const about=document.getElementById('pf_about').value.trim().slice(0,280);const years=document.getElementById('pf_years').value.trim().slice(0,20),ride=document.getElementById('pf_ride').value,teetime=document.getElementById('pf_teetime').value,favclub=document.getElementById('pf_favclub').value.trim().slice(0,40);const share=document.getElementById('pf_share').checked;
     const state=document.getElementById('pf_state').value;const first=(document.getElementById('pf_first')||{value:''}).value.trim().slice(0,30),last=(document.getElementById('pf_last')||{value:''}).value.trim().slice(0,30);const bag={};BAG.forEach(([k])=>{const v=document.getElementById('bag_'+k).value.trim().slice(0,60);if(v)bag[k]=v});try{await putProfile({first,last,about,years,ride,teetime,favclub,bag,state,shareRounds:share})}catch(err){toast(writeErr(err));return}syncPlayer().catch(()=>{});S.profileEdit=false;toast('Profile saved');render();window.scrollTo(0,0);return}
