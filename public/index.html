@@ -297,6 +297,26 @@ body.firstrun #backBtn,body.firstrun #hcChip{display:none!important}
 .hc-none{font-size:1.6rem;font-weight:600;color:var(--sage);letter-spacing:0}
 body.web-noclub #nav button[data-view="clubhouse"]{display:none}body.web-noclub #nav{grid-template-columns:repeat(4,1fr)!important}
 .signin .si-box{display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:var(--r-lg);background:#171A1A;border:1px solid rgba(255,255,255,.08)}.si-code{font-family:'JetBrains Mono',monospace;font-size:1.6rem;letter-spacing:.4em;text-align:center}
+.rv2{overflow:hidden}.rv2-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(207,232,218,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(207,232,218,.05) 1px,transparent 1px);background-size:28px 28px;-webkit-mask-image:radial-gradient(60% 50% at 50% 40%,#000,transparent);mask-image:radial-gradient(60% 50% at 50% 40%,#000,transparent)}
+.rv2 .rv-in{gap:12px;max-width:460px;width:100%}
+.rv2-stamp{font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:700;letter-spacing:.28em;color:var(--volt);border:1.5px solid rgba(47,208,115,.7);padding:8px 14px;border-radius:6px;transform:rotate(-2deg);animation:stamp .5s cubic-bezier(.2,1.6,.4,1) .1s both;background:rgba(47,208,115,.06)}
+@keyframes stamp{from{opacity:0;transform:rotate(-2deg) scale(2.2)}to{opacity:1;transform:rotate(-2deg) scale(1)}}
+.rv2-stage{position:relative;width:300px;height:220px;display:grid;place-items:center;margin:4px 0}
+.rv2-rays{position:absolute;width:420px;height:420px;left:50%;top:50%;margin:-210px 0 0 -210px;background:repeating-conic-gradient(from 0deg,rgba(47,208,115,.16) 0deg 6deg,transparent 6deg 20deg);-webkit-mask-image:radial-gradient(circle,#000 18%,transparent 62%);mask-image:radial-gradient(circle,#000 18%,transparent 62%);animation:rays 18s linear infinite,fadein .8s ease .2s both}
+@keyframes rays{to{transform:rotate(360deg)}}
+.rv2-ring{position:absolute;width:170px;height:170px;border-radius:50%;border:2px solid rgba(47,208,115,.55);animation:ringout 1.6s ease-out .35s both}.rv2-ring.r2{animation-delay:.65s}
+@keyframes ringout{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(1.9)}}
+.rv2-hexes{position:relative;display:flex;align-items:center;gap:6px;z-index:1}
+.rv2-h{animation:rvpop .7s cubic-bezier(.2,1.4,.3,1) var(--d) both}.rv2-h.main .badgehex{filter:drop-shadow(0 0 28px rgba(47,208,115,.6)) drop-shadow(0 10px 16px rgba(0,0,0,.6))}.rv2-h.side{opacity:.92;margin-top:40px}
+.rv2-spark{position:absolute;left:50%;top:50%;width:4px;height:14px;margin:-7px 0 0 -2px;border-radius:2px;background:var(--volt);opacity:0;transform:rotate(var(--a)) translateY(-70px);animation:spark .9s ease-out var(--d) both}
+@keyframes spark{0%{opacity:0;transform:rotate(var(--a)) translateY(-60px) scaleY(.4)}30%{opacity:1}100%{opacity:0;transform:rotate(var(--a)) translateY(-150px) scaleY(1)}}
+.rv2-was{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--sage);letter-spacing:.06em;animation:rise .5s ease .6s both}.rv2-was s{color:#8C9A93}
+.rv2-name{font-size:clamp(2rem,7vw,2.6rem)!important;line-height:1.05}
+.rv2-specs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;animation:rise .5s ease .95s both}
+.rv2-specs span{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);font-weight:600;font-size:.88rem}
+.rv2-specs span.new{border-color:rgba(47,208,115,.6);background:rgba(47,208,115,.08)}.rv2-specs i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.14em;color:var(--sage)}.rv2-specs em{font-style:normal;font-size:.6rem;color:var(--volt);letter-spacing:.1em}
+.rv2-act{display:flex;flex-direction:column;gap:10px;width:100%;margin-top:6px;animation:rise .5s ease 1.15s both}.rv2-share{min-height:52px;font-size:1.02rem;display:flex;align-items:center;justify-content:center;gap:8px}
+@media (prefers-reduced-motion:reduce){.rv2-rays,.rv2-ring,.rv2-spark{animation:none!important}}
 .chtop{display:flex;flex-direction:column;gap:12px}
 @media(max-width:520px){.cht-row .small.muted{display:none}}
 .cht-row{display:flex;justify-content:space-between;align-items:center;gap:12px}.cht-title{margin:0;font-family:var(--display);font-size:1.5rem;letter-spacing:-.01em}
@@ -1530,7 +1550,7 @@ let userCap=null,me=null,base=null;
 async function initStore(){
   document.body.classList.toggle('web-noclub',!!(window.BP_WEB&&!window.BP_WEB.clubhouse));
   S.draft=ls('rl_draft');
-  if(window.BP_AUTH){const u=await BP_AUTH.me();if(!u){S.store='auth';S.ready=true;S.profileReady=true;render();return}S.authEmail=u.email}
+  if(window.BP_AUTH){const u=await BP_AUTH.me();if(!u){S.store='auth';S.ready=true;S.profileReady=true;render();return}S.authEmail=u.email;try{if(sessionStorage.getItem('bp_after')==='profile'){sessionStorage.removeItem('bp_after');S.view='profile'}}catch(_){}}
   if(window.claude&&window.claude.use){
     try{db=await window.claude.use('db')}catch(e){db=null}
     try{userCap=await window.claude.use('user')}catch(e){userCap=null}
@@ -2110,7 +2130,7 @@ function afterSave(r,before){
   const after=badgeSnapshot(r);
   S.newBadges=BADGES.filter(b=>after[b.id]>(before[b.id]||0)).map(b=>({...b,tier:after[b.id]}));
   {const nb=after.__build||'';const ob=before.__build||'';
-   if(nb&&nb!==ob){const codes=nb.split(',');S.reveal={kind:'build',builds:codes.map(c=>BUILDS.find(b=>b.code===c)).filter(Boolean),fresh:codes.filter(c=>!ob.split(',').includes(c))}}
+   if(nb&&nb!==ob){const codes=nb.split(',');S.reveal={kind:'build',builds:codes.map(c=>BUILDS.find(b=>b.code===c)).filter(Boolean),fresh:codes.filter(c=>!ob.split(',').includes(c)),prev:ob?ob.split(',').map(c=>BUILDS.find(b=>b.code===c)).filter(Boolean):[]}}
    else if(S.newBadges.length)S.reveal={kind:'badges',badges:S.newBadges.slice(0,3)}}
   if(socialOk()){const list=[r,...S.rounds.filter(x=>x.id!==r.id)];syncPlayer(list).catch(()=>{});
     if(S.profile.shareRounds!==false)S.sharePrompt=r.id;}
@@ -2755,13 +2775,22 @@ async function drawBluprint(builds){
   cells.forEach(([k,v],i)=>{const cx=cx0[i]+20,cw=TW*fr[i];x.font='600 18px "JetBrains Mono", monospace';x.fillStyle=SG;x.fillText(k,cx,tb+38);x.font='600 30px "JetBrains Mono", monospace';x.fillStyle=k==='HANDICAP'?G:IV;
     let t=v;while(x.measureText(t).width>cw-34&&t.length>3)t=t.slice(0,-2)+'…';x.fillText(t,cx,tb+84)});
   x.font='700 34px "Sora", sans-serif';x.fillStyle=G;x.fillText("WHAT'S YOUR BLUPRINT?",M+20,tb+168);
-  x.font='500 20px "JetBrains Mono", monospace';x.fillStyle=SG;x.textAlign='right';x.fillText('DRAWN BY BLUPRINT GOLF',W-M-20,tb+166);x.textAlign='left';
+  x.font='500 20px "JetBrains Mono", monospace';x.fillStyle=SG;x.textAlign='right';x.fillText('BLUPRINTGOLF.COM',W-M-20,tb+166);x.textAlign='left';
   return await new Promise(r=>cv.toBlob(r,'image/png'));
+}
+// Share the BluPrint story card straight to the phone's share sheet (Instagram Stories, Messages…)
+async function shareStory(builds){
+  const bs=builds||(ctx().pb||{}).builds;if(!bs||!bs.length){toast('Log 3 rounds to draw your BluPrint.');return}
+  const id=buildIdentity(bs);const nm=id.builds.length>1?id.name:id.builds[0].name;
+  let blob=S.storyFor===nm&&S.storyBlob;
+  if(blob){const file=new File([blob],'my-bluprint.png',{type:'image/png'});
+    try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'My BluPrint',text:"What's your BluPrint? bluprintgolf.com"});return}}catch(e){if(e&&e.name==='AbortError')return}}
+  await openBluprintImage(bs);
 }
 async function openBluprintImage(builds){
   const bs=builds||(ctx().pb||{}).builds;if(!bs||!bs.length){toast('Log 3 rounds to draw your BluPrint.');return}
   toast('Drawing your BluPrint…');const blob=await drawBluprint(bs);if(S.cardImg&&S.cardImg.url)URL.revokeObjectURL(S.cardImg.url);
-  const id=buildIdentity(bs);S.cardImg={blob,url:URL.createObjectURL(blob),kind:'bp',bpName:id.builds.length>1?id.name:id.builds[0].name,name:'my-bluprint.png',type:'image/png'};render();
+  S.storyFor=(()=>{const i=buildIdentity(bs);return i.builds.length>1?i.name:i.builds[0].name})();S.storyBlob=blob;const id=buildIdentity(bs);S.cardImg={blob,url:URL.createObjectURL(blob),kind:'bp',bpName:id.builds.length>1?id.name:id.builds[0].name,name:'my-bluprint.png',type:'image/png'};render();
 }
 async function openScorecardImage(){
   const r=S.rounds.find(x=>x.id===S.report)||S.reportRound;if(!r||!playedHoles(r).length){toast('This round has no hole-by-hole scores to show.');return}
@@ -2774,8 +2803,8 @@ async function sendScorecard(){
   else toast('Press and hold the image to save or share it.');
 }
 function scorecardSheet(){const c=S.cardImg;const bp=c.kind==='bp';return `<div class="sheet-back" data-act="closeCardImg"></div><section class="sheet" role="dialog" aria-label="${bp?'My BluPrint image':'Scorecard image'}"><div class="sheet-grab"></div>
-  <span class="eyebrow">${bp?'My BluPrint':'Your scorecard'}</span><img class="sc-img ${bp?'bp-img':''}" src="${c.url}" alt="${bp?'My BluPrint: '+esc(c.bpName):'Scorecard image'}">
-  <div class="row"><button class="btn primary" style="flex:1" data-act="sendCardImg">${bp?'Share or save':'Text or save'}</button>${socialOk()?`<button class="btn" style="flex:1" data-act="postCardImg">Post to Clubhouse</button>`:''}</div>
+  <span class="eyebrow">${bp?'My BluPrint':'Your scorecard'}</span>${bp?`<p class="small muted" style="margin:0">On your phone, tap Share and pick Instagram, then Stories. On a computer, save it and post from your phone.</p>`:''}<img class="sc-img ${bp?'bp-img':''}" src="${c.url}" alt="${bp?'My BluPrint: '+esc(c.bpName):'Scorecard image'}">
+  <div class="row"><button class="btn primary" style="flex:1" data-act="sendCardImg">${bp?'Share to your story':'Text or save'}</button>${socialOk()?`<button class="btn" style="flex:1" data-act="postCardImg">Post to Clubhouse</button>`:''}</div>
   <button class="btn ghost" data-act="closeCardImg">Close</button></section>`}
 function miniCard(card){if(!card||!card.h||!card.h.length)return '';const st=card.start||1;const segs=[];for(let i=0;i<card.h.length;i+=9)segs.push(card.h.slice(i,i+9));
   return `<div class="minicard">${segs.map((sg,ni)=>`<div class="mc-row">${sg.map((h,i)=>{const d=h[1]-h[0];return `<span class="mc-h ${d<=-1?'u':d===0?'e':d===1?'b':'d'}"><i>${st+ni*9+i}</i><b>${h[1]}</b></span>`}).join('')}<span class="mc-h tot"><i>${segs.length>1?(ni?'In':'Out'):'Tot'}</i><b>${sg.reduce((s,h)=>s+h[1],0)}</b></span></div>`).join('')}</div>`}
@@ -3044,13 +3073,26 @@ function buildStory(builds,other){const b=(builds||[]).slice(0,3);if(!b.length)r
   if(other)out=out.replace(/\bYou're\b/g,"They're").replace(/\byou're\b/g,"they're").replace(/\bYou've\b/g,"They've").replace(/\byou've\b/g,"they've").replace(/\byourself\b/g,'themselves').replace(/\b(on|for|than|to|with|sets|beat) you\b/g,'$1 them').replace(/\bYour\b/g,'Their').replace(/\byour\b/g,'their').replace(/\bYou\b/g,'They').replace(/\byou\b/g,'they');
   return out}
 // Full-screen unlock moment after a round: new build or new achievement tiers
+const IG_IC='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>';
 function revealView(){const R=S.reveal;if(!R)return '';
   if(R.kind==='build'){const id=buildIdentity(R.builds);const bs=id.builds.slice(0,3);const name=bs.length>1?id.name:(bs[0]||{}).name||'';
-    return `<div class="reveal" role="dialog" aria-label="New BluPrint"><div class="rv-glow"></div><div class="rv-in">
-      <span class="kicker">${R.fresh&&R.fresh.length?'New BluPrint unlocked':'Your BluPrint evolved'}</span>
-      <div class="rv-badges">${bs.map((x,i)=>`<span class="rv-b ${R.fresh&&R.fresh.includes(x.code)?'fresh':''}" style="--d:${i*180+200}ms">${hexBuild(x,i?84:112)}</span>`).join('')}</div>
-      <b class="rv-name">${esc(name)}</b><p class="rv-story">${esc(buildStory(bs))}</p>
-      <div class="rv-act">${socialOk()?`<button class="btn primary" data-act="revealShare">Share to Clubhouse</button>`:''}<button class="btn" data-act="revealImg">Save as image</button><button class="btn ghost" data-act="revealClose">Continue</button></div></div></div>`}
+    const prev=R.prev&&R.prev.length?(()=>{const p=buildIdentity(R.prev);return p.builds.length>1?p.name:(p.builds[0]||{}).name||''})():'';
+    const evolved=!!prev&&prev!==name;const first=!R.prev||!R.prev.length;
+    if(!S.storyBlob||S.storyFor!==name){S.storyFor=name;S.storyBlob=null;drawBluprint(bs).then(b=>{if(S.storyFor===name)S.storyBlob=b}).catch(()=>{})}
+    const order=bs.length===3?[1,0,2]:bs.length===2?[0,1]:[0];
+    return `<div class="reveal rv2" role="dialog" aria-label="${first?'Your BluPrint is ready':'Your BluPrint evolved'}"><div class="rv2-grid"></div><div class="rv-glow"></div>
+      <div class="rv-in">
+        <span class="rv2-stamp">${first?'BLUPRINT UNLOCKED':evolved?'BLUPRINT EVOLVED':'BLUPRINT UPDATED'}</span>
+        <div class="rv2-stage"><div class="rv2-rays"></div><div class="rv2-ring"></div><div class="rv2-ring r2"></div>
+          <div class="rv2-hexes">${order.map((i,k)=>bs[i]?`<span class="rv2-h ${i===0?'main':'side'}" style="--d:${i===0?250:600+k*120}ms">${hexBuild(bs[i],i===0?150:84)}</span>`:'').join('')}</div>
+          ${[...Array(10)].map((_,i)=>`<i class="rv2-spark" style="--a:${i*36}deg;--d:${400+i*30}ms"></i>`).join('')}</div>
+        ${evolved?`<span class="rv2-was">was <s>${esc(prev)}</s></span>`:''}
+        <b class="rv-name rv2-name">${esc(name)}</b>
+        <div class="rv2-specs">${bs.map((x,i)=>`<span class="${R.fresh&&R.fresh.includes(x.code)?'new':''}"><i>${i?'SPEC 0'+(i+1):'PRIMARY'}</i>${esc(x.name)}${R.fresh&&R.fresh.includes(x.code)&&!first?' <em>NEW</em>':''}</span>`).join('')}</div>
+        <p class="rv-story">${esc(buildStory(bs))}</p>
+        <div class="rv2-act"><button class="btn primary block rv2-share" data-act="revealStory">${IG_IC} Share to your story</button>
+          <div class="row" style="gap:10px;justify-content:center">${socialOk()?`<button class="btn" data-act="revealShare">Post to Clubhouse</button>`:''}<button class="btn" data-act="revealProfile">See my BluPrint</button><button class="btn ghost" data-act="revealClose">Close</button></div></div>
+      </div></div>`}
   const bs=R.badges||[];
   return `<div class="reveal" role="dialog" aria-label="Achievement unlocked"><div class="rv-glow"></div><div class="rv-in">
     <span class="kicker">${bs.length>1?bs.length+' achievements unlocked':'Achievement unlocked'}</span>
@@ -3397,7 +3439,7 @@ async function siAct(act){const a=S.auth;
   if(act==='siSend'){const e=document.getElementById('si_email');if(e)a.email=e.value.trim();if(!a.email){a.err='Enter your email.';render();return}
     a.busy=true;a.err='';render();try{const d=await BP_AUTH.start(a.email);a.step='code';a.dev=d&&d.devCode||'';if(a.step==='code'&&!document.getElementById('si_email'))toast('New code sent')}catch(e){a.err=e.message||'Could not send the code.'}a.busy=false;render();setTimeout(()=>{const c=document.getElementById('si_code');if(c)c.focus()},50);return}
   if(act==='siVerify'){const c=document.getElementById('si_code');a.code=c?c.value.trim():'';if(a.code.length<6){a.err='Enter the 6-digit code.';render();return}
-    a.busy=true;a.err='';render();try{await BP_AUTH.verify(a.email,a.code);location.reload()}catch(e){a.busy=false;a.err=e.message||'That code did not work.';render()}return}}
+    a.busy=true;a.err='';render();try{await BP_AUTH.verify(a.email,a.code);try{sessionStorage.setItem('bp_after','profile')}catch(_){}location.reload()}catch(e){a.busy=false;a.err=e.message||'That code did not work.';render()}return}}
 function accountPanel(){
   return `<section class="sect panel"><div class="sect-head"><h3>Account</h3>${IS_WEB&&S.authEmail?`<span class="small muted">${esc(S.authEmail)}</span>`:''}</div>
     <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" data-act="exportData">Export my data</button>${IS_WEB?`<label class="btn" for="imp_file" style="cursor:pointer">Import from beta</label><input type="file" id="imp_file" data-field="imp.file" accept="application/json,.json" style="position:absolute;width:1px;height:1px;opacity:0"><button class="btn" data-act="signOut">Sign out</button>`:''}</div>
@@ -3465,7 +3507,7 @@ async function onbSaveRounds(){onbSnap();const R=onbRounds();const num=x=>x===''
   S.onbBusy=false;S.onbR=null;
   try{const all=[...rounds,...S.rounds.filter(x=>!rounds.some(y=>y.id===x.id))].sort((a,b)=>String(b.date).localeCompare(String(a.date)));const v=verifiedIndex(all);const ix=v.index!=null?v.index:(S.profile.index!=null?Number(S.profile.index):18);
     const pb=playerBuilds(all,ix,v.diffs);if(!pb.locked&&pb.builds.length)S.reveal={kind:'build',builds:pb.builds,fresh:pb.builds.map(b=>b.code)};else setTimeout(()=>toast('Rounds saved. Add putts, fairways and greens to sharpen your BluPrint.'),300)}catch(e){}
-  if(socialOk())syncPlayer().catch(()=>{});S.view='home';render();window.scrollTo(0,0)}
+  if(socialOk())syncPlayer().catch(()=>{});S.view='profile';render();window.scrollTo(0,0)}
 function needsOnboard(){return !!(S.profile.username&&!S.profile.onboarded&&!S.rounds.length&&!S.readOnly&&S.view!=='photo'&&S.view!=='text'&&S.view!=='setup'&&S.view!=='live'&&S.view!=='report')}
 function viewOnboard(c){
   const step=S.onb||1;const m=cmem();const ob=S.onbSel||(S.onbSel={str:[...(m.strengths||[])],weak:[...(m.weaknesses||[])],miss:(m.tendencies||[]).find(t=>t.startsWith('Usual miss'))||''});
@@ -3622,6 +3664,8 @@ async function socialAct(act,a){
   if(act==='csort'){SOC.csort=a.dataset.v;render();return true}
   if(act==='fvote'){const k=a.dataset.key,v=Number(a.dataset.v);const ref=db.doc('reactions/'+k+'~v~'+me);const cur=myVote(k);try{cur===v?await ref.delete():await ref.set({post:k,uid:me,kind:'vote',v,at:nowIso()})}catch(e){toast(writeErr(e))}return true}
   if(act==='revealClose'){S.reveal=null;render();return true}
+  if(act==='revealProfile'){S.reveal=null;S.view='profile';render();window.scrollTo(0,0);return true}
+  if(act==='revealStory'){shareStory(S.reveal&&S.reveal.builds);return true}
   if(act==='revealShare'){const R=S.reveal;S.reveal=null;const id=buildIdentity(R.builds);const nm=id.builds.length>1?id.name:(id.builds[0]||{}).name;try{await createPost({type:'milestone',text:`unlocked a new BluPrint: ${id.builds.length>1?id.name:nm}`});toast('Shared to The Clubhouse')}catch(e){toast(writeErr(e))}render();return true}
   if(act==='shareBadge'){S.reveal=null;if(!socialOk()){toast('Pick a username to post in The Clubhouse');return true}S.cardUid=null;S.shareBadge={id:a.dataset.id,tier:Number(a.dataset.tier)};SOC.sbCaption='';render();return true}
   if(act==='closeShareBadge'){S.shareBadge=null;render();return true}
@@ -3910,7 +3954,7 @@ document.addEventListener('click',async e=>{
   if(act==='signup'){const su=S.signup;const n=su.name.trim();const iv=su.index.trim();const idx=iv===''?null:Number(iv);
     if(iv!==''&&(isNaN(idx)||idx<-10||idx>54)){su.err='Enter an index between +10 and 54, or leave it blank.';render();return}
     su.busy=true;su.err='';render();
-    try{await claimUsername(n,idx);if(!window.BP_WEB){syncPlayer().catch(()=>{});initSocial()}S.view=window.BP_WEB?'home':'clubhouse';toast('Welcome, @'+n)}catch(e){su.err=e&&e.msg?e.msg:writeErr(e)}
+    try{await claimUsername(n,idx);if(!window.BP_WEB){syncPlayer().catch(()=>{});initSocial()}S.view=window.BP_WEB?'profile':'clubhouse';toast('Welcome, @'+n)}catch(e){su.err=e&&e.msg?e.msg:writeErr(e)}
     su.busy=false;render();return}
   if(act==='saveAbout'){const about=document.getElementById('pf_about').value.trim().slice(0,280);const years=document.getElementById('pf_years').value.trim().slice(0,20),ride=document.getElementById('pf_ride').value,teetime=document.getElementById('pf_teetime').value,favclub=document.getElementById('pf_favclub').value.trim().slice(0,40);const share=document.getElementById('pf_share').checked;
     const state=document.getElementById('pf_state').value;const first=(document.getElementById('pf_first')||{value:''}).value.trim().slice(0,30),last=(document.getElementById('pf_last')||{value:''}).value.trim().slice(0,30);const bag={};BAG.forEach(([k])=>{const v=document.getElementById('bag_'+k).value.trim().slice(0,60);if(v)bag[k]=v});try{await putProfile({first,last,about,years,ride,teetime,favclub,bag,state,shareRounds:share})}catch(err){toast(writeErr(err));return}syncPlayer().catch(()=>{});S.profileEdit=false;toast('Profile saved');render();window.scrollTo(0,0);return}
@@ -3932,7 +3976,7 @@ document.addEventListener('click',async e=>{
   if(act==='closeCardImg'){S.cardImg=null;render();return}
   if(act==='sendCardImg'){sendScorecard();return}
   if(act==='postCardImg'&&S.cardImg&&S.cardImg.kind==='bp'){const c=S.cardImg;S.cardImg=null;render();try{const md=await uploadMedia(new File([c.blob],c.name,{type:'image/png'}));await createPost({type:'milestone',text:`shared their BluPrint: ${c.bpName}`,...md});toast('Posted to The Clubhouse')}catch(e){toast(writeErr(e))}return}
-  if(act==='shareBP'){openBluprintImage();return}
+  if(act==='shareBP'){shareStory();return}
   if(act==='revealImg'){const R=S.reveal;S.reveal=null;openBluprintImage(R&&R.builds);return}
   if(act==='postCardImg'){const r=S.rounds.find(x=>x.id===S.cardImg.rid)||S.reportRound;S.cardImg=null;S.sharePrompt=null;render();const p=r&&roundPost(r,S.newBadges||[]);if(p)createPost(p).then(()=>toast('Scorecard posted to The Clubhouse')).catch(e=>toast(writeErr(e)));return}
   if(act==='shareMonth'){shareMonth();return}
