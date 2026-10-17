@@ -68,6 +68,7 @@ header.top h1 span{color:var(--volt)}
 .chip-hc{font-family:var(--mono);font-size:.85rem;color:var(--ivory);border:1px solid var(--line-2);border-radius:999px;padding:5px 12px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;max-width:60vw;overflow:hidden;text-overflow:ellipsis}
 .backbtn{border:1px solid var(--line-2);background:transparent;color:var(--ivory);border-radius:999px;width:36px;height:36px;display:grid;place-items:center;margin-left:-4px}
 .backbtn svg{width:20px;height:20px}
+.backbtn[hidden]{display:none}
 main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px;display:flex;flex-direction:column;gap:28px}
 /* Surfaces: flat, hairline, used sparingly */
 .card{background:#181B1B;border:1px solid rgba(255,255,255,.06);box-shadow:0 18px 40px -28px rgba(0,0,0,.8);border-radius:var(--r-lg);padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
@@ -1131,6 +1132,27 @@ input.t:focus,select.t:focus,textarea.t:focus{border-color:rgba(47,208,115,.6);b
 
 /* Small iPhones: keep the handicap visible in the header chip; status name wraps instead of clipping */
 @media (max-width:430px){#hcChip .hc-u{display:none}.idc-stt b{white-space:normal;line-height:1.15}}
+
+/* Phones: profile header on one row (name · handicap · status) */
+@media (max-width:520px){
+ .ptile .idc-head{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:0!important;width:100%;flex-wrap:nowrap!important;margin-bottom:10px}
+ .ptile .idc-head>.idc-chips{display:contents!important}
+ .ptile .idc-head>.idc-who{display:flex!important;flex-direction:row!important;align-items:center!important;gap:7px!important;min-width:0;padding-right:8px;justify-self:stretch}
+ .ptile .idc-who .av{width:34px!important;height:34px!important;font-size:.9rem!important;flex:0 0 auto}
+ .ptile .idc-who>div{min-width:0;flex:1 1 auto}
+ .ptile .idc-head .pname{font-size:1rem!important;display:block!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+ .ptile .idc-who .small{font-size:.68rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+ .ptile .idc-head .idc-hc{padding:4px 9px!important;border-left:1px solid rgba(255,255,255,.1)!important;border-right:1px solid rgba(255,255,255,.1)!important;border-radius:0!important;margin:0!important}
+ .ptile .idc-hc b{font-size:1.4rem;gap:3px}
+ .ptile .idc-hc b .vcheck{width:12px;height:12px}
+ .ptile .idc-hc span{font-size:.52rem;letter-spacing:.06em;white-space:nowrap}
+ .ptile .idc-head .idc-st{padding:4px 0 4px 9px!important;gap:6px!important;justify-self:stretch;min-width:0}
+ .ptile .idc-st .idc-stt{min-width:0}
+ .ptile .idc-ring{width:30px;height:30px;font-size:.88rem;border-width:2px;flex:0 0 auto}
+ .ptile .idc-stt b{font-size:.76rem;white-space:normal!important;line-height:1.15}
+ .ptile .idc-stt span{font-size:.52rem;letter-spacing:.06em;white-space:nowrap}
+}
+}
 </style>
 
 <div class="ambient" aria-hidden="true"><i class="glow g1"></i><i class="glow g2"></i><i class="glow g3"></i><div class="topo"></div><div class="topo2"></div><svg class="golfart bp" viewBox="740 170 420 1160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -1271,11 +1293,11 @@ const BENCH=[
  {h:25,fir:43,gir:2.5, putts:36.5,tp:3.2,ud:20,dbl:7.5}];
 function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
 function bench(hc){
-  hc=clamp(Number(hc)||0,0,25);
+  const raw=clamp(Number(hc)||0,-10,54); hc=clamp(raw,0,25); // stat tables cover 0-25; expected score scales with the real index
   let i=0; while(i<BENCH.length-2 && hc>BENCH[i+1].h) i++;
   const a=BENCH[i],b=BENCH[i+1],t=(hc-a.h)/(b.h-a.h);
   const o={h:hc}; for(const k of Object.keys(a)) if(k!=='h') o[k]=a[k]+(b[k]-a[k])*t;
-  o.toPar=1.2+1.08*hc; return o;
+  o.toPar=1.2+1.08*raw; return o;
 }
 function holeGir(hl){
   if(hl.gir===true||hl.gir===false) return hl.gir;
@@ -1419,6 +1441,11 @@ function leverage(you,b){
   return items.sort((a,b2)=>b2.gap-a.gap);
 }
 function fmt(x,d=1){if(x==null||!isFinite(x))return '—';return Number(x).toFixed(d)}
+// Handicaps: a plus handicap is stored as a negative number and shown the golf way, "+2.0"
+function hcTxt(x,d=1){if(x==null||!isFinite(x))return '—';const v=Math.round(Number(x)*Math.pow(10,d))/Math.pow(10,d);return v<0?'+'+fmt(-v,d):fmt(v,d)}
+function parseHc(t){t=String(t??'').trim().replace(/\u2212/g,'-');if(!t)return null;const n=Number(t.replace(/^\+/,''));return isNaN(n)?NaN:(t.startsWith('+')?-n:n)}
+// Score to par: +3.2, E, −1.4 (true minus sign)
+function parTxt(x,d=1){if(x==null||!isFinite(x))return '—';const v=Math.round(Number(x)*Math.pow(10,d))/Math.pow(10,d);return v===0?'E':(v>0?'+':'−')+fmt(Math.abs(v),d)}
 function rate(you,b,lowerBetter,tol){
   if(you==null||b==null) return 'neutral';
   const d=lowerBetter?(b-you):(you-b);
@@ -1709,7 +1736,7 @@ function goBack(){
 function render(){S._popHtml="";
   const c=ctx();
   {const sti=myStatusI();let lv=0;try{lv=badgeState(S.rounds,{index:c.index!=null?c.index:c.est,diffs:c.diffs,goal:S.profile.goal}).lvl}catch(e){}
-  document.getElementById('hcChip').innerHTML=(S.profile.username?`<span class="hc-lv" style="--stc:${STC[sti]}" title="${esc(STATUS[sti][0])}">${lv}</span><span class="hc-u">@${esc(S.profile.username)}</span>`:'')+`<span class="hc-n">${c.index!=null?(c.verified?VCHECK+' ':'')+fmt(c.index,1):(S.profile.username?'—':'Set handicap')}</span>`}
+  document.getElementById('hcChip').innerHTML=(S.profile.username?`<span class="hc-lv" style="--stc:${STC[sti]}" title="${esc(STATUS[sti][0])}">${lv}</span><span class="hc-u">@${esc(S.profile.username)}</span>`:'')+`<span class="hc-n">${c.index!=null?(c.verified?VCHECK+' ':'')+hcTxt(c.index,1):(S.profile.username?'—':'Set handicap')}</span>`}
   const root=document.querySelector('[data-view-root]')||null;
   const navKey={caddie:'profile',findfriends:'clubhouse',player:'clubhouse',inbox:'clubhouse',thread:'clubhouse',setup:'log',live:'log',photo:'log',text:'log',report:'home'}[S.view]||S.view;
   document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===navKey?'page':'false'));
@@ -1798,7 +1825,8 @@ function dualRing(pYou,pRef,val,tone,label){
    <circle class="arc" cx="50" cy="50" r="${R2}" fill="none" stroke="#4A524F" stroke-width="4" stroke-linecap="round" stroke-dasharray="${(C2*b).toFixed(1)} ${C2.toFixed(1)}" transform="rotate(-90 50 50)"/>
    <text x="50" y="56" text-anchor="middle" fill="${col}" font-family="JetBrains Mono, monospace" font-size="17" font-weight="600">${esc(val)}</text></svg>`;
 }
-const RING_SCALE={fir:v=>v,gir:v=>100*v/18,ud:v=>v,putts:v=>100*v/45};
+// every ring reads the same way: a longer arc is better (putts: fewer fills more)
+const RING_SCALE={fir:v=>v,gir:v=>100*v/18,ud:v=>v,putts:v=>clamp(100*(46-v)/(46-26),0,100)};
 const RING_TOL={fir:6,gir:1.2,ud:8,putts:1.2};
 function ringTone(k,v,ref,lower){if(v==null||ref==null)return '';const d=lower?ref-v:v-ref;return d>=0?'good':d<=-RING_TOL[k]?'bad':''}
 function ringDelta(k,v,ref,lower,dp,u){if(v==null||ref==null)return '';const st=Math.pow(10,-(dp||0)),rr=x=>Math.round(x/st)*st;const d=rr(v)-rr(ref),t=ringTone(k,v,ref,lower);const word=lower?(d>0?'more':'fewer'):(d>0?'above':'below');return `<span class="rdelta ${t}">${Math.abs(d)<st/2?'Even':`${fmt(Math.abs(d),dp)}${u} ${word}`}</span>`}
@@ -1831,7 +1859,7 @@ const shortDate=d=>{const t=new Date(String(d)+'T12:00:00');return isNaN(t)?Stri
 const longDate=d=>{const t=new Date(String(d)+'T12:00:00');return isNaN(t)?String(d||''):t.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
 function viewHome(c){
   if(!S.ready) return `<p class="muted">Loading your rounds…</p>`;
-  const hcNum=c.index!=null?fmt(c.index,1):'<small class="hc-none">No index yet</small>';
+  const hcNum=c.index!=null?hcTxt(c.index,1):'<small class="hc-none">No index yet</small>';
   const heroHead=`<div class="hero-left"><span class="kicker">Handicap index</span>
       <div class="hero-num">${c.verified?VCHECK:''}<span>${hcNum}</span></div>
       <div class="hero-sub">${c.index==null?'<span class="pill neutral">Not set</span>':c.verified?`<span class="pill good">Verified</span><span class="small muted">from ${c.ver.count} score${c.ver.count===1?'':'s'}</span>`:`<span class="pill neutral">Self-reported</span><span class="small muted">${c.ver.needed?c.ver.needed+' more scored round'+(c.ver.needed===1?'':'s')+' to verify':''}</span>`}</div></div>`;
@@ -1841,7 +1869,7 @@ function viewHome(c){
     ${c.index!=null?`<section class="hero">${heroHead}</section>`:''}
     ${startList(c)}`;
   const you=c.you,b=c.b,lv=leverage(you,b),top=lv.filter(x=>x.gap>0.15).slice(0,2);
-  const lvlName=c.index!=null?`${fmt(c.hc,1)} ${c.verified?'verified':'self-reported'} index`:`18 handicap`;
+  const lvlName=c.index!=null?`${hcTxt(c.hc,1)} ${c.verified?'verified':'self-reported'} index`:`18 handicap`;
   const last10=c.rs.slice(0,10);
   const scores18=last10.map(r=>per18(agg([r])).score).filter(x=>x!=null);
   const best=Math.min(...c.rs.filter(r=>agg([r]).holes===18).map(r=>agg([r]).score),Infinity);
@@ -1849,7 +1877,7 @@ function viewHome(c){
   const diffPts=c.diffs.slice(-12).map(d=>({x:shortDate(d.date),y:d.diff}));
   // rings
   const ringDef=[['Fairways','fir',you.fir,b.fir,false,v=>fmt(v,0)+'%'],['Greens','gir',you.gir,b.gir,false,v=>fmt(v,1)],['Par saves','ud',you.ud,b.ud,false,v=>fmt(v,0)+'%'],['Putts','putts',you.putts,b.putts,true,v=>fmt(v,1)]];
-  const rings=`<section class="sect" style="gap:10px"><div class="ringpanel"><div class="rings rings4">${ringDef.map(([l,k,v,bv,lb,f])=>`<div class="ring">${dualRing(v==null?0:RING_SCALE[k](v),bv==null?0:RING_SCALE[k](bv),v==null?'—':f(v),ringTone(k,v,bv,lb),l)}<span class="rl">${l}</span>${ringDelta(k,v,bv,lb,k==='gir'||k==='putts'?1:0,k==='fir'||k==='ud'?'%':'')}</div>`).join('')}</div>${ringKey(`Avg ${fmt(c.hc,1)} handicap`)}</div></section>`;
+  const rings=`<section class="sect" style="gap:10px"><div class="ringpanel"><div class="rings rings4">${ringDef.map(([l,k,v,bv,lb,f])=>`<div class="ring">${dualRing(v==null?0:RING_SCALE[k](v),bv==null?0:RING_SCALE[k](bv),v==null?'—':f(v),ringTone(k,v,bv,lb),l)}<span class="rl">${l}</span>${ringDelta(k,v,bv,lb,k==='gir'||k==='putts'?1:0,k==='fir'||k==='ud'?'%':'')}</div>`).join('')}</div>${ringKey(`Avg ${hcTxt(c.hc,1)} handicap`)}</div></section>`;
   // strokes vs level
   const sgMap={driving:'Driving',approach:'Approach',short:'Short game',putting:'Putting',scoring:'Blow-ups'};
   const sgs=['driving','approach','short','putting','scoring'].map(k=>{const it=lv.find(x=>x.key===k);return it?{k,l:sgMap[k],v:-it.gap}:null}).filter(Boolean);
@@ -1857,7 +1885,7 @@ function viewHome(c){
   const sgSorted=[...sgs].sort((x,y)=>x.v-y.v);
   const sg=`<section class="sect panel"><div class="sect-head"><h3>Strokes vs your level</h3><span class="small muted">Per round vs a typical ${esc(lvlName)}</span></div>
     <div class="sgnet"><span class="kicker">Net</span><b class="mono" style="color:${tot>=0?'var(--volt)':'var(--loss)'}">${tot>=0?'+':'−'}${fmt(Math.abs(tot),1)}</b><span class="small muted">strokes ${tot>=0?'gained':'lost'} per round, estimated</span></div>
-    <div class="sglist">${sgSorted.map(x=>`<div class="sgitem"><span>${x.l}</span><span class="mono" style="color:${Math.abs(x.v)<0.15?'var(--sage)':x.v>0?'var(--volt)':'var(--loss)'}">${Math.abs(x.v)<0.05?'0.0':(x.v>0?'▲ +':'▼ −')+fmt(Math.abs(x.v),1)}</span></div>`).join('')}</div>
+    <div class="sglist">${sgSorted.map(x=>`<div class="sgitem"><span>${x.l}</span><span class="mono" style="color:${Math.abs(x.v)<0.15?'var(--sage)':x.v>0?'var(--volt)':'var(--loss)'}">${Math.abs(x.v)<0.05?'0.0':(x.v>0?'+':'−')+fmt(Math.abs(x.v),1)}</span></div>`).join('')}</div>
     <p class="small muted">Plus means you gain strokes on golfers at your level. Minus means that part of your game costs you.</p></section>`;
   // caddie: how to read this page
   const tolR={Fairways:3,Greens:3,'Par saves':5,Putts:0.5};
@@ -1884,20 +1912,20 @@ function viewHome(c){
   // overview metrics with arrows
   const recent=per18(agg(c.rs.slice(0,3))),prior=per18(agg(c.rs.slice(3,10))),canTrend=c.rs.length>=4;
   const tiles=[
-    ['Score to par','toPar',you.toPar!=null?(you.toPar>=0?'+':'')+fmt(you.toPar,1):'—',rate(you.toPar,b.toPar,true,1.5),`typical +${fmt(b.toPar,1)}`,true,0.8],
+    ['Score to par','toPar',parTxt(you.toPar,1),rate(you.toPar,b.toPar,true,1.5),`typical ${parTxt(b.toPar,1)}`,true,0.8],
     ['Putts','putts',fmt(you.putts,1),rate(you.putts,b.putts,true,0.8),`typical ${fmt(b.putts,1)}`,true,0.5],
     ['Greens hit','gir',fmt(you.gir,1),rate(you.gir,b.gir,false,0.8),`typical ${fmt(b.gir,1)}`,false,0.5],
     ['Fairways','fir',you.fir!=null?fmt(you.fir,0)+'%':'—',rate(you.fir,b.fir,false,5),`typical ${fmt(b.fir,0)}%`,false,3],
     ['3-putts','tp',fmt(you.tp,1),rate(you.tp,b.tp,true,0.5),`typical ${fmt(b.tp,1)}`,true,0.3],
     ['Par saves','ud',you.ud!=null?fmt(you.ud,0)+'%':'—',rate(you.ud,b.ud,false,6),`typical ${fmt(b.ud,0)}% est.`,false,4]];
   const arrow=(k,lowerBetter,tol)=>{if(!canTrend)return '';const r=recent[k],p=prior[k];if(r==null||p==null)return '';const d=r-p;
-    if(Math.abs(d)<tol)return `<span class="trend flat" title="Steady over your last 3 rounds">▬</span>`;
-    const up=d>0,good=lowerBetter?!up:up;return `<span class="trend ${up?'up':'down'}-${good?'good':'bad'}" title="${good?'Improving':'Slipping'}: last 3 rounds vs the ${Math.min(7,c.rs.length-3)} before">${up?'▲':'▼'} ${fmt(Math.abs(d),k==='fir'||k==='ud'?0:1)}</span>`};
+    if(Math.abs(d)<tol)return `<span class="trend flat" title="Steady over your last 3 rounds">Last 3: steady</span>`;
+    const up=d>0,good=lowerBetter?!up:up;return `<span class="trend ${up?'up':'down'}-${good?'good':'bad'}" title="${good?'Improving':'Slipping'}: last 3 rounds vs the ${Math.min(7,c.rs.length-3)} before">Last 3: ${up?'▲':'▼'} ${fmt(Math.abs(d),k==='fir'||k==='ud'?0:1)}${k==='fir'||k==='ud'?'%':''}</span>`};
   if(S.statPop&&S.view==='home')S._popHtml=`<div class="pop-wrap" role="dialog"><div class="pop-back" data-act="statPop" data-k=""></div><div class="pop"><div class="pop-grab"></div><button class="pop-x" data-act="statPop" data-k="" aria-label="Close">✕</button>${statPopHtml(c,S.statPop)}</div></div>`;
   const pillTxt={good:'Better than typical',warn:'About typical',bad:'Costing you',neutral:'Not logged'};
   const overview=`<section class="sect panel"><div class="sect-head"><h3>Recent form</h3><span class="small muted">Last ${Math.min(10,c.rs.length)} round${Math.min(10,c.rs.length)===1?'':'s'} · per 18</span></div>
-    <div class="tiles ov">${tiles.map(t=>`<button class="tile r-${t[3]}" data-act="statPop" data-k="${t[1]}" aria-label="${t[0]}: last 10 rounds"><span class="lbl">${t[0]}</span><span class="row" style="gap:8px;align-items:baseline"><span class="val">${t[2]}</span>${arrow(t[1],t[5],t[6])}</span><span class="pill ${t[3]}">${pillTxt[t[3]]}</span><span class="small muted mono">${t[4]}</span><span class="tile-more">Last 10 ›</span></button>`).join('')}</div>
-    ${canTrend?`<p class="small muted">Arrows show which way each stat is heading: your last 3 rounds vs the ${Math.min(7,c.rs.length-3)} before. Green is helping your score, red is costing you.</p>`:''}</section>`;
+    <div class="tiles ov">${tiles.map(t=>`<button class="tile r-${t[3]}" data-act="statPop" data-k="${t[1]}" aria-label="${t[0]}: last 10 rounds"><span class="lbl">${t[0]}</span><span class="row" style="gap:8px;align-items:baseline"><span class="val">${t[2]}</span></span><span class="pill ${t[3]}">${pillTxt[t[3]]}</span><span class="small muted mono">${t[4]}</span>${arrow(t[1],t[5],t[6])}<span class="tile-more">Round by round ›</span></button>`).join('')}</div>
+    ${canTrend?`<p class="small muted">The label compares you to a typical golfer at your handicap. "Last 3" shows which way the number moved in your last 3 rounds vs the ${Math.min(7,c.rs.length-3)} before: ▲ up, ▼ down. Green means the move helps your score, red means it costs you.</p>`:''}</section>`;
   // scoring mix
   const A=agg(last10);const n18=A.hHoles?18/A.hHoles:0;
   const mixV=[['Birdie+',(A.bird+A.eag)*n18,'var(--volt)'],['Par',A.pars*n18,'var(--ivory)'],['Bogey',A.bog*n18,'var(--sage)'],['Double+',A.dbl*n18,'var(--loss)']];
@@ -1944,19 +1972,19 @@ function statPopHtml(c,k){const M=STAT_META[k];if(!M)return '';const [lbl,lower,
     return {r,n,raw,eq}});
   const vals=rows.filter(x=>x.eq!=null).map(x=>x.eq);if(!vals.length)return `<div class="sp"><span class="eyebrow">Last 10 rounds</span><h3>${lbl}</h3><p class="small muted">Not tracked in your recent rounds yet. Score rounds hole by hole to start tracking it.</p></div>`;
   const avg=vals.reduce((t,v)=>t+v,0)/vals.length;const bm=b[k];const lo=Math.min(...vals,bm??Infinity),hi=Math.max(...vals,bm??-Infinity);const pad=(hi-lo)*.5||Math.max(1,Math.abs(hi)*.12);const mn=k==='fir'||k==='ud'?Math.max(0,lo-pad):lo-pad,mx=hi+pad*.25;
-  const fmtv=(v)=>k==='toPar'?(v>0?'+':v<0?'−':'')+fmt(Math.abs(v),dp):fmt(v,dp)+u;
+  const fmtv=(v)=>k==='toPar'?parTxt(v,dp):fmt(v,dp)+u;
   const good=v=>bm==null?null:(lower?v<=bm:v>=bm);
   return `<div class="sp"><span class="eyebrow">Last ${vals.length} round${vals.length===1?'':'s'} · per 18</span><h3>${lbl}</h3>
-    <div class="sp-sum"><div><b>${fmtv(avg)}</b><span>Your average</span></div>${bm!=null?`<div><b>${fmtv(bm)}</b><span>Typical ${fmt(c.hc,1)} hcp</span></div>`:''}<div><b>${fmtv(lower?Math.min(...vals):Math.max(...vals))}</b><span>Best</span></div></div>
+    <div class="sp-sum"><div><b>${fmtv(avg)}</b><span>Your average</span></div>${bm!=null?`<div><b>${fmtv(bm)}</b><span>Typical ${hcTxt(c.hc,1)} hcp</span></div>`:''}<div><b>${fmtv(lower?Math.min(...vals):Math.max(...vals))}</b><span>Best</span></div></div>
     <div class="sp-list">${rows.map(x=>{if(x.eq==null)return `<div class="sp-row na"><span class="sp-d">${esc(shortDate(x.r.date))}</span><span class="sp-c">${esc(x.r.course||'Round')}</span><span class="sp-bar"></span><span class="sp-v muted">—</span></div>`;
       const w=Math.max(4,100*(x.eq-mn)/((mx-mn)||1));const g=good(x.eq);
       return `<div class="sp-row"><span class="sp-d">${esc(shortDate(x.r.date))}</span><span class="sp-c">${esc(x.r.course||'Round')}${x.n&&x.n<18?' <i>9</i>':''}</span><span class="sp-bar"><i class="${g==null?'':g?'g':'b'}" style="width:${w}%"></i>${bm!=null?`<em style="left:${100*(bm-mn)/((mx-mn)||1)}%"></em>`:''}</span><span class="sp-v">${fmtv(x.n&&x.n<18&&!u?x.raw:x.eq)}${x.n&&x.n<18&&!u&&x.raw!=null?`<small>${fmtv(x.eq)} for 18</small>`:''}</span></div>`}).join('')}</div>
-    ${bm!=null?`<p class="small muted" style="margin:0">Marker shows a typical ${fmt(c.hc,1)} handicap. Green beats it, red trails it.</p>`:''}</div>`}
+    ${bm!=null?`<p class="small muted" style="margin:0">Marker shows a typical ${hcTxt(c.hc,1)} handicap. Green beats it, red trails it.</p>`:''}</div>`}
 function drillPanel(c){
   const you=c.you,b=c.b,goal=S.profile.goal&&S.profile.goal.index!=null?Number(S.profile.goal.index):Math.max(0,c.hc-5);
   const g=bench(goal); const d0=S.drill||'scoring';
   const pane=d=>{
-  const row=(lbl,y,bb,gg,dp=1,suf='')=>{const lw=/^(To par|Score on|Doubles|Penalty|Putts|Three-putts)/.test(lbl);const tn=y==null||bb==null?'':(lw?y<=bb:y>=bb)?'var(--volt)':'var(--loss)';const tp=lbl.startsWith('To par'),pl=v=>tp&&v>0?'+':'';return `<tr><td>${lbl}</td><td class="num"><b${tn?` style="color:${tn}"`:''}>${y==null?'—':pl(y)+fmt(y,dp)+suf}</b></td><td>${bb==null?'—':pl(bb)+fmt(bb,dp)+suf}</td><td>${gg==null?'—':pl(gg)+fmt(gg,dp)+suf}</td></tr>`};
+  const row=(lbl,y,bb,gg,dp=1,suf='')=>{const lw=/^(To par|Score on|Doubles|Penalty|Putts|Three-putts)/.test(lbl);const rq=x=>Math.round(x*Math.pow(10,dp))/Math.pow(10,dp);const tn=y==null||bb==null||rq(y)===rq(bb)?'':(lw?rq(y)<rq(bb):rq(y)>rq(bb))?'var(--volt)':'var(--loss)';const tp=lbl.startsWith('To par'),pl=v=>tp&&v>0?'+':'';return `<tr><td>${lbl}</td><td class="num"><b${tn?` style="color:${tn}"`:''}>${y==null?'—':pl(y)+fmt(y,dp)+suf}</b></td><td>${bb==null?'—':pl(bb)+fmt(bb,dp)+suf}</td><td>${gg==null?'—':pl(gg)+fmt(gg,dp)+suf}</td></tr>`};
   let rows='',note='',tr='';
   if(d==='scoring'){rows=row('Score on a par 72',you.toPar!=null?you.toPar+72:null,b.toPar!=null?b.toPar+72:null,g.toPar!=null?g.toPar+72:null)+row('Doubles or worse',you.dbl,b.dbl,g.dbl)+row('Birdies or better',you.bird,null,null)+row('Par 3 average',you.p3,null,null,2)+row('Par 4 average',you.p4,null,null,2)+row('Par 5 average',you.p5,null,null,2);
     note='Blow-up holes are usually the fastest strokes to save. When in trouble, take your medicine and get back in play.';tr=spark(trend(c,'toPar'),true)}
@@ -1968,7 +1996,7 @@ function drillPanel(c){
     note='Pick one go-to chip (a low-lofted bump-and-run) and practice landing it on a spot. Benchmarks here are estimates.';tr=spark(trend(c,'ud'),false)}
   if(d==='putting'){rows=row('Putts per 18',you.putts,b.putts,g.putts)+row('Three-putts per 18',you.tp,b.tp,g.tp);
     note='Three-putts are the cleanest putting signal. Total putts drop on their own when you miss greens and chip close, so read it next to greens hit.';tr=spark(trend(c,'tp'),true)}
-    return `<div class="scroll-x"><table class="cmp"><thead><tr><th>Stat</th><th>You</th><th>Avg ${fmt(c.hc,1)} hcp</th><th>Avg ${fmt(goal,0)} hcp (goal)</th></tr></thead><tbody>${rows}</tbody></table></div>
+    return `<div class="scroll-x"><table class="cmp"><thead><tr><th>Stat</th><th>You</th><th>Avg ${hcTxt(c.hc,1)} hcp</th><th>Avg ${hcTxt(goal,0)} hcp (goal)</th></tr></thead><tbody>${rows}</tbody></table></div>
    <div><span class="eyebrow">Trend, last 10 rounds</span>${tr}</div><p class="small">${esc(note)}</p>`};
   return `<section class="sect panel" id="drill"><div class="sect-head"><h3>Deep dive</h3></div><div class="tabs" role="tablist">${DRILLS.map(x=>`<button role="tab" aria-selected="${d0===x[0]}" data-act="drill" data-drill="${x[0]}">${x[1]}</button>`).join('')}</div><div class="dcar" data-cur="${d0}">${DRILLS.map(x=>`<div class="dpane" data-pane="${x[0]}" role="tabpanel">${pane(x[0])}</div>`).join('')}</div></section>`;
 }
@@ -2117,7 +2145,7 @@ function viewLive(c){
   const last=d.cur>=d.holes.length-1;const hn=d.cur+(d.start||1);
   return `<section class="lc">
     <div class="lc-head"><div><span class="eyebrow">${esc(d.course)}</span><div class="lc-hn">Hole ${hn}</div></div>
-      <div class="lc-meta"><b>Par ${P}</b><span>${h.yds?h.yds+' yds':''}${h.yds&&h.si?' · ':''}${h.si?'Hcp '+h.si:''}</span><span class="lc-tot">${touched.length?`Thru ${touched.length}: <b>${tot}</b> ${tr===0?'E':(tr>0?'+':'')+tr}`:'First hole'}</span></div></div>
+      <div class="lc-meta"><b>Par ${P}</b><span>${h.yds?h.yds+' yds':''}${h.yds&&h.si?' · ':''}${h.si?'Hcp '+h.si:''}</span><span class="lc-tot">${touched.length?`Thru ${touched.length}: <b>${tot}</b> ${parTxt(tr,0)}`:'First hole'}</span></div></div>
 
     <div class="lc-sec"><span class="lc-lbl">Score</span>
       <div class="lc-scores">${opts.map(v=>{const r=v-P;return `<button class="lc-sc ${r<0?'under':r>=2?'over':''}" aria-pressed="${h.score===v}" data-act="hv" data-k="score" data-v="${v}"><b>${v}</b><span>${names[r]||('+'+r)}</span></button>`}).join('')}<button class="lc-sc more" data-act="hs" data-k="score" data-d="1" aria-label="Higher score"><b>+</b><span>More</span></button></div></div>
@@ -2342,7 +2370,7 @@ function viewReport(c){
   return `<section class="recap">
     <span class="kicker">${esc(longDate(r.date))} · ${esc(r.source==='photo'?'Scorecard photo':r.source==='text'?'Quick entry':'Live scorecard')}${r.estimated?' · Estimated':''}${r.example?' · Sample':''}${r.tees?' · '+esc(r.tees):''}</span>
     <h2>${esc(r.course)}</h2>
-    <div class="recap-score"><span class="rs-num">${a.score}</span><span class="rs-par ${tp<0?'u':tp===0?'e':''}">${tp===0?'E':(tp>0?'+':'')+tp}</span><span class="small muted">${a.holes} holes</span></div>
+    <div class="recap-score"><span class="rs-num">${a.score}</span><span class="rs-par ${tp<0?'u':tp===0?'e':''}">${parTxt(tp,0)}</span><span class="small muted">${a.holes} holes</span></div>
   </section>
   ${nb.length?`<section class="card unlock"><div class="row between"><span class="eyebrow" style="color:var(--volt)">🏆 Achievement${nb.length>1?'s':''} unlocked</span>${socialOk()&&nb.length>1?`<span class="small muted">Share any to The Clubhouse</span>`:''}</div>
     ${nb.map(b=>`<div class="unlock-row">${achCard({id:b.id,name:b.name,desc:b.desc,tier:b.tier})}${socialOk()?`<button class="btn small primary" data-act="shareBadge" data-id="${esc(b.id)}" data-tier="${b.tier}">Share to Clubhouse</button>`:''}</div>`).join('')}</section>`:''}
@@ -2471,7 +2499,7 @@ function monthTargets(c,aim){
   const G=bench(aim),W=bench(Math.min(36,aim+10)),Y=c.you;
   const g=S.profile.goal||{};const monthsLeft=g.by?Math.max(1,(new Date(g.by+'T12:00:00')-new Date())/(30.4*864e5)):3;
   const f=clamp(1/monthsLeft,.25,1);
-  const A=fmt(aim,0);const an=/^(8|11|18|8\d)$/.test(String(A))?'an':'a';const AA=(an==='an'?'An ':'A ')+A;
+  const A=hcTxt(aim,0);const an=/^(8|11|18|8\d)$/.test(String(A))?'an':'a';const AA=(an==='an'?'An ':'A ')+A;
   // [key, label, decimals, lower is better, unit, action verb, how-to]
   const defs=[
    ['putts','Putts',1,true,'',d=>`${d} fewer putts`,['Make everything inside 4 feet and lag long putts into a 3-foot circle.','Track your make rate from 6 to 10 feet and own your speed from 40 feet.'][aim<8?1:0]],
@@ -2481,7 +2509,7 @@ function monthTargets(c,aim){
    ['fir','Fairways',0,false,'%',d=>`${d}% more fairways`,['On tight holes, hit the club you can keep in play.','Own one shape off the tee and play it on every tight hole.'][aim<8?1:0]],
    ['dbl','Doubles or worse',1,true,'',d=>`${d} fewer doubles`,['From trouble, punch out to the fairway and play for bogey.','Stop short-siding yourself. Aim where your whole miss pattern is safe.'][aim<8?1:0]],
    ['toPar','Score',1,true,'',d=>`${d} strokes lower`,['This comes from the stats above. Fix those and the score follows.','Turn par 5s and short approaches into birdie chances.'][aim<8?1:0]]];
-  const sg=(k,v)=>k==='toPar'?(v>0?'+':v<0?'−':'')+fmt(Math.abs(v),1):null;
+  const sg=(k,v)=>k==='toPar'?parTxt(v,1):null;
   const rows=defs.map(([k,l,dp,lower,u,act,how])=>{const v=Y[k],gl=G[k];if(v==null||gl==null)return null;
     // compare on the numbers the golfer actually sees, so 4.4 vs 4.4 is never "behind"
     const step=dp?.1:1;const rd=x=>Math.round(x/step)*step;const rv=rd(v),rg=rd(gl);
@@ -2515,17 +2543,17 @@ function viewProgress(c){
     const left=Math.max(0,cur-tgt);const perMonth=days>0?left/(days/30.4):null;
     const reached=cur!=null&&cur<=tgt;
     hero=`${(S._popHtml=S.goalEdit?`<div class="pop-wrap" role="dialog" aria-label="Set a handicap goal"><div class="pop-back" data-act="toggleGoal"></div><div class="pop"><div class="pop-grab"></div><button class="pop-x" data-act="toggleGoal" aria-label="Close">✕</button>
-      <div class="gp"><span class="eyebrow">${reached?'Set your next goal':'New handicap goal'}</span><h3>${reached?'Nice work. What\'s next?':'Where do you want to get to?'}</h3><p class="small muted">Now ${fmt(cur,1)}. Pick a target index and a date, and your coach plan re-paces around it.</p>
+      <div class="gp"><span class="eyebrow">${reached?'Set your next goal':'New handicap goal'}</span><h3>${reached?'Nice work. What\'s next?':'Where do you want to get to?'}</h3><p class="small muted">Now ${hcTxt(cur,1)}. Pick a target index and a date, and your coach plan re-paces around it.</p>
       <div class="gp-quick">${[1,2,3,5].map(d=>{const v=Math.max(0,Math.round((cur-d)*10)/10);return `<button class="pill neutral" data-act="goalQuick" data-v="${v}">${fmt(v,1)} <span class="muted">−${d}</span></button>`}).join('')}</div>
       <div class="grid2">GOALFORM</div><button class="btn primary block" data-act="saveGoal">Save goal</button></div></div></div>`:'','')}<section class="hero coachhero"><div class="hero-left"><span class="kicker">Handicap goal</span>
       <div class="hero-num ch-num"><span style="color:var(--volt)">${fmt(tgt,1)}</span></div>
-      <div class="hero-sub">${reached?'<span class="pill good">Goal reached</span>':`<span class="pill neutral">${Math.round(pct)}% of the way</span>`}<span class="small muted">from ${fmt(start,1)} · now ${fmt(cur,1)} ${c.verified?'verified':'self-reported'}</span></div>
+      <div class="hero-sub">${reached?'<span class="pill good">Goal reached</span>':`<span class="pill neutral">${Math.round(pct)}% of the way</span>`}<span class="small muted">from ${hcTxt(start,1)} · now ${hcTxt(cur,1)} ${c.verified?'verified':'self-reported'}</span></div>
       <div class="hero-meta strip"><div><span class="kicker">To go</span><b>${fmt(left,1)}</b></div><div><span class="kicker">Days left</span><b>${days!=null?(days>=0?days:'Past'):'—'}</b></div><div><span class="kicker">Pace needed</span><b>${perMonth!=null?fmt(perMonth,1):'—'}<small> /mo</small></b></div></div></div>
-    <div class="hero-right"><div class="goalcard"><div class="gc-ring">${ringSvg(pct,cur!=null?fmt(cur,1):'—',pct>=50||reached)}<span>Now</span></div>
-      <div class="gc-txt"><span class="kicker" style="color:var(--volt)">Your target</span><b class="gc-path mono">${fmt(start,1)} <span class="muted">→</span> <span style="color:var(--volt)">${fmt(tgt,1)}</span></b><span class="small muted">${g.by?'By '+esc(new Date(g.by+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})):'No date set'}</span>
+    <div class="hero-right"><div class="goalcard"><div class="gc-ring">${ringSvg(pct,cur!=null?hcTxt(cur,1):'—',pct>=50||reached)}<span>Now</span></div>
+      <div class="gc-txt"><span class="kicker" style="color:var(--volt)">Your target</span><b class="gc-path mono">${hcTxt(start,1)} <span class="muted">→</span> <span style="color:var(--volt)">${fmt(tgt,1)}</span></b><span class="small muted">${g.by?'By '+esc(new Date(g.by+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})):'No date set'}</span>
       <button class="btn primary goalbtn" data-act="toggleGoal">${reached?'Set next goal':'Change goal'}</button></div></div></div></section>`;
     // Compare against the goal still ahead: the set goal, or a suggested next one once it's reached
-    const aim=reached?Math.max(0,Math.floor(cur)-2):tgt;const aimTxt=fmt(aim,0);const anA=/^(8|11|18|8\d)$/.test(aimTxt)?'an':'a';
+    const aim=reached?Math.max(0,Math.floor(cur)-2):tgt;const aimTxt=hcTxt(aim,0);const anA=/^(8|11|18|8\d)$/.test(aimTxt)?'an':'a';
     const gb=bench(aim),you=c.you;
     const rd=[['Fairways',you.fir,gb.fir,'%',0,false,'fir'],['Greens',you.gir,gb.gir,'',1,false,'gir'],['Par saves',you.ud,gb.ud,'%',0,false,'ud'],['Putts',you.putts,gb.putts,'',1,true,'putts']];
     rings=`<section class="sect panel"><div class="sect-head"><h3>You vs ${anA} ${aimTxt}</h3><span class="small muted">${reached?'Your suggested next goal':'Your goal level'} · per 18</span></div><div class="ringpanel"><div class="rings rings4">${rd.map(([l,v,t,u,dp,lower,k])=>`<div class="ring">${dualRing(v==null?0:RING_SCALE[k](v),t==null?0:RING_SCALE[k](t),v==null?'—':fmt(v,dp)+u,ringTone(k,v,t,lower),l)}<span class="rl">${l}</span>${ringDelta(k,v,t,lower,dp,u)}</div>`).join('')}</div>${ringKey(`Goal ${aimTxt} handicap`)}</div></section>`;
@@ -2548,7 +2576,7 @@ function viewProgress(c){
         <div class="row between" style="align-items:center;margin-top:auto"><span class="small muted">${esc(d.src)}</span><a class="link small" href="${yt(d.q)}" target="_blank" rel="noopener">Watch ↗</a></div></article>`).join('')}</div></section>`
       :`<section class="caddie"><p class="big">You're already playing <em>like a ${aimTxt}</em> in every logged category.</p><p class="small muted">Keep posting scores so your index catches up, or set a lower goal.</p></section>`;
   }
-  const goalForm=`<label class="f">Target index<input class="t" inputmode="decimal" id="gl_index" value="${esc(g.index??'')}" placeholder="e.g. 15"></label><label class="f">By<input class="t" type="date" min="${today()}" id="gl_by" value="${esc(g.by??'')}"></label>`;
+  const goalForm=`<label class="f">Target index<input class="t" inputmode="decimal" id="gl_index" value="${g.index!=null?esc(hcTxt(g.index,1).replace(/\.0$/,'')):''}" placeholder="e.g. 15"></label><label class="f">By<input class="t" type="date" min="${today()}" id="gl_by" value="${esc(g.by??'')}"></label>`;
   hero=hero.replace('GOALFORM',goalForm);if(S._popHtml)S._popHtml=S._popHtml.replace('GOALFORM',goalForm);
   return `${has?hero:`<section class="welcome"><span class="kicker">My coach</span><h2>Set a handicap goal. Get a plan to reach it.</h2><p class="muted">BluPrint Golf compares your stats to golfers at your target handicap and builds your action plan from the biggest gaps.</p>${cur==null?`<div class="notice">Add a self-reported index on your profile, or log 3 rounds first.</div>`:''}<div class="grid2">${goalForm}</div><button class="btn primary" data-act="saveGoal">Set my goal</button></section>`}
   ${has&&!c.rs.length?`<div class="notice">Log a few rounds to unlock your action plan.</div>`:''}
@@ -2596,9 +2624,9 @@ function viewProfile(c){
   const buildBlock=c.pb.locked?`<div class="buildcard"><div><b>BluPrint locked</b><span class="small muted">Log 3 rounds to reveal your BluPrint. It's based on what you do better than golfers at your handicap.</span></div></div>`:c.pb.builds.length?`<div class="builds">${c.pb.builds.map((bd,i)=>`<div class="buildcard ${i===0?'primary':''}">${hexBuild(bd,40)}<div><b>${esc(bd.name)}</b><span class="small muted">${esc(bd.desc)}</span></div></div>`).join('')}</div>`:`<div class="buildcard">${hexBuild({code:'AR'},40)}<div><b>All-Rounder</b><span class="small muted">No standout strength yet. Keep logging, and your BluPrint will sharpen.</span></div></div>`;
   const vOK=c.ver.index!=null,sOK=c.self!=null,useSelf=!c.verified&&sOK;
   const hcPick=`<div class="hcpick" role="group" aria-label="Handicap to show">
-      <button data-act="setHcPref" data-v="verified" aria-pressed="${!useSelf&&vOK}" ${vOK?'':'disabled'}><span class="lbl">Verified</span><span class="num">${vOK?VCHECK+' '+fmt(c.ver.index,1):'—'}</span><span class="small muted">${vOK?`From ${c.ver.count} scores`:`${c.ver.needed} more scored round${c.ver.needed===1?'':'s'}`}</span></button>
-      <button data-act="setHcPref" data-v="self" aria-pressed="${useSelf}" ${sOK?'':''}><span class="lbl">Self-reported</span><span class="num">${sOK?fmt(c.self,1):'—'}</span><span class="small muted">${S.hcEdit?'':`<span class="link" data-act="hcEdit">${sOK?'Edit':'Add yours'}</span>`}</span></button></div>
-    ${S.hcEdit?`<div class="row" style="width:100%;flex-wrap:nowrap"><input class="t" inputmode="decimal" id="pf_index" data-field="pf.index" value="${esc(S.profile.index??'')}" placeholder="e.g. 18.1 from GHIN" style="flex:1"><button class="btn primary" data-act="saveIndex">Save</button></div>`:''}
+      <button data-act="setHcPref" data-v="verified" aria-pressed="${!useSelf&&vOK}" ${vOK?'':'disabled'}><span class="lbl">Verified</span><span class="num">${vOK?VCHECK+' '+hcTxt(c.ver.index,1):'—'}</span><span class="small muted">${vOK?`From ${c.ver.count} scores`:`${c.ver.needed} more scored round${c.ver.needed===1?'':'s'}`}</span></button>
+      <button data-act="setHcPref" data-v="self" aria-pressed="${useSelf}" ${sOK?'':''}><span class="lbl">Self-reported</span><span class="num">${sOK?hcTxt(c.self,1):'—'}</span><span class="small muted">${S.hcEdit?'':`<span class="link" data-act="hcEdit">${sOK?'Edit':'Add yours'}</span>`}</span></button></div>
+    ${S.hcEdit?`<div class="row" style="width:100%;flex-wrap:nowrap"><input class="t" inputmode="decimal" id="pf_index" data-field="pf.index" value="${S.profile.index!=null&&S.profile.index!==''?esc(hcTxt(S.profile.index,1)):''}" placeholder="e.g. 18.1 from GHIN" style="flex:1"><button class="btn primary" data-act="saveIndex">Save</button></div>`:''}
     <p class="small muted" style="max-width:34ch">Verified uses World Handicap System math on rounds you log hole by hole. It isn't an official GHIN index.</p>`;
   return `<section class="card ptile">
     <div class="pcenter">${S.profile.username&&S.profileEdit?`<label for="pf_photo" class="avedit" title="${S.profile.avatar?'Change photo':'Add profile photo'}">${av(96)}<span class="cam">${S.profile.avatar?'Edit':'+ Photo'}</span></label><input type="file" id="pf_photo" data-field="pf.photo" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0">`:S.profileEdit?av(96):''}
@@ -2738,7 +2766,7 @@ async function drawScorecard(r){
   x.fillStyle=SG;x.font='600 26px "Inter", sans-serif';x.textAlign='right';x.fillText(`${longDate(r.date)}${r.tees?' · '+r.tees+' tees':''}${r.rating?` · ${r.rating}/${r.slope}`:''}`,W-P,84);x.textAlign='left';
   x.fillStyle=IV;x.font='700 64px "Sora", sans-serif';wrap(x,r.course||'Round',P,180,W-2*P-300,68);
   x.font='600 220px "Barlow Condensed", "JetBrains Mono", sans-serif';x.textAlign='right';x.fillText(String(a.score),W-P,330);
-  x.font='600 64px "Barlow Condensed", "JetBrains Mono", sans-serif';x.fillStyle=tp<0?G:tp===0?IV:RED;x.fillText(tp===0?'E':(tp>0?'+':'')+tp,W-P,410);x.textAlign='left';
+  x.font='600 64px "Barlow Condensed", "JetBrains Mono", sans-serif';x.fillStyle=tp<0?G:tp===0?IV:RED;x.fillText(parTxt(tp,0),W-P,410);x.textAlign='left';
   x.fillStyle=SG;x.font='600 28px "Inter", sans-serif';x.fillText(`@${S.profile.username||'golfer'} · ${a.holes} holes`,P,300);
   const fwMark=h=>h.par===3?'':h.fw==='hit'?'✓':h.fw==='L'?'←':h.fw==='R'?'→':h.fw==='S'?'S':h.fw==='Lg'?'L':'–';
   let y=470;
@@ -2919,7 +2947,7 @@ async function drawBluprintCard(d){
 }
 
 async function drawBluprint(builds,label){const c=ctx();const bs=(builds||[]).slice(0,3);
-  return drawBluprintCard({builds:bs,label:label||'MY BLUPRINT',handle:S.profile.username||'',handicap:c.index!=null?fmt(c.index,1):null,verified:!!c.verified,
+  return drawBluprintCard({builds:bs,label:label||'MY BLUPRINT',handle:S.profile.username||'',handicap:c.index!=null?hcTxt(c.index,1):null,verified:!!c.verified,
     date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}).toUpperCase(),statement:bs[0]?BUILD_CORE[bs[0].code]||'':''})}
 // Share the BluPrint story card straight to the phone's share sheet (Instagram Stories, Messages…)
 async function shareStory(builds){
@@ -2954,7 +2982,7 @@ function miniCard(card){if(!card||!card.h||!card.h.length)return '';const st=car
 
 async function shareRound(){
   const r=S.rounds.find(x=>x.id===S.report)||S.reportRound;const a=agg([r]);const tp=a.score-a.par;const nb=S.newBadges||[];
-  const blob=await drawCard({eyebrow:`${longDate(r.date)} · ${a.holes} holes`,title:r.course,big:a.score,bigNote:`${tp>0?'+':''}${tp} TO PAR`,
+  const blob=await drawCard({eyebrow:`${longDate(r.date)} · ${a.holes} holes`,title:r.course,big:a.score,bigNote:tp===0?'EVEN PAR':`${parTxt(tp,0)} TO PAR`,
     stats:[['Putts',a.puttHoles?a.putts:'—'],['Greens',a.girHoles?a.gir:'—'],['Fairways',a.firOpp?`${a.fir}/${a.firOpp}`:'—'],['3-putts',a.tpHoles?a.tp:'—'],['Birdies',a.bird+a.eag],['Doubles+',a.dbl]],
     footer:nb.length?`UNLOCKED: ${nb.map(b=>b.name.toUpperCase()).join(' · ')}`:''});
   saveBlob(blob,`round-${r.date}.png`);
@@ -2962,12 +2990,12 @@ async function shareRound(){
 async function shareMonth(){
   const c=ctx();const m=monthReview(c);
   const blob=await drawCard({eyebrow:'Monthly review',title:m.label,big:m.n,bigNote:m.n===1?'ROUND LOGGED':'ROUNDS LOGGED',
-    stats:[['Best',m.best],['To par / 18',(m.toPar>=0?'+':'')+fmt(m.toPar,1)],['Greens / 18',fmt(m.pm.gir,1)],['Putts / 18',fmt(m.pm.putts,1)],['3-putts / 18',fmt(m.pm.tp,1)],['Doubles / 18',fmt(m.pm.dbl,1)]],footer:m.line.slice(0,60).toUpperCase()});
+    stats:[['Best',m.best],['To par / 18',parTxt(m.toPar,1)],['Greens / 18',fmt(m.pm.gir,1)],['Putts / 18',fmt(m.pm.putts,1)],['3-putts / 18',fmt(m.pm.tp,1)],['Doubles / 18',fmt(m.pm.dbl,1)]],footer:m.line.slice(0,60).toUpperCase()});
   saveBlob(blob,`month-${m.label.replace(/\s+/g,'-').toLowerCase()}.png`);
 }
 
 // ---------- AI coach ----------
-function statsKey(c){return [c.rs.length,c.rs[0]&&c.rs[0].id,fmt(c.hc,1)].join('|')}
+function statsKey(c){return [c.rs.length,c.rs[0]&&c.rs[0].id,hcTxt(c.hc,1)].join('|')}
 async function askStatsSummary(){
   const c=ctx();if(!sampleFn||!c.rs.length)return;const key=statsKey(c);const you=c.you,b=c.b;
   const recent=per18(agg(c.rs.slice(0,3))),prior=per18(agg(c.rs.slice(3,10)));
@@ -2976,7 +3004,7 @@ async function askStatsSummary(){
   const scores=c.rs.slice(0,10).map(r=>{const a=agg([r]);return a.holes===18?a.score:null}).filter(x=>x!=null).join(', ');
   const lev=leverage(you,b).map(x=>`${x.area}: ${x.gap>0?'losing':'gaining'} about ${fmt(Math.abs(x.gap),1)} strokes vs level (${x.detail})`).join('\n');
   const prompt=`You are the golfer's caddie in a stats app. Summarize what their stats page says, in plain conversational language, so they understand it at a glance.
-Handicap: ${fmt(c.hc,1)} ${c.verified?'(verified from logged rounds)':'(self-reported)'}. ${c.rs.length} rounds logged.
+Handicap: ${hcTxt(c.hc,1)} ${c.verified?'(verified from logged rounds)':'(self-reported)'}. ${c.rs.length} rounds logged.
 Per-18 averages over the last ${Math.min(10,c.rs.length)} rounds:
 ${rows}
 Recent 18-hole scores, newest first: ${scores||'none'}
@@ -2988,12 +3016,12 @@ Write 4 short labeled lines, each starting with the label and a colon: "Big pict
   catch(e){S.sum=''}
   S.sumBusy=false;render();
 }
-function coachKey(c){const g=S.profile.goal&&S.profile.goal.index;return [c.rs.length,g??'',fmt(c.hc,1)].join('|')}
+function coachKey(c){const g=S.profile.goal&&S.profile.goal.index;return [c.rs.length,g??'',hcTxt(c.hc,1)].join('|')}
 async function askCoach(){
   const c=ctx();const you=c.you,b=c.b;const goal=S.profile.goal&&S.profile.goal.index!=null?Number(S.profile.goal.index):null;const gb=goal!=null?bench(goal):null;
   const lines=[['Score to par',you.toPar,b.toPar,gb&&gb.toPar],['Putts',you.putts,b.putts,gb&&gb.putts],['Greens in regulation',you.gir,b.gir,gb&&gb.gir],['Fairways %',you.fir,b.fir,gb&&gb.fir],['Three-putts',you.tp,b.tp,gb&&gb.tp],['Par saves after missed green %',you.ud,b.ud,gb&&gb.ud],['Doubles or worse',you.dbl,b.dbl,gb&&gb.dbl],['Penalties',you.pen,null,null]]
     .map(l=>`${l[0]}: player ${fmt(l[1],1)}, typical for level ${fmt(l[2],1)}${gb?`, goal level ${fmt(l[3],1)}`:''}`).join('\n');
-  const m=you.miss;const prompt=`You are a golf coach writing for a stats app. Player handicap: ${fmt(c.hc,1)}${c.verified?' (verified from logged rounds)':' (self-reported)'}.${goal!=null?` Goal: ${goal} index${S.profile.goal.by?` by ${S.profile.goal.by}`:''}.`:''}
+  const m=you.miss;const prompt=`You are a golf coach writing for a stats app. Player handicap: ${hcTxt(c.hc,1)}${c.verified?' (verified from logged rounds)':' (self-reported)'}.${goal!=null?` Goal: ${goal} index${S.profile.goal.by?` by ${S.profile.goal.by}`:''}.`:''}
 Per-18 averages over their last ${Math.min(10,c.rs.length)} rounds (${you.holes} holes logged):
 ${lines}
 Fairway misses: left ${m.L}, right ${m.R}, short ${m.S}, long ${m.Lg}.
@@ -3061,7 +3089,7 @@ async function createPost(p){
   await db.collection('posts/'+me+'/items').doc(uid('p')).set(clean({...p,mentions,uid:me,username:S.profile.username,createdAt:nowIso()}));
 }
 function roundPost(r,newBadges){
-  const a=agg([r]);if(!a.score)return null;const tp=a.score-a.par;const tps=tp===0?'E':(tp>0?'+':'')+tp;
+  const a=agg([r]);if(!a.score)return null;const tp=a.score-a.par;const tps=parTxt(tp,0);
   const br=newBadges.find(b=>b.id==='barrier');
   let text;
   if(br&&a.holes===18) text=`broke ${BADGES.find(b=>b.id==='barrier').tiers[br.tier-1]} at ${r.course}`;
@@ -3242,9 +3270,9 @@ const BUILD_COACH={BB:'Your length is a weapon. The fastest strokes for you come
 function buildCoach(c){if(!c.pb||c.pb.locked||!c.pb.builds.length)return '';const bs=c.pb.builds.slice(0,3);const id=buildIdentity(bs);const p=bs[0];
   return `<section class="sect panel bcoach"><div class="sect-head"><h3>Coaching for ${/^[AEIOU]/i.test(id.name)?'an':'a'} ${esc(bs.length>1?id.name:p.name)}</h3></div>
     <div class="bc-row"><div class="bc-ic">${bs.map((x,i)=>hexBuild(x,i?34:44)).join('')}</div><p>${esc(BUILD_COACH[p.code]||'')}</p></div></section>`}
-function idHc(v,ver,act){return `<${act?'button':'div'} class="idc-hc${act?' tap':''}" ${act?`data-act="pexp" data-k="hc" aria-expanded="${S.pexp==='hc'}"`:''}><b>${v!=null?(ver?VCHECK:'')+fmt(v,1):'—'}</b><span>${v==null?'Handicap':ver?'Verified':'Self-reported'}${act?' <i>▾</i>':''}</span></${act?'button':'div'}>`}
+function idHc(v,ver,act){return `<${act?'button':'div'} class="idc-hc${act?' tap':''}" ${act?`data-act="pexp" data-k="hc" aria-expanded="${S.pexp==='hc'}"`:''}><b>${v!=null?(ver?VCHECK:'')+hcTxt(v,1):'—'}</b><span>${v==null?'Handicap':ver?'Verified':'Self-rep.'}${act?' <i>▾</i>':''}</span></${act?'button':'div'}>`}
 const STC=['#9AA4A1','#C77A45','#C9D3D8','#E8C15A','#A9CBEA','#2FD073'];
-function idStatus(i,lvl,act){const c=STC[i]||STC[0];return `<${act?'button':'div'} class="idc-st${act?' tap':''}" ${act?`data-act="pexp" data-k="st" aria-expanded="${S.pexp==='st'}"`:''} style="--stc:${c}"><span class="idc-ring">${lvl}</span><span class="idc-stt"><b>${esc(STATUS[i][0])}</b><span>Golfer status${act?' <i>▾</i>':''}</span></span></${act?'button':'div'}>`}
+function idStatus(i,lvl,act){const c=STC[i]||STC[0];return `<${act?'button':'div'} class="idc-st${act?' tap':''}" ${act?`data-act="pexp" data-k="st" aria-expanded="${S.pexp==='st'}"`:''} style="--stc:${c}"><span class="idc-ring">${lvl}</span><span class="idc-stt"><b>${esc(STATUS[i][0])}</b><span>Status${act?' <i>▾</i>':''}</span></span></${act?'button':'div'}>`}
 function idCard(builds,opts){opts=opts||{};const id=buildIdentity(builds||[]);
   const near=(opts.near||[]).length?`<div class="idc-near"><span class="eyebrow">Close to unlocking</span><div class="idc-nrow">${opts.near.map(n=>`<div class="idc-n"><div class="idc-sil" style="--p:${n.pct}">${hexBuild({code:'?'},46)}</div><div><b>${n.pct}% there</b><span>${esc(BUILD_HINTS[n.code]||'Keep playing…')}</span></div></div>`).join('')}</div></div>`:'';
   if(opts.locked||!id.builds.length)return `<div class="idcard locked">${opts.head||''}<div class="idc-badges">${hexBuild({code:'?'},96)}</div><span class="kicker">My BluPrint</span><b class="idc-name">${opts.locked?'Still drafting':'No BluPrint yet'}</b><p class="idc-story">${opts.locked?'Log 3 rounds and your BluPrint is revealed, based on what you do better than golfers at your handicap.':'This golfer is still building their game.'}</p>${near}</div>`;
@@ -3297,7 +3325,7 @@ function postCard(p){
       ${mediaHtml(p,'post-img',p.username||'')}
       ${isRound?`${(()=>{const hl=roundHighlights(p);const bd=(p.badges||[]);return hl.length||bd.length?`<div class="rhlrow">${hl.map(x=>`<span class="rhl"><i>${x[0]}</i>${esc(x[1])}</span>`).join('')}${bd.slice(0,2).map(x=>`<span class="rhl ach"><i>🏅</i>${esc(x)}</span>`).join('')}${bd.length>2?`<span class="rhl more">+${bd.length-2} more</span>`:''}</div>`:''})()}`:''}
       ${!isRound&&p.card?miniCard(p.card):''}
-      ${!isRound&&p.score?`<div class="row" style="gap:6px"><span class="pill neutral">${p.score} · ${p.toPar===0?'E':(p.toPar>0?'+':'')+p.toPar}</span>${p.putts!=null?`<span class="pill neutral">${p.putts} putts</span>`:''}${p.gir!=null?`<span class="pill neutral">${p.gir} greens</span>`:''}${p.date?`<span class="small muted">${esc(p.date)}</span>`:''}</div>`:''}
+      ${!isRound&&p.score?`<div class="row" style="gap:6px"><span class="pill neutral">${p.score} · ${parTxt(p.toPar,0)}</span>${p.putts!=null?`<span class="pill neutral">${p.putts} putts</span>`:''}${p.gir!=null?`<span class="pill neutral">${p.gir} greens</span>`:''}${p.date?`<span class="small muted">${esc(p.date)}</span>`:''}</div>`:''}
       ${p.type==='badge'&&p.badge?achCard(p.badge):''}${p.caption?`<p class="post-text">${linkify(p.caption)}</p>`:''}
       ${!isRound&&(p.badges||[]).length?`<div class="row" style="gap:6px">${p.badges.map(b=>`<span class="pill good">${esc(b)}</span>`).join('')}</div>`:''}
     </div>
@@ -3455,7 +3483,7 @@ function viewClubhouse(c){
     <div class="row" style="gap:8px;flex-wrap:nowrap"><button class="icbtn ${srch?'on':''}" data-act="chSearch" aria-label="Find friends" title="Find friends" aria-pressed="${srch}">${IC.search}</button><button class="icbtn" data-act="invMenu" aria-label="Invite friends to your group" title="Invite friends to your group">${IC.addUser}</button><button class="icbtn" data-act="nav" data-view="inbox" aria-label="Messages${unread?`, ${unread} unread`:''}">${IC.mail}${unread?`<span class="icdot">${unread>9?'9+':unread}</span>`:''}</button></div></div>
     <div class="chstrip" role="list">${chStats.map(([l,v])=>`<div role="listitem"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
     ${srch?`<div class="search chsearch"><input class="t" id="ch_q" data-field="ch.q" value="${esc(SOC.q)}" placeholder="Find friends by name, username or club" autocomplete="off" autocapitalize="off" aria-label="Find friends"><button class="plain link small" data-act="nav" data-view="findfriends">Browse all</button></div>
-    ${q?`<div class="results">${users.map(p=>`<button class="list-row" data-act="openUid" data-uid="${esc(p.uid)}"><span class="row" style="gap:10px">${avatar(p.uid,32)}<b>@${esc(p.username)}</b>${buildTag((p.builds||[])[0],true)}</span><span class="small muted row" style="gap:4px">${p.index!=null?(p.verified?VCHECK:'')+fmt(p.index,1):''}</span></button>`).join('')}
+    ${q?`<div class="results">${users.map(p=>`<button class="list-row" data-act="openUid" data-uid="${esc(p.uid)}"><span class="row" style="gap:10px">${avatar(p.uid,32)}<b>@${esc(p.username)}</b>${buildTag((p.builds||[])[0],true)}</span><span class="small muted row" style="gap:4px">${p.index!=null?(p.verified?VCHECK:'')+hcTxt(p.index,1):''}</span></button>`).join('')}
      ${clubs.map(x=>`<button class="list-row" data-act="cpPick" data-key="search" data-id="${esc(x.id)}"><span class="row" style="gap:8px">${IC.flag}<span><b>${clubName(x)}</b><br><span class="small muted">${esc(clubPlace(x)||'Self-entered club')}</span></span></span><span class="small muted">Club feed</span></button>`).join('')}
      ${!users.length&&!clubs.length?`<p class="small muted" style="padding:8px 0">No golfers or clubs match "${esc(SOC.q)}".</p>`:''}</div>`:''}`:''}</section>
   <div class="modes modes3" role="tablist"><button role="tab" aria-selected="${SOC.mode!=='feed'&&SOC.mode!=='recap'}" data-act="chmode" data-mode="forum">The Forum</button><button role="tab" aria-selected="${SOC.mode==='feed'}" data-act="chmode" data-mode="feed">The Feed</button><button role="tab" aria-selected="${SOC.mode==='recap'}" data-act="chmode" data-mode="recap">Group recap</button></div>
@@ -3495,7 +3523,7 @@ function viewPlayer(c){
   return `<section class="card ptile pv">
     <div class="pcenter">${idCard(builds,{other:u!==me,head:`<div class="idc-head"><div class="idc-who">${avatar(u,56)}<div><h2 class="pname">@${esc(p.username)}</h2>${name?`<span class="small muted">${esc(name)}</span>`:''}</div></div><div class="idc-chips">${idHc(cur,!!p.verified)}${p.status!=null&&STATUS[p.status]?idStatus(p.status,(p.badges||[]).reduce((t,x)=>t+(x.tier||0),0)):''}</div></div>`})}
       ${home?`<span class="small muted">${esc(home.name)}${p.state?', '+esc(p.state):''}</span>`:''}
-      <div class="pvstats"><div><b class="row" style="gap:4px;justify-content:center">${cur!=null&&p.verified?VCHECK:''}${cur!=null?fmt(cur,1):'—'}</b><span>${cur==null?'Handicap':p.verified?'Verified':'Self-reported'}</span></div><div><b>${p.rounds||0}</b><span>Rounds</span></div><div><b>${g&&g.index!=null?fmt(g.index,1):'—'}</b><span>${pct!=null?`Goal · ${Math.round(pct)}%`:'Goal'}</span></div></div>
+      <div class="pvstats"><div><b class="row" style="gap:4px;justify-content:center">${cur!=null&&p.verified?VCHECK:''}${cur!=null?hcTxt(cur,1):'—'}</b><span>${cur==null?'Handicap':p.verified?'Verified':'Self-reported'}</span></div><div><b>${p.rounds||0}</b><span>Rounds</span></div><div><b>${g&&g.index!=null?hcTxt(g.index,1):'—'}</b><span>${pct!=null?`Goal · ${Math.round(pct)}%`:'Goal'}</span></div></div>
       ${isMe?`<button class="btn wide" data-act="nav" data-view="profile">Edit my profile</button>`:`<div class="pvact">
         ${fs==='friends'?`<button class="btn" disabled>✓ Friends</button>`:fs==='sent'?`<button class="btn" disabled>Requested</button>`:fs==='incoming'?`<button class="btn primary" data-act="acceptReq" data-uid="${esc(u)}">Accept</button>`:`<button class="btn primary" data-act="friendReq" data-uid="${esc(u)}">Add friend</button>`}
         ${(()=>{const g=curGroup();if(!g)return `<button class="btn" data-act="grpNew">Start a group</button>`;const st=groupInvState(u,g.id);return st==='member'?`<button class="btn" disabled>In ${esc(g.name)}</button>`:st==='pending'?`<button class="btn" disabled>Group invite sent</button>`:`<button class="btn" data-act="grpSend" data-uid="${esc(u)}">Invite to group</button>`})()}
@@ -3524,7 +3552,7 @@ function playerCard(u){
   return `<div class="sheet-back" data-act="closeCard"></div><section class="sheet" role="dialog" aria-label="Player card for @${esc(p.username)}">
     <div class="sheet-grab"></div>
     <div class="pcard-top">${avatar(u,72)}<div style="min-width:0"><h3 class="row" style="gap:8px">@${esc(p.username)}${bd?hexBuild(bd,26):''}</h3>${bd?`<span class="small" style="color:var(--volt)">${esc(bd.name)}</span>`:`<span class="small muted">Not in your BluPrint yet</span>`}</div>
-      <div class="pcard-hcp"><span class="kicker">Handicap</span><b class="mono row" style="gap:6px;justify-content:flex-end">${cur!=null&&p.verified?VCHECK:''}${cur!=null?fmt(cur,1):'—'}</b><span class="small muted">${cur==null?'':p.verified?'Verified':'Self-reported'}</span></div></div>
+      <div class="pcard-hcp"><span class="kicker">Handicap</span><b class="mono row" style="gap:6px;justify-content:flex-end">${cur!=null&&p.verified?VCHECK:''}${cur!=null?hcTxt(cur,1):'—'}</b><span class="small muted">${cur==null?'':p.verified?'Verified':'Self-reported'}</span></div></div>
     <div class="pcard-facts"><div><span class="kicker">Home club</span><b>${home?esc(home.name)+(home.verified?' ✓':''):'—'}</b></div><div><span class="kicker">State</span><b>${esc(p.state||'—')}</b></div></div>
     <div><span class="kicker">Top achievements</span>${topBadges(p).length?`<div class="pcard-badges">${topBadges(p).map(x=>`<div class="badge t${x.tier}"><div class="medal m2">${medalSvg(x.id,x.tier,60)}</div><b>${esc(x.name)}</b><span>${TIERS[x.tier-1]}</span></div>`).join('')}</div>`:`<p class="small muted" style="margin-top:6px">No achievements yet.</p>`}</div>
     <div class="row">${fs==='friends'?`<span class="pill good">Friends</span>`:fs==='sent'?`<span class="pill neutral">Request sent</span>`:fs==='incoming'?`<button class="btn primary" data-act="acceptReq" data-uid="${esc(u)}">Accept friend request</button>`:`<button class="btn primary" data-act="friendReq" data-uid="${esc(u)}">Add friend</button>`}
@@ -3552,7 +3580,7 @@ function viewFindFriends(c){
     ${mine!=null?`<button class="pill ${sim?'good':'neutral'}" data-act="ffSim">Similar handicap (±5)</button>`:''}</div>
   <div style="border-top:1px solid var(--line)">${list.length?list.slice(0,60).map(p=>{const h=hc(p);const d=mine!=null&&h!=null?h-mine:null;const home=(p.clubs||[]).map(asClub)[0];
     return `<button class="list-row" data-act="openUid" data-uid="${esc(p.uid)}"><span class="row" style="gap:12px;flex-wrap:nowrap;min-width:0">${avatar(p.uid,44)}<span style="min-width:0"><b>@${esc(p.username)}</b> ${buildTag((p.builds||[])[0],true)}<br><span class="small muted">${[fullName(p)?`<span style="color:var(--ivory)">${esc(fullName(p))}</span>`:'',home?esc(home.name):'',p.state?esc(p.state):''].filter(Boolean).join(' · ')}</span></span></span>
-      <span class="ffh"><b class="mono row" style="gap:5px;justify-content:flex-end">${h!=null&&p.verified?VCHECK:''}${h!=null?fmt(h,1):'—'}</b>${d!=null?`<span class="small ${Math.abs(d)<=3?'':'muted'}" style="${Math.abs(d)<=3?'color:var(--volt)':''}">${Math.abs(d)<0.05?'same as you':(d>0?'+':'−')+fmt(Math.abs(d),1)+' vs you'}</span>`:''}</span></button>`}).join('')
+      <span class="ffh"><b class="mono row" style="gap:5px;justify-content:flex-end">${h!=null&&p.verified?VCHECK:''}${h!=null?hcTxt(h,1):'—'}</b>${d!=null?`<span class="small ${Math.abs(d)<=3?'':'muted'}" style="${Math.abs(d)<=3?'color:var(--volt)':''}">${Math.abs(d)<0.05?'same as you':(d>0?'+':'−')+fmt(Math.abs(d),1)+' vs you'}</span>`:''}</span></button>`}).join('')
     :`<p class="muted" style="padding:16px 0">${fq?`No golfers match "${esc(S.ffQ)}". They may not have joined yet. Invite them.`:club?`No BluPrint Golf golfers have ${esc(club.name)} as their club yet. Invite your group, and add it as your home club so others can find you.`:'No golfers yet.'}</p>`}</div>
   <div class="row"><button class="btn small ghost" data-act="ffAll">${club?'Show all golfers':''}</button></div>`;
 }
@@ -3680,7 +3708,7 @@ function viewOnboard(c){
     <label class="f">About me<textarea class="t" id="ob_about" maxlength="280" placeholder="Weekend golfer, chasing a 15. Always up for a Saturday loop." style="min-height:64px">${esc(S.profile.about||'')}</textarea></label>${nav()}`;
   if(step===2) body=`<span class="kicker">Step 2 of 4 · Handicap and goal</span><h2>Where's your game now?</h2><p class="muted">Use your GHIN index if you have one. Your verified index builds from the rounds you log here.</p>
     <label class="f">Current handicap index<input class="t" inputmode="decimal" id="ob_index" value="${esc(S.profile.index??'')}" placeholder="e.g. 18.1 (or leave blank)"></label>
-    <div class="grid2"><label class="f">Goal index<input class="t" inputmode="decimal" id="ob_goal" value="${esc((S.profile.goal||{}).index??'')}" placeholder="e.g. 15"></label><label class="f">By<input class="t" type="date" min="${today()}" id="ob_by" value="${esc((S.profile.goal||{}).by??'')}"></label></div>
+    <div class="grid2"><label class="f">Goal index<input class="t" inputmode="decimal" id="ob_goal" value="${(S.profile.goal||{}).index!=null?esc(hcTxt(S.profile.goal.index,1).replace(/\.0$/,'')):''}" placeholder="e.g. 15"></label><label class="f">By<input class="t" type="date" min="${today()}" id="ob_by" value="${esc((S.profile.goal||{}).by??'')}"></label></div>
     <p class="small muted">Your goal sets the level your stats and work orders compare you to.</p>${nav()}`;
   if(step===3){const y=m.yardages||{};const chip=(arr,v,k)=>`<button class="pill ${arr.includes(v)?'good':'neutral'}" data-act="onbChip" data-k="${k}" data-v="${esc(v)}" aria-pressed="${arr.includes(v)}">${esc(v)}</button>`;
     body=`<span class="kicker">Step 3 of 4 · Brief your caddie</span><h2>Tell your caddie your game</h2><p class="muted">Your caddie uses this for club picks, advice and your plan.</p>
@@ -3697,8 +3725,8 @@ function viewOnboard(c){
 function onbSaveStep(step){
   const v=id=>{const e=document.getElementById(id);return e?e.value.trim():''};const p={};
   if(step===1){p.first=v('ob_first').slice(0,30);p.last=v('ob_last').slice(0,30);p.state=v('ob_state');p.ride=v('ob_ride');p.about=v('ob_about')}
-  if(step===2){const ix=v('ob_index');if(ix!==''){const n=Number(ix);if(isNaN(n)||n<-10||n>54){toast('Enter an index between +10 and 54.');return false}p.index=n}
-    const gl=v('ob_goal');if(gl!==''){const g=Number(gl);if(isNaN(g)){toast('Enter a goal index.');return false}const cur=p.index!=null?p.index:(S.profile.index!=null?Number(S.profile.index):null);p.goal={index:g,by:v('ob_by'),start:cur,set:today()}}}
+  if(step===2){const ix=v('ob_index');if(ix!==''){const n=parseHc(ix);if(isNaN(n)||n<-10||n>54){toast('Enter an index between +10 and 54.');return false}p.index=n}
+    const gl=v('ob_goal');if(gl!==''){const g=parseHc(gl);if(isNaN(g)){toast('Enter a goal index.');return false}const cur=p.index!=null?p.index:(S.profile.index!=null?Number(S.profile.index):null);p.goal={index:g,by:v('ob_by'),start:cur,set:today()}}}
   if(step===3){const m={...cmem()};m.yardages={...(m.yardages||{})};['Driver','7i','PW'].forEach(k=>{const x=v('ob_y_'+k);if(x)m.yardages[k]=x});const ob=S.onbSel||{};m.strengths=ob.str||[];m.weaknesses=ob.weak||[];m.tendencies=[...(m.tendencies||[]).filter(t=>!t.startsWith('Usual miss')),...(ob.miss?[ob.miss]:[])];const n=v('ob_notes');if(n)m.notes=[...(m.notes||[]),n];p.caddie=m;
     const bag={...(S.profile.bag||{})};BAG.forEach(([k])=>{const x=v('bag_'+k);if(x)bag[k]=x;else delete bag[k]});p.bag=bag}
   return p;
@@ -3751,7 +3779,7 @@ function clubBoard(co){
   const month=new Date().toLocaleString('en-US',{month:'long'});
   if(!rows.length)return `<div class="board"><div class="row between"><span class="eyebrow">${month} leaderboard</span><span class="small muted">by flight</span></div><p class="small muted">No rounds shared here this month. Post one and take the top spot.</p></div>`;
   const groups=[...FLIGHTS.map(x=>x[0]),'Unflighted'].map(f=>({f,r:rows.filter(x=>x.f===f).sort((a,b)=>a.p.score-b.p.score)})).filter(g=>g.r.length);
-  return `<div class="board"><div class="row between"><span class="eyebrow">${month} leaderboard</span><span class="small muted">Best 18 shared · by flight</span></div>${groups.map(g=>`<div class="bflight"><span class="kicker">${g.f}</span>${g.r.slice(0,5).map((x,i)=>`<button class="list-row" data-act="openUid" data-uid="${esc(x.p.uid)}"><span class="row" style="gap:10px;flex-wrap:nowrap"><span class="mono muted" style="width:14px">${i+1}</span>${avatar(x.p.uid,28)}<b>@${esc(x.p.username||pname(x.p.uid))}</b>${x.ix!=null?`<span class="small muted mono">${fmt(x.ix,1)}</span>`:''}</span><span class="mono"><b>${x.p.score}</b> <span class="small muted">${x.p.toPar===0?'E':(x.p.toPar>0?'+':'')+x.p.toPar}</span></span></button>`).join('')}</div>`).join('')}</div>`;
+  return `<div class="board"><div class="row between"><span class="eyebrow">${month} leaderboard</span><span class="small muted">Best 18 shared · by flight</span></div>${groups.map(g=>`<div class="bflight"><span class="kicker">${g.f}</span>${g.r.slice(0,5).map((x,i)=>`<button class="list-row" data-act="openUid" data-uid="${esc(x.p.uid)}"><span class="row" style="gap:10px;flex-wrap:nowrap"><span class="mono muted" style="width:14px">${i+1}</span>${avatar(x.p.uid,28)}<b>@${esc(x.p.username||pname(x.p.uid))}</b>${x.ix!=null?`<span class="small muted mono">${hcTxt(x.ix,1)}</span>`:''}</span><span class="mono"><b>${x.p.score}</b> <span class="small muted">${x.p.toPar===0?'E':(x.p.toPar>0?'+':'')+x.p.toPar}</span></span></button>`).join('')}</div>`).join('')}</div>`;
 }
 
 function friendsSection(){
@@ -3759,7 +3787,7 @@ function friendsSection(){
   const fr=friendIds().filter(u=>SOC.players[u]);const pend=pendingIn();
   return `<section class="sect"><div class="sect-head"><h3>Friends</h3><div class="row" style="gap:8px"><span class="small muted">${fr.length} friend${fr.length===1?'':'s'}</span><button class="btn small primary" data-act="invite">Invite</button></div></div>
     ${pend.length?`<div>${pend.map(r=>`<div class="list-row"><button class="plain row" style="gap:10px" data-act="openUid" data-uid="${esc(r.from)}">${avatar(r.from,36)}<b>@${esc(pname(r.from))}</b><span class="small muted">wants to be friends</span></button><div class="row" style="gap:6px"><button class="btn small primary" data-act="acceptReq" data-uid="${esc(r.from)}">Accept</button><button class="btn small" data-act="declineReq" data-uid="${esc(r.from)}">Decline</button></div></div>`).join('')}</div>`:''}
-    ${fr.length?`<div style="border-top:1px solid var(--line)">${fr.map(u=>{const p=SOC.players[u];const cur=p.index!=null?p.index:p.est;return `<button class="list-row" data-act="openUid" data-uid="${esc(u)}"><span class="row" style="gap:10px;flex-wrap:nowrap">${avatar(u,40)}<span><b>@${esc(p.username)}</b> ${buildTag((p.builds||[])[0],true)}<br><span class="small muted">${esc(((p.clubs||[]).map(asClub)[0]||{}).name||'')}${p.state?' · '+esc(p.state):''}</span></span></span><span class="mono row" style="gap:5px">${cur!=null&&p.verified?VCHECK:''}${cur!=null?fmt(cur,1):''}</span></button>`}).join('')}</div>`:`<p class="small muted">No friends yet. Find golfers in the Clubhouse, tap their name, and add them.</p>`}
+    ${fr.length?`<div style="border-top:1px solid var(--line)">${fr.map(u=>{const p=SOC.players[u];const cur=p.index!=null?p.index:p.est;return `<button class="list-row" data-act="openUid" data-uid="${esc(u)}"><span class="row" style="gap:10px;flex-wrap:nowrap">${avatar(u,40)}<span><b>@${esc(p.username)}</b> ${buildTag((p.builds||[])[0],true)}<br><span class="small muted">${esc(((p.clubs||[]).map(asClub)[0]||{}).name||'')}${p.state?' · '+esc(p.state):''}</span></span></span><span class="mono row" style="gap:5px">${cur!=null&&p.verified?VCHECK:''}${cur!=null?hcTxt(cur,1):''}</span></button>`}).join('')}</div>`:`<p class="small muted">No friends yet. Find golfers in the Clubhouse, tap their name, and add them.</p>`}
   </section>`;
 }
 function threadId(a,b){return [a,b].sort().join('~')}
@@ -3977,7 +4005,7 @@ function memSummary(){
 }
 function statSummary(){
   const c=ctx(),y=c.you,b=c.b,m=y.miss||{};
-  return `Handicap ${fmt(c.hc,1)}${c.verified?' (verified)':''}. Per 18 over recent rounds: fairways ${fmt(y.fir,0)}% (typical ${fmt(b.fir,0)}%), greens ${fmt(y.gir,1)} (typical ${fmt(b.gir,1)}), putts ${fmt(y.putts,1)}, three-putts ${fmt(y.tp,1)}, par saves ${fmt(y.ud,0)}%, doubles ${fmt(y.dbl,1)}. Fairway misses: left ${m.L||0}, right ${m.R||0}, short ${m.S||0}, long ${m.Lg||0}.`;
+  return `Handicap ${hcTxt(c.hc,1)}${c.verified?' (verified)':''}. Per 18 over recent rounds: fairways ${fmt(y.fir,0)}% (typical ${fmt(b.fir,0)}%), greens ${fmt(y.gir,1)} (typical ${fmt(b.gir,1)}), putts ${fmt(y.putts,1)}, three-putts ${fmt(y.tp,1)}, par saves ${fmt(y.ud,0)}%, doubles ${fmt(y.dbl,1)}. Fairway misses: left ${m.L||0}, right ${m.R||0}, short ${m.S||0}, long ${m.Lg||0}.`;
 }
 function openCaddie(mode){S.cchat={mode,turns:[],busy:false,draft:'',err:''};if(mode==='memory'){S.view='caddie';render();window.scrollTo(0,0)}else render()}
 function chatHtml(ch){
@@ -4143,12 +4171,12 @@ document.addEventListener('click',async e=>{
   if(act==='revealImg'){const R=S.reveal;S.reveal=null;openBluprintImage(R&&R.builds);return}
   if(act==='postCardImg'){const r=S.rounds.find(x=>x.id===S.cardImg.rid)||S.reportRound;S.cardImg=null;S.sharePrompt=null;render();const p=r&&roundPost(r,S.newBadges||[]);if(p)createPost(p).then(()=>toast('Scorecard posted to The Clubhouse')).catch(e=>toast(writeErr(e)));return}
   if(act==='shareMonth'){shareMonth();return}
-  if(act==='saveIndex'){const v=document.getElementById('pf_index').value.trim();const n=v===''?null:Number(v);if(v!==''&&(isNaN(n)||n<-10||n>54)){toast('Enter an index between +10 and 54.');return}try{await putProfile({index:n})}catch(err){toast(writeErr(err));return}S.hcEdit=false;toast('Index saved');render();syncPlayer().catch(()=>{});return}
+  if(act==='saveIndex'){const v=document.getElementById('pf_index').value.trim();const n=v===''?null:parseHc(v);if(v!==''&&(isNaN(n)||n<-10||n>54)){toast('Enter an index between +10 and 54.');return}try{await putProfile({index:n})}catch(err){toast(writeErr(err));return}S.hcEdit=false;toast('Index saved');render();syncPlayer().catch(()=>{});return}
   if(act==='setHcPref'){const v=a.dataset.v;if(v==='self'&&!ctx().self){S.hcEdit=true;render();return}await putProfile({hcPref:v}).catch(()=>{});render();if(socialOk())syncPlayer().catch(()=>{});return}
   if(act==='hcEdit'){S.hcEdit=true;render();return}
   if(act==='toggleGoal'){S.goalEdit=!S.goalEdit;render();if(S.goalEdit)setTimeout(()=>{const sh=document.getElementById('sheet');if(sh)enhanceDates(sh)},0);return}
   if(act==='goalQuick'){const i=document.getElementById('gl_index');if(i)i.value=a.dataset.v;document.querySelectorAll('.gp-quick .pill').forEach(b=>b.classList.toggle('good',b===a));return}
-  if(act==='saveGoal'){const t=document.getElementById('gl_index').value.trim(),by=document.getElementById('gl_by').value;const n=Number(t);if(t===''||isNaN(n)){toast('Enter a target index.');return}const c=ctx();const cur=c.index!=null?c.index:c.est;
+  if(act==='saveGoal'){const t=document.getElementById('gl_index').value.trim(),by=document.getElementById('gl_by').value;const n=parseHc(t);if(t===''||isNaN(n)){toast('Enter a target index.');return}const c=ctx();const cur=c.index!=null?c.index:c.est;
     try{await putProfile({goal:{index:n,by,start:cur,set:today()}})}catch(err){toast(writeErr(err));return}S.goalEdit=false;toast('Goal set');render();if(socialOk()){syncPlayer().catch(()=>{});createPost({type:'goal',text:`set a goal: ${n} index${by?' by '+by:''}. Hold me to it.`}).catch(()=>{})}return}
   if(act==='clearExamples'){const ex=S.rounds.filter(r=>r.example);for(const r of ex){try{await delRound(r.id)}catch(err){}}toast('Sample rounds removed');return}
   if(act==='copyGame'){const t=S.gameText||'';try{await navigator.clipboard.writeText(t);toast('Copied')}catch(err){const ta=document.getElementById('gameTxt');ta&&ta.select();toast('Select and copy the text below')}return}
