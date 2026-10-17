@@ -338,6 +338,13 @@ body.web-noclub #nav button[data-view="clubhouse"]{display:none}body.web-noclub 
 .rv3-load span{font-family:'JetBrains Mono',monospace;font-size:.8rem;letter-spacing:.14em;color:var(--volt);animation:pulse 1.2s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.4}}
 .rv3 .rv2-act{max-width:380px}
+.wel-hyp{padding:16px;border-radius:var(--r-lg);border:1px solid rgba(255,255,255,.08);background:#151918}
+.onb-track{display:flex;gap:6px;list-style:none;padding:0;margin:0 0 4px;flex-wrap:wrap}.onb-track li{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--sage);padding:5px 9px;border-radius:99px;border:1px solid rgba(255,255,255,.1)}
+.onb-track li.done{color:var(--volt);border-color:rgba(47,208,115,.35)}.onb-track li.done::before{content:'✓ '}.onb-track li.cur{color:var(--ivory);border-color:rgba(244,245,243,.5)}
+.or-prog{display:flex;align-items:center;gap:12px}.or-bar{flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}.or-bar i{display:block;height:100%;width:calc(var(--p)*100%);background:var(--volt);border-radius:99px;transition:width .3s ease}
+.or-prog span{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--sage);white-space:nowrap}.or-prog b{color:var(--ivory)}
+.rv3-act{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.rv3-share{display:inline-flex;align-items:center;gap:8px}
+.rv3-hyp{margin:0;font-size:.85rem;color:#C9D1CE;text-align:center}.rv3-hyp span{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--volt)}
 .chtop{display:flex;flex-direction:column;gap:12px}
 @media(max-width:520px){.cht-row .small.muted{display:none}}
 .cht-row{display:flex;justify-content:space-between;align-items:center;gap:12px}.cht-title{margin:0;font-family:var(--display);font-size:1.5rem;letter-spacing:-.01em}
@@ -2910,8 +2917,8 @@ async function sendScorecard(){
   else toast('Press and hold the image to save or share it.');
 }
 function scorecardSheet(){const c=S.cardImg;const bp=c.kind==='bp';return `<div class="sheet-back" data-act="closeCardImg"></div><section class="sheet" role="dialog" aria-label="${bp?'My BluPrint image':'Scorecard image'}"><div class="sheet-grab"></div>
-  <span class="eyebrow">${bp?'My BluPrint':'Your scorecard'}</span>${bp?`<p class="small muted" style="margin:0">On your phone, tap Share and pick Instagram, then Stories. On a computer, save it and post from your phone.</p>`:''}<img class="sc-img ${bp?'bp-img':''}" src="${c.url}" alt="${bp?'My BluPrint: '+esc(c.bpName):'Scorecard image'}">
-  <div class="row"><button class="btn primary" style="flex:1" data-act="sendCardImg">${bp?'Share to your story':'Text or save'}</button>${socialOk()?`<button class="btn" style="flex:1" data-act="postCardImg">Post to Clubhouse</button>`:''}</div>
+  <span class="eyebrow">${c.kind==='sample'?'Sample BluPrint card':bp?'My BluPrint':'Your scorecard'}</span>${bp?`<p class="small muted" style="margin:0">On your phone, tap Share and pick Instagram, then Stories. On a computer, save it and post from your phone.</p>`:''}<img class="sc-img ${bp?'bp-img':''}" src="${c.url}" alt="${bp?'My BluPrint: '+esc(c.bpName):'Scorecard image'}">
+  ${c.kind==='sample'?`<p class="small muted" style="margin:0">Every BluPrint gets its own card: your archetype, your three specs and your handicap.</p>`:''}<div class="row" ${c.kind==='sample'?'hidden':''}><button class="btn primary" style="flex:1" data-act="sendCardImg">${bp?'Share to your story':'Text or save'}</button>${socialOk()?`<button class="btn" style="flex:1" data-act="postCardImg">Post to Clubhouse</button>`:''}</div>
   <button class="btn ghost" data-act="closeCardImg">Close</button></section>`}
 function miniCard(card){if(!card||!card.h||!card.h.length)return '';const st=card.start||1;const segs=[];for(let i=0;i<card.h.length;i+=9)segs.push(card.h.slice(i,i+9));
   return `<div class="minicard">${segs.map((sg,ni)=>`<div class="mc-row">${sg.map((h,i)=>{const d=h[1]-h[0];return `<span class="mc-h ${d<=-1?'u':d===0?'e':d===1?'b':'d'}"><i>${st+ni*9+i}</i><b>${h[1]}</b></span>`}).join('')}<span class="mc-h tot"><i>${segs.length>1?(ni?'In':'Out'):'Tot'}</i><b>${sg.reduce((s,h)=>s+h[1],0)}</b></span></div>`).join('')}</div>`}
@@ -3191,8 +3198,9 @@ function revealView(){const R=S.reveal;if(!R)return '';
       <div class="rv3-in">
         <div class="rv3-card ${ready?'on':''}">${ready?`<img src="${S.revealImg.url}" alt="${esc(label.toLowerCase())}: ${esc(name)}"><i class="rv3-scan"></i>`:`<div class="rv3-load"><span>Drafting your BluPrint…</span></div>`}</div>
         ${prev&&prev!==name?`<span class="rv2-was">was <s>${esc(prev)}</s></span>`:''}
-        <div class="rv2-act"><button class="btn primary block rv2-share" data-act="revealStory" ${ready?'':'disabled'}>${IG_IC} Share to your story</button>
-          <div class="row" style="gap:10px;justify-content:center">${socialOk()?`<button class="btn" data-act="revealShare">Post to Clubhouse</button>`:''}<button class="btn" data-act="revealProfile">See my BluPrint</button><button class="btn ghost" data-act="revealClose">Close</button></div></div>
+        ${(()=>{const hyp=ls('bp_hyp');const hl=(HYP.find(h=>h[0]===hyp)||[])[1];if(!hl||!first||!bs[0])return '';const hit=bs.slice(0,3).some(b=>b.code===hyp);return `<p class="rv3-hyp"><span>Hypothesis</span> ${esc(hl)} <span>·</span> ${hit?'Confirmed in your top three':`Revised. Your data points to ${esc(bs[0].name)}`}</p>`})()}
+        <div class="rv3-act"><button class="btn primary rv3-share" data-act="revealStory" ${ready?'':'disabled'}>${IG_IC} Share to story</button><button class="btn" data-act="revealFriend">Send to a friend</button></div>
+        <div class="row" style="gap:10px;justify-content:center">${socialOk()?`<button class="btn small" data-act="revealShare">Post to Clubhouse</button>`:''}<button class="btn small ghost" data-act="revealProfile">See my profile</button><button class="btn small ghost" data-act="revealClose">Close</button></div>
       </div></div>`}
   const bs=R.badges||[];
   return `<div class="reveal" role="dialog" aria-label="Achievement unlocked"><div class="rv-glow"></div><div class="rv-in">
@@ -3557,6 +3565,7 @@ async function importData(file){try{const d=JSON.parse(await file.text());if(!d|
     const keep=['first','last','about','state','ride','index','goal','caddie','bag','avatar','favclub','clubs','joined'];const p={};keep.forEach(k=>{if(d.profile&&d.profile[k]!=null&&S.profile[k]==null)p[k]=d.profile[k]});if(Object.keys(p).length)await putProfile(p);
     toast(`Imported ${n} round${n===1?'':'s'}`)}catch(e){toast("That file isn't a BluPrint Golf export.")}}
 // ----- First run: welcome screen before sign-up -----
+const HYP=[['BB','Distance off the tee'],['FF','Accuracy off the tee'],['IS','Iron play'],['SW','Short game'],['PP','Putting'],['BP','Course management'],['MT','Consistency']];
 function showWelcome(){if(S.readOnly||S.welcomed||ls('bp_welcomed'))return false;
   if(S.store==='auth')return true;
   return (S.store==='db'&&S.profileReady&&!S.profile.username)||(S.store!=='db'&&!S.rounds.length&&!S.profile.username)}
@@ -3580,14 +3589,21 @@ function viewWelcome(){
       <div><span class="wy-ic">${ic.coach}</span><div><b>A coach that knows your stats</b><span>Work orders aimed at the exact strokes you're losing, tailored to your handicap.</span></div></div>
       <div><span class="wy-ic">${ic.club}</span><div><b>${IS_WEB?'A verified handicap':'A verified handicap and a Clubhouse'}</b><span>Score rounds hole by hole for a handicap built on World Handicap System rules${IS_WEB?'. The Clubhouse for your group is coming soon.':', then see how your group stacks up.'}</span></div></div>
     </div>
-    <div class="wel-cta"><button class="btn primary block" data-act="welcomeGo">Get my BluPrint</button><span class="small muted">Takes about 3 minutes.</span></div>
+    <div class="wel-hyp"><span class="eyebrow">Which part of your game do you rely on most?</span><div class="row" style="gap:6px;margin-top:8px">${HYP.map(([k,l])=>`<button class="pill ${S.hyp===k?'good':'neutral'}" data-act="hypPick" data-k="${k}" aria-pressed="${S.hyp===k}">${l}</button>`).join('')}</div>
+      <p class="small muted" style="margin:8px 0 0">${S.hyp?`Noted. Your rounds will test it against golfers at your handicap.`:'Optional. We\'ll compare it with what your numbers show.'}</p></div>
+    <div class="wel-cta"><button class="btn primary block" data-act="welcomeGo">Get my BluPrint</button><button class="plain link small" data-act="sampleCard">View a sample card</button><span class="small muted">About 3 minutes: email, username, three recent rounds.</span></div>
   </section>`}
+document.addEventListener('input',e=>{const t=e.target;if(!t||!t.id||!/^or_\d_score$/.test(t.id))return;const n=[0,1,2].filter(i=>{const el=document.getElementById(`or_${i}_score`);return el&&el.value.trim()}).length;
+  const b=document.getElementById('or_prog_n');if(b)b.textContent=n;const box=b&&b.closest('.or-prog');if(box)box.style.setProperty('--p',n/3)});
 // Onboarding step 4: three recent rounds, quick entry
 function onbRounds(){return S.onbR||(S.onbR=[0,1,2].map(()=>({course:'',date:'',n:18,score:'',putts:'',fir:'',gir:''})))}
 function onbSnap(){const R=onbRounds();R.forEach((r,i)=>{['course','date','score','putts','fir','gir'].forEach(k=>{const e=document.getElementById(`or_${i}_${k}`);if(e)r[k]=e.value.trim()})})}
 function onbRoundsView(){const R=onbRounds();const est=S.onbEst!==false;
-  return `<span class="kicker">Step 4 of 4 · Your starting point</span><h2>Your last 3 rounds</h2>
-    <p class="muted">Three rounds is all it takes to draw your BluPrint. Only the score is required.</p>
+  const hyp=S.hyp||ls('bp_hyp');const hl=(HYP.find(h=>h[0]===hyp)||[])[1];const filled=R.filter(r=>String(r.score||'').trim()).length;
+  return `<span class="kicker">Baseline</span><h2>Your last 3 rounds</h2>
+    <p class="muted">Three rounds give us a baseline. Each stat is benchmarked against golfers at your handicap, and your three strongest attributes become your BluPrint. Only the score is required.</p>
+    ${hl?`<p class="small" style="margin:0"><span class="kicker" style="color:var(--volt)">Your hypothesis</span> ${esc(hl)}. The data will confirm or revise it.</p>`:''}
+    <div class="or-prog" style="--p:${filled/3}"><div class="or-bar"><i></i></div><span><b id="or_prog_n">${filled}</b> of 3 rounds entered</span></div>
     <div class="seg onb-est" role="radiogroup" aria-label="How exact are these numbers"><button role="radio" aria-checked="${est}" aria-pressed="${est}" data-act="onbEst" data-v="1">Estimates are fine</button><button role="radio" aria-checked="${!est}" aria-pressed="${!est}" data-act="onbEst" data-v="0">Exact, from my card</button></div>
     <p class="small muted" style="margin:-4px 0 0">${est?"Don't remember exactly? Ballpark it. Your stats sharpen as you log real rounds, and estimated rounds are marked so you know which is which.":"Use the numbers from your scorecard or GHIN. Your verified handicap still comes from rounds you score hole by hole with your tees."}</p>
     ${R.map((r,i)=>`<div class="or-card"><div class="or-head"><b>Round ${i+1}</b><div class="seg sm"><button aria-pressed="${r.n===18}" data-act="onbN" data-i="${i}" data-n="18">18</button><button aria-pressed="${r.n===9}" data-act="onbN" data-i="${i}" data-n="9">9</button></div></div>
@@ -3611,7 +3627,7 @@ async function onbSaveRounds(){onbSnap();const R=onbRounds();const num=x=>x===''
   if(socialOk())syncPlayer().catch(()=>{});S.view='profile';render();window.scrollTo(0,0)}
 function needsOnboard(){return !!(S.profile.username&&!S.profile.onboarded&&!S.rounds.length&&!S.readOnly&&S.view!=='photo'&&S.view!=='text'&&S.view!=='setup'&&S.view!=='live'&&S.view!=='report')}
 function viewOnboard(c){
-  const step=S.onb||1;const m=cmem();const ob=S.onbSel||(S.onbSel={str:[...(m.strengths||[])],weak:[...(m.weaknesses||[])],miss:(m.tendencies||[]).find(t=>t.startsWith('Usual miss'))||''});
+  const step=S.onb||4;const m=cmem();const ob=S.onbSel||(S.onbSel={str:[...(m.strengths||[])],weak:[...(m.weaknesses||[])],miss:(m.tendencies||[]).find(t=>t.startsWith('Usual miss'))||''});
   const dots=`<div class="onb-dots">${[1,2,3,4].map(i=>`<i class="${i<=step?'on':''}"></i>`).join('')}</div>`;
   const nav=(next,label)=>`<div class="row" style="margin-top:4px">${step>1?`<button class="btn" data-act="onbBack">Back</button>`:''}<button class="btn primary" style="flex:1" data-act="onbNext">${label||'Continue'}</button></div><button class="plain link small" style="align-self:center" data-act="onbSkip">${step<4?'Skip this step':'Skip for now'}</button>`;
   let body='';
@@ -3635,7 +3651,7 @@ function viewOnboard(c){
     <details id="ob_bag" class="card" style="padding:12px" ${S.onbBagOpen?'open':''}><summary class="eyebrow" style="cursor:pointer">What's in the bag (optional)</summary><div class="grid2" style="margin-top:10px">${BAG.map(([k,l,ph])=>`<label class="f">${l}<input class="t" id="bag_${k}" maxlength="60" value="${esc((S.profile.bag||{})[k]||'')}" placeholder="${esc(ph)}"></label>`).join('')}</div></details>
     <label class="f">Anything else your caddie should know?<textarea class="t" id="ob_notes" maxlength="200" placeholder="e.g. Fighting a slice lately. Love my 3-hybrid." style="min-height:56px"></textarea></label>${nav()}`}
   if(step===4) body=onbRoundsView();
-  const top=`<div class="onb-top"><button class="onb-arrow" data-act="onbBack" aria-label="Previous step" ${step===1?'disabled':''}>‹</button>${dots}<button class="onb-arrow" data-act="${step<4?'onbNext':'onbSkip'}" aria-label="${step<4?'Next step':'Finish setup'}">›</button></div>`;
+  const top=step===4?`<ol class="onb-track"><li class="done">Account</li><li class="done">Username</li><li class="cur">Baseline rounds</li><li>Your BluPrint</li></ol>`:`<div class="onb-top"><button class="onb-arrow" data-act="onbBack" aria-label="Previous step" ${step===1?'disabled':''}>‹</button>${dots}<button class="onb-arrow" data-act="${step<4?'onbNext':'onbSkip'}" aria-label="${step<4?'Next step':'Finish setup'}">›</button></div>`;
   return `<section class="onb">${top}${body}</section>`;
 }
 function onbSaveStep(step){
@@ -4045,6 +4061,10 @@ document.addEventListener('click',async e=>{
   if(act==='delAskNo'){S.delAsk=false;render();return}
   if(act==='delAccount'){try{await BP_AUTH.deleteAccount();try{localStorage.clear()}catch(e){}location.reload()}catch(e){toast('Could not delete the account. Try again.')}return}
   if(act==='exportData'){exportData();return}
+  if(act==='hypPick'){S.hyp=S.hyp===a.dataset.k?'':a.dataset.k;ls('bp_hyp',S.hyp||null);render();return}
+  if(act==='sampleCard'){toast('Drafting a sample…');const bl=await drawBluprintCard({builds:['CR','PP','CS'].map(c=>BUILDS.find(b=>b.code===c)),label:'SAMPLE CARD',handle:'sample',handicap:'14.2',date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}).toUpperCase(),statement:BUILD_CORE.CR});S.cardImg={blob:bl,url:URL.createObjectURL(bl),kind:'sample',name:'sample.png'};render();return}
+  if(act==='revealFriend'){const R=S.reveal;const id=buildIdentity(R.builds);const nm=id.builds.length>1?id.name:id.builds[0].name;const t=`My BluPrint: ${nm} (${id.builds.map(b=>b.name).join(' · ')}). What's yours? ${location.origin}`;
+    try{if(navigator.share){await navigator.share({text:t});return}}catch(e){if(e&&e.name==='AbortError')return}try{await navigator.clipboard.writeText(t);toast('Copied. Paste it to a friend.')}catch(e){toast(t)}return}
   if(act==='welcomeGo'){S.welcomed=true;ls('bp_welcomed',true);render();window.scrollTo(0,0);return}
   if(act.startsWith('onb')){await onbAct(act,a);return}
   if(act==='invite'){if(typeof SOC!=='undefined')SOC.pop=null;inviteFriends(a.dataset.club||'');return}
