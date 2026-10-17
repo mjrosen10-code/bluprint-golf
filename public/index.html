@@ -345,6 +345,7 @@ body.web-noclub #nav button[data-view="clubhouse"]{display:none}body.web-noclub 
 .or-prog span{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--sage);white-space:nowrap}.or-prog b{color:var(--ivory)}
 .rv3-act{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.rv3-share{display:inline-flex;align-items:center;gap:8px}
 .rv3-hyp{margin:0;font-size:.85rem;color:#C9D1CE;text-align:center}.rv3-hyp span{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--volt)}
+.setpw{display:flex;flex-direction:column;gap:8px;padding-top:6px}
 .chtop{display:flex;flex-direction:column;gap:12px}
 @media(max-width:520px){.cht-row .small.muted{display:none}}
 .cht-row{display:flex;justify-content:space-between;align-items:center;gap:12px}.cht-title{margin:0;font-family:var(--display);font-size:1.5rem;letter-spacing:-.01em}
@@ -1580,7 +1581,7 @@ let userCap=null,me=null,base=null;
 async function initStore(){
   document.body.classList.toggle('web-noclub',!!(window.BP_WEB&&!window.BP_WEB.clubhouse));
   S.draft=ls('rl_draft');
-  if(window.BP_AUTH){const u=await BP_AUTH.me();if(!u){S.store='auth';S.ready=true;S.profileReady=true;render();return}S.authEmail=u.email;try{if(sessionStorage.getItem('bp_after')==='profile'){sessionStorage.removeItem('bp_after');S.view='profile'}}catch(_){}}
+  if(window.BP_AUTH){const u=await BP_AUTH.me();if(!u){S.store='auth';S.ready=true;S.profileReady=true;render();return}S.authEmail=u.email;S.authHasPw=!!u.hasPassword;try{if(sessionStorage.getItem('bp_after')==='profile'){sessionStorage.removeItem('bp_after');S.view='profile'}}catch(_){}}
   if(window.claude&&window.claude.use){
     try{db=await window.claude.use('db')}catch(e){db=null}
     try{userCap=await window.claude.use('user')}catch(e){userCap=null}
@@ -3532,26 +3533,37 @@ const APP_URL=window.BP_WEB?location.origin:'https://claude.ai/artifact/Qu6irNLP
 const ONB_AREAS=['Driving','Irons','Short game','Putting','Course management'];
 // ----- Web build (bluprintgolf.com): sign in, account, data import/export -----
 const IS_WEB=!!window.BP_WEB;
-function viewSignin(){const a=S.auth||(S.auth={step:'email',email:'',code:'',busy:false,err:''});
-  return `<section class="wel signin"><div class="wel-hero"><h1>${a.step==='code'?'Check your email':'Sign in to <span>BluPrint</span>'}</h1>
-    <p>${a.step==='code'?`We sent a 6-digit code to <b>${esc(a.email)}</b>. It expires in 10 minutes.`:'Enter your email and we\'ll send you a one-time code. No password to remember.'}</p></div>
-    <div class="si-box">${a.step==='code'?`<label class="f">Code<input class="t si-code" id="si_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" value="${esc(a.code)}"></label>
-      <button class="btn primary block" data-act="siVerify" ${a.busy?'disabled':''}>${a.busy?'Checking…':'Sign in'}</button>
-      <div class="row" style="justify-content:space-between"><button class="plain link small" data-act="siBack">Use a different email</button><button class="plain link small" data-act="siSend">Send a new code</button></div>`
-     :`<label class="f">Email<input class="t" id="si_email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" value="${esc(a.email)}"></label>
-      <button class="btn primary block" data-act="siSend" ${a.busy?'disabled':''}>${a.busy?'Sending…':'Email me a code'}</button>`}
-      ${a.err?`<p class="small" style="color:var(--loss);margin:0">${esc(a.err)}</p>`:''}
-      ${a.dev?`<p class="small muted" style="margin:0">Test mode code: <b>${esc(a.dev)}</b></p>`:''}</div>
-    <p class="small muted" style="text-align:center">New here? Signing in creates your account.</p></section>`}
-async function siAct(act){const a=S.auth;
-  if(act==='siBack'){a.step='email';a.err='';a.code='';render();return}
-  if(act==='siSend'){const e=document.getElementById('si_email');if(e)a.email=e.value.trim();if(!a.email){a.err='Enter your email.';render();return}
-    a.busy=true;a.err='';render();try{const d=await BP_AUTH.start(a.email);a.step='code';a.dev=d&&d.devCode||'';if(a.step==='code'&&!document.getElementById('si_email'))toast('New code sent')}catch(e){a.err=e.message||'Could not send the code.'}a.busy=false;render();setTimeout(()=>{const c=document.getElementById('si_code');if(c)c.focus()},50);return}
-  if(act==='siVerify'){const c=document.getElementById('si_code');a.code=c?c.value.trim():'';if(a.code.length<6){a.err='Enter the 6-digit code.';render();return}
-    a.busy=true;a.err='';render();try{await BP_AUTH.verify(a.email,a.code);try{sessionStorage.setItem('bp_after','profile')}catch(_){}location.reload()}catch(e){a.busy=false;a.err=e.message||'That code did not work.';render()}return}}
+function viewSignin(){const a=S.auth||(S.auth={mode:ls('bp_welcomed')&&!S.welcomed?'signin':'create',step:'form',email:'',busy:false,err:''});
+  const m=a.mode,code=a.step==='code';const email=`<label class="f">Email<input class="t" id="si_email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" value="${esc(a.email)}"></label>`;
+  const pw=(id,label,auto)=>`<label class="f">${label}<input class="t" id="${id}" type="password" autocomplete="${auto}" minlength="8" placeholder="At least 8 characters"></label>`;
+  const codeField=`<label class="f">Code from your email<input class="t si-code" id="si_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" value="${esc(a.code||'')}"></label>`;
+  const T={signin:['Sign in','Welcome back.'],create:['Create your account','Your email and a password. We\'ll send a code to confirm the email.'],forgot:['Reset your password','We\'ll email you a code, then you choose a new password.'],code:['Sign in with a code','We\'ll email you a one-time code.']}[m];
+  let body='';
+  if(m==='signin')body=`${email}${pw('si_pw','Password','current-password')}<button class="btn primary block" data-act="siLogin" ${a.busy?'disabled':''}>${a.busy?'Signing in…':'Sign in'}</button>
+    <div class="row" style="justify-content:space-between"><button class="plain link small" data-act="siMode" data-m="forgot">Forgot password?</button><button class="plain link small" data-act="siMode" data-m="code">Email me a code instead</button></div>`;
+  else if(!code)body=`${email}${m==='create'?pw('si_pw','Password','new-password'):''}<button class="btn primary block" data-act="siSend" ${a.busy?'disabled':''}>${a.busy?'Sending…':m==='create'?'Continue':'Email me a code'}</button>`;
+  else body=`<p class="small muted" style="margin:0">We sent a 6-digit code to <b>${esc(a.email)}</b>. It expires in 10 minutes.</p>${codeField}${m==='forgot'?pw('si_pw','New password','new-password'):''}
+    <button class="btn primary block" data-act="siVerify" ${a.busy?'disabled':''}>${a.busy?'Checking…':m==='create'?'Create account':m==='forgot'?'Save password and sign in':'Sign in'}</button>
+    <div class="row" style="justify-content:space-between"><button class="plain link small" data-act="siBack">Use a different email</button><button class="plain link small" data-act="siSend">Send a new code</button></div>`;
+  return `<section class="wel signin"><div class="wel-hero"><h1>${T[0]}</h1><p>${T[1]}</p></div>
+    <div class="si-box">${body}${a.err?`<p class="small" style="color:var(--loss);margin:0">${esc(a.err)}</p>`:''}${a.dev?`<p class="small muted" style="margin:0">Test mode code: <b>${esc(a.dev)}</b></p>`:''}</div>
+    <p class="small muted" style="text-align:center">${m==='signin'?`New to BluPrint Golf? <button class="plain link small" data-act="siMode" data-m="create">Create an account</button>`:`Already have an account? <button class="plain link small" data-act="siMode" data-m="signin">Sign in</button>`}</p></section>`}
+async function siAct(act,el){const a=S.auth;const v=id=>{const e=document.getElementById(id);return e?e.value:''};
+  const done=()=>{try{sessionStorage.setItem('bp_after','profile')}catch(_){}location.reload()};
+  if(act==='siMode'){S.auth={mode:el.dataset.m,step:'form',email:a.email,busy:false,err:''};render();return}
+  if(act==='siBack'){a.step='form';a.err='';a.code='';render();return}
+  if(act==='siLogin'){a.email=v('si_email').trim();const p=v('si_pw');if(!a.email||!p){a.err='Enter your email and password.';render();return}
+    a.busy=true;a.err='';render();try{await BP_AUTH.login(a.email,p);done()}catch(e){a.busy=false;a.err=e.message||'Could not sign in.';render()}return}
+  if(act==='siSend'){if(a.step==='form'){a.email=v('si_email').trim();if(a.mode==='create'){a.pw=v('si_pw');if(a.pw.length<8){a.err='Use at least 8 characters for your password.';render();return}}}
+    if(!a.email){a.err='Enter your email.';render();return}
+    a.busy=true;a.err='';render();try{const d=await BP_AUTH.start(a.email);a.dev=d&&d.devCode||'';if(a.step==='code')toast('New code sent');a.step='code'}catch(e){a.err=e.message||'Could not send the code.'}a.busy=false;render();setTimeout(()=>{const c=document.getElementById('si_code');if(c)c.focus()},50);return}
+  if(act==='siVerify'){a.code=v('si_code').trim();if(a.code.length<6){a.err='Enter the 6-digit code.';render();return}
+    let pw=null;if(a.mode==='create')pw=a.pw;if(a.mode==='forgot'){pw=v('si_pw');if(pw.length<8){a.err='Use at least 8 characters for your new password.';render();return}}
+    a.busy=true;a.err='';render();try{await BP_AUTH.verify(a.email,a.code,pw);done()}catch(e){a.busy=false;a.err=e.message||'That code did not work.';render()}return}}
 function accountPanel(){
   return `<section class="sect panel"><div class="sect-head"><h3>Account</h3>${IS_WEB&&S.authEmail?`<span class="small muted">${esc(S.authEmail)}</span>`:''}</div>
     <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" data-act="exportData">Export my data</button>${IS_WEB?`<label class="btn" for="imp_file" style="cursor:pointer">Import from beta</label><input type="file" id="imp_file" data-field="imp.file" accept="application/json,.json" style="position:absolute;width:1px;height:1px;opacity:0"><button class="btn" data-act="signOut">Sign out</button>`:''}</div>
+    ${IS_WEB?`<div class="setpw"><span class="eyebrow">${S.authHasPw?'Change password':'Set a password'}</span>${S.authHasPw?'':`<p class="small muted" style="margin:0">Your account doesn't have a password yet. Add one so you can sign in without an email code.</p>`}<div class="row" style="gap:8px;flex-wrap:nowrap"><input class="t" id="acct_pw" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" style="flex:1"><button class="btn" data-act="setPw">Save</button></div></div>`:''}
     <p class="small muted" style="margin:0">${IS_WEB?'Moving from the beta? Export your data there, then import the file here.':'Download your rounds and profile as a file. You can import it on bluprintgolf.com.'}</p>
     ${IS_WEB?(S.delAsk?`<div class="row" style="gap:8px;align-items:center"><span class="small">Delete your account and all your rounds for good?</span><button class="btn danger small" data-act="delAccount">Delete everything</button><button class="btn ghost small" data-act="delAskNo">Cancel</button></div>`:`<button class="plain link small" style="align-self:flex-start;color:var(--loss)" data-act="delAsk">Delete my account</button>`):''}</section>`}
 async function exportData(){const data={app:'bluprint-golf',version:1,exported:new Date().toISOString(),profile:S.profile,rounds:S.rounds.filter(r=>!r.example),courses:S.courses||[]};
@@ -3591,7 +3603,7 @@ function viewWelcome(){
     </div>
     <div class="wel-hyp"><span class="eyebrow">Which part of your game do you rely on most?</span><div class="row" style="gap:6px;margin-top:8px">${HYP.map(([k,l])=>`<button class="pill ${S.hyp===k?'good':'neutral'}" data-act="hypPick" data-k="${k}" aria-pressed="${S.hyp===k}">${l}</button>`).join('')}</div>
       <p class="small muted" style="margin:8px 0 0">${S.hyp?`Noted. Your rounds will test it against golfers at your handicap.`:'Optional. We\'ll compare it with what your numbers show.'}</p></div>
-    <div class="wel-cta"><button class="btn primary block" data-act="welcomeGo">Get my BluPrint</button><button class="plain link small" data-act="sampleCard">View a sample card</button><span class="small muted">About 3 minutes: email, username, three recent rounds.</span></div>
+    <div class="wel-cta"><button class="btn primary block" data-act="welcomeGo">Get my BluPrint</button><button class="plain link small" data-act="sampleCard">View a sample card</button>${IS_WEB?`<span class="small muted">Have an account? <button class="plain link small" data-act="welcomeSignin">Sign in</button></span>`:''}<span class="small muted">About 3 minutes: email, username, three recent rounds.</span></div>
   </section>`}
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.id||!/^or_\d_score$/.test(t.id))return;const n=[0,1,2].filter(i=>{const el=document.getElementById(`or_${i}_score`);return el&&el.value.trim()}).length;
   const b=document.getElementById('or_prog_n');if(b)b.textContent=n;const box=b&&b.closest('.or-prog');if(box)box.style.setProperty('--p',n/3)});
@@ -3664,7 +3676,7 @@ function onbSaveStep(step){
   return p;
 }
 async function onbAct(act,a){
-  const step=S.onb||1;
+  const step=S.onb||4;
   if(act==='onbEst'){onbSnap();S.onbEst=a.dataset.v==='1';render();return}
   if(act==='onbN'){onbSnap();onbRounds()[Number(a.dataset.i)].n=Number(a.dataset.n);render();return}
   if(act==='onbSaveRounds'){if(!S.onbBusy)await onbSaveRounds();return}
@@ -4055,7 +4067,8 @@ document.addEventListener('click',async e=>{
   if(act==='statPop'){S.statPop=a.dataset.k||null;render();return}
   if(act==='achAll'){S.achAll=!S.achAll;render();return}
   if(act==='profCancel'){S.profileEdit=false;S.renaming=false;render();window.scrollTo(0,0);return}
-  if(act.startsWith('si')&&S.store==='auth'){await siAct(act);return}
+  if(act.startsWith('si')&&S.store==='auth'){await siAct(act,a);return}
+  if(act==='setPw'){const e=document.getElementById('acct_pw');const p=e?e.value:'';if(p.length<8){toast('Use at least 8 characters.');return}try{await BP_AUTH.setPassword(p);S.authHasPw=true;e.value='';toast('Password saved');render()}catch(err){toast(err.message||'Could not save the password.')}return}
   if(act==='signOut'){await BP_AUTH.logout();location.reload();return}
   if(act==='delAsk'){S.delAsk=true;render();return}
   if(act==='delAskNo'){S.delAsk=false;render();return}
@@ -4065,7 +4078,8 @@ document.addEventListener('click',async e=>{
   if(act==='sampleCard'){toast('Drafting a sample…');const bl=await drawBluprintCard({builds:['CR','PP','CS'].map(c=>BUILDS.find(b=>b.code===c)),label:'SAMPLE CARD',handle:'sample',handicap:'14.2',date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}).toUpperCase(),statement:BUILD_CORE.CR});S.cardImg={blob:bl,url:URL.createObjectURL(bl),kind:'sample',name:'sample.png'};render();return}
   if(act==='revealFriend'){const R=S.reveal;const id=buildIdentity(R.builds);const nm=id.builds.length>1?id.name:id.builds[0].name;const t=`My BluPrint: ${nm} (${id.builds.map(b=>b.name).join(' · ')}). What's yours? ${location.origin}`;
     try{if(navigator.share){await navigator.share({text:t});return}}catch(e){if(e&&e.name==='AbortError')return}try{await navigator.clipboard.writeText(t);toast('Copied. Paste it to a friend.')}catch(e){toast(t)}return}
-  if(act==='welcomeGo'){S.welcomed=true;ls('bp_welcomed',true);render();window.scrollTo(0,0);return}
+  if(act==='welcomeSignin'){S.welcomed=true;ls('bp_welcomed',true);S.auth={mode:'signin',step:'form',email:'',busy:false,err:''};render();window.scrollTo(0,0);return}
+  if(act==='welcomeGo'){S.auth={mode:'create',step:'form',email:'',busy:false,err:''};S.welcomed=true;ls('bp_welcomed',true);render();window.scrollTo(0,0);return}
   if(act.startsWith('onb')){await onbAct(act,a);return}
   if(act==='invite'){if(typeof SOC!=='undefined')SOC.pop=null;inviteFriends(a.dataset.club||'');return}
   if(act==='closeInvite'){S.inviteText=null;render();return}

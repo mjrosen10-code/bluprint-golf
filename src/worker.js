@@ -23,10 +23,12 @@ export default {
         if (p === '/auth/start' && req.method === 'POST') return await authStart(req, env);
         if (p === '/auth/verify' && req.method === 'POST') return await authVerify(req, env);
         if (p === '/auth/me') return await authMe(req, env);
+        if (p === '/auth/login' && req.method === 'POST') return await authLogin(req, env);
         if (p === '/auth/logout' && req.method === 'POST') return await authLogout(req, env);
         const user = await currentUser(req, env);
         if (!user) return json({ error: 'not_signed_in', code: 'not_granted' }, 401);
         if (p === '/auth/delete' && req.method === 'POST') return await deleteAccount(env, user);
+        if (p === '/auth/password' && req.method === 'POST') return await setPasswordRoute(req, env, user);
         if (p === '/api/doc') return await docRoute(req, env, user, url);
         if (p === '/api/query' && req.method === 'POST') return await queryRoute(req, env, user);
         if (p === '/api/ai' && req.method === 'POST') return await aiRoute(req, env, user);
@@ -117,7 +119,8 @@ async function authStart(req, env) {
 }
 
 async function authVerify(req, env) {
-  const { email: raw, code: rc } = await body(req, 4096);
+  const { email: raw, code: rc, password } = await body(req, 4096);
+  if (password != null && pwProblem(password)) return json({ error: pwProblem(password) }, 400);
   const email = String(raw || '').trim().toLowerCase();
   const code = String(rc || '').replace(/\D/g, '');
   const row = await env.DB.prepare('SELECT code_hash, expires, attempts FROM login_codes WHERE email=?').bind(email).first();
@@ -133,6 +136,13 @@ async function authVerify(req, env) {
     user = { id: randomId('u'), email };
     await env.DB.prepare('INSERT INTO users(id, email, created) VALUES(?,?,?)').bind(user.id, email, new Date().toISOString()).run();
   }
+  if (password != null) {
+    await env.DB.prepare('UPDATE users SET pw=? WHERE id=?').bind(await hashPassword(password, env), user.id).run();
+    await env.DB.prepare('DELETE FROM login_attempts WHERE email=?').bind(email).run();
+  }
+  return await startSession(env, user);
+}
+async function startSession(env, user) {
   const token = randomToken(32);
   const expires = Date.now() + SESSION_DAYS * 864e5;
   await env.DB.prepare('INSERT INTO sessions(token_hash, user_id, expires) VALUES(?,?,?)').bind(await sha256(token), user.id, expires).run();
@@ -149,13 +159,62 @@ function sessionToken(req) {
 async function currentUser(req, env) {
   const t = sessionToken(req);
   if (!t) return null;
-  const s = await env.DB.prepare('SELECT u.id, u.email, s.expires FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=?').bind(await sha256(t)).first();
+  const s = await env.DB.prepare('SELECT u.id, u.email, u.pw, s.expires FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=?').bind(await sha256(t)).first();
   if (!s || s.expires < Date.now()) return null;
-  return { id: s.id, email: s.email };
+  return { id: s.id, email: s.email, hasPassword: !!s.pw };
 }
 async function authMe(req, env) {
   const u = await currentUser(req, env);
   return u ? json({ user: u }) : json({ user: null }, 200);
+}
+// ---------- passwords (PBKDF2-SHA256, salted; iteration count stored with each hash) ----------
+function pwProblem(p) {
+  p = String(p || '');
+  if (p.length < 8) return 'Use at least 8 characters.';
+  if (p.length > 200) return 'That password is too long.';
+  return null;
+}
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function pbkdf2(password, salt, iter) {
+  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+  return crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: iter }, key, 256);
+}
+async function hashPassword(password, env) {
+  const iter = Math.min(100000, Number(env.PBKDF2_ITER || 60000));
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  return `pbkdf2$${iter}$${b64(salt)}$${b64(await pbkdf2(password, salt, iter))}`;
+}
+async function checkPassword(password, stored) {
+  const [kind, iter, salt, hash] = String(stored || '').split('$');
+  if (kind !== 'pbkdf2') return false;
+  const got = new Uint8Array(await pbkdf2(password, unb64(salt), Number(iter)));
+  const want = unb64(hash);
+  if (got.length !== want.length) return false;
+  let diff = 0; for (let i = 0; i < got.length; i++) diff |= got[i] ^ want[i];
+  return diff === 0;
+}
+async function authLogin(req, env) {
+  const { email: raw, password } = await body(req, 4096);
+  const email = String(raw || '').trim().toLowerCase();
+  const now = Date.now();
+  const att = await env.DB.prepare('SELECT fails, window_start FROM login_attempts WHERE email=?').bind(email).first();
+  const fails = att && now - att.window_start < 15 * 60e3 ? att.fails : 0;
+  if (fails >= 8) return json({ error: 'Too many tries. Wait 15 minutes or sign in with an email code.' }, 429);
+  const user = await env.DB.prepare('SELECT id, email, pw FROM users WHERE email=?').bind(email).first();
+  if (!user || !user.pw || !(await checkPassword(String(password || ''), user.pw))) {
+    await env.DB.prepare(`INSERT INTO login_attempts(email, fails, window_start) VALUES(?,1,?)
+      ON CONFLICT(email) DO UPDATE SET fails=CASE WHEN ?-window_start<900000 THEN fails+1 ELSE 1 END, window_start=CASE WHEN ?-window_start<900000 THEN window_start ELSE ? END`).bind(email, now, now, now, now).run();
+    return json({ error: user && !user.pw ? 'This account has no password yet. Sign in with an email code, then set one.' : 'Email or password is not right.' }, 400);
+  }
+  await env.DB.prepare('DELETE FROM login_attempts WHERE email=?').bind(email).run();
+  return await startSession(env, user);
+}
+async function setPasswordRoute(req, env, user) {
+  const { password } = await body(req, 4096);
+  if (pwProblem(password)) return json({ error: pwProblem(password) }, 400);
+  await env.DB.prepare('UPDATE users SET pw=? WHERE id=?').bind(await hashPassword(password, env), user.id).run();
+  return json({ ok: true });
 }
 async function authLogout(req, env) {
   const t = sessionToken(req);
@@ -169,6 +228,7 @@ async function deleteAccount(env, user) {
     env.DB.prepare('DELETE FROM sessions WHERE user_id=?').bind(uid),
     env.DB.prepare('DELETE FROM ai_usage WHERE user_id=?').bind(uid),
     env.DB.prepare('DELETE FROM login_codes WHERE email=?').bind(user.email),
+    env.DB.prepare('DELETE FROM login_attempts WHERE email=?').bind(user.email),
     env.DB.prepare('DELETE FROM users WHERE id=?').bind(uid)
   ]);
   return json({ ok: true }, 200, { 'set-cookie': 'bp_s=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0' });

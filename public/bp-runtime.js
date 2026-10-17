@@ -20,7 +20,9 @@
   const auth = {
     async me() { if (session !== null) return session; try { const d = await api('GET', '/auth/me'); session = d.user || false; } catch (e) { session = false; } return session; },
     start: email => api('POST', '/auth/start', { email }),
-    async verify(email, code) { const d = await api('POST', '/auth/verify', { email, code }); if (d.token) setTok(d.token); session = d.user; return d.user; },
+    async verify(email, code, password) { const d = await api('POST', '/auth/verify', { email, code, ...(password != null ? { password } : {}) }); if (d.token) setTok(d.token); session = d.user; return d.user; },
+    async login(email, password) { const d = await api('POST', '/auth/login', { email, password }); if (d.token) setTok(d.token); session = d.user; return d.user; },
+    setPassword: password => api('POST', '/auth/password', { password }),
     async logout() { try { await api('POST', '/auth/logout', {}); } catch (e) {} setTok(''); session = false; },
     async deleteAccount() { await api('POST', '/auth/delete', {}); setTok(''); session = false; }
   };
