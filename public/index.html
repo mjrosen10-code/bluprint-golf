@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0D0F0F">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="BluPrint">
 <meta name="description" content="BluPrint Golf: golf stats benchmarked to your handicap, a verified handicap built on World Handicap System rules, and a coach that turns your numbers into a plan.">
 <meta property="og:title" content="BluPrint Golf: What's your BluPrint?">
 <meta property="og:description" content="Log three rounds and see the game you actually play: your strengths, your leaks and a plan to fix them.">
@@ -1120,6 +1121,16 @@ input.t:focus,select.t:focus,textarea.t:focus{border-color:rgba(47,208,115,.6);b
 .idc-tri2 .tri-row{display:flex;justify-content:center;gap:44px;margin-top:-30px;position:relative;z-index:1}
 .idc-tri2 .ts .badgehex{filter:drop-shadow(0 6px 10px rgba(0,0,0,.6));opacity:.95}
 @media (max-width:600px){.idc-tri2{width:auto}.idc-tri2 .t0 .hex{width:124px;height:124px}.idc-tri2 .ts .hex{width:78px;height:78px}.idc-tri2 .tri-row{gap:38px;margin-top:-26px}}
+
+/* iPhone: fields under 16px make Safari zoom the page on focus */
+@supports (-webkit-touch-callout:none){input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{font-size:16px!important}}
+/* Touch: small text links and chips keep their look but get a ~44px tap area */
+@media (pointer:coarse){button.link,button.pill,.foldhead,[data-act=delAsk]{position:relative}
+  button.link::after,[data-act=delAsk]::after{content:"";position:absolute;inset:-10px -4px}button.pill::after{content:"";position:absolute;inset:-5px -2px}
+  .foldhead::after{content:"";position:absolute;inset:-9px 0}}
+
+/* Small iPhones: keep the handicap visible in the header chip; status name wraps instead of clipping */
+@media (max-width:430px){#hcChip .hc-u{display:none}.idc-stt b{white-space:normal;line-height:1.15}}
 </style>
 
 <div class="ambient" aria-hidden="true"><i class="glow g1"></i><i class="glow g2"></i><i class="glow g3"></i><div class="topo"></div><div class="topo2"></div><svg class="golfart bp" viewBox="740 170 420 1160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -1505,8 +1516,8 @@ const BUILDS=[
  {id:'putter',code:'PP',name:'Platinum Putter',desc:'Takes fewer putts than golfers at your level and rarely three-putts',test:(y,b)=>{const t=y.tp!=null?(b.tp-y.tp)/0.8:null;if(y.putts==null)return t;const exp=b.putts+0.35*((y.gir!=null?y.gir:b.gir)-b.gir);const s=(exp-y.putts)/0.8;return t==null?s:Math.min(s,t)}},
  {id:'birdie',code:'BM',name:'Birdie Machine',desc:'Makes more birdies than golfers at your level',test:(y,b)=>y.bird!=null?(y.bird-Math.max(0.3,2.2-0.1*b.h))/0.6:null},
  {id:'steady',code:'BP',name:'Bogey Proof',desc:'Avoids the big numbers',test:(y,b)=>y.dbl!=null?(b.dbl-y.dbl)/1.5:null},
- {id:'par5',code:'P5',name:'Par-5 Predator',desc:'Scores best on the long holes',test:y=>y.p5!=null&&y.p4!=null?((y.p4-4)-(y.p5-5))/0.35:null},
- {id:'par3',code:'P3',name:'Par-3 Assassin',desc:'Lethal on the short holes',test:y=>y.p3!=null&&y.p4!=null?((y.p4-4)-(y.p3-3))/0.35:null},
+ {id:'par5',code:'P5',name:'Par-5 Predator',desc:'Scores best on the long holes',test:y=>y.p5!=null&&y.p4!=null?((y.p4-4)-(y.p5-5)-0.1)/0.35:null},
+ {id:'par3',code:'P3',name:'Par-3 Assassin',desc:'Lethal on the short holes',test:y=>y.p3!=null&&y.p4!=null?((y.p4-4)-(y.p3-3)-0.25)/0.35:null},
  {id:'closer',code:'CC',name:'Clutch Closer',desc:'Plays the back nine better than the front',test:(y,b,x)=>x.closer},
  {id:'rising',code:'RS',name:'Rising Star',desc:'Index dropping fast',test:(y,b,x)=>x.rising},
  {id:'rat',code:'CR',name:'Course Rat',desc:'Always out there',test:(y,b,x)=>x.rat},
@@ -1679,6 +1690,7 @@ function locKey(l){return [l.view,l.view==='player'?l.playerUid:'',l.view==='rep
 function trackNav(blocked){
   const cur=locOf();
   if(!blocked&&NAV.last&&!NAV.back&&locKey(NAV.last)!==locKey(cur)){NAV.stack.push(NAV.last);if(NAV.stack.length>30)NAV.stack.shift()}
+  if(!blocked&&['home','progress','log','profile','clubhouse'].includes(cur.view))NAV.stack=[]; // bottom-nav tabs are top level: no back arrow
   NAV.back=false;if(!blocked)NAV.last=cur;
   const b=document.getElementById('backBtn');if(b)b.hidden=blocked||!NAV.stack.length;
 }
@@ -1789,7 +1801,7 @@ function dualRing(pYou,pRef,val,tone,label){
 const RING_SCALE={fir:v=>v,gir:v=>100*v/18,ud:v=>v,putts:v=>100*v/45};
 const RING_TOL={fir:6,gir:1.2,ud:8,putts:1.2};
 function ringTone(k,v,ref,lower){if(v==null||ref==null)return '';const d=lower?ref-v:v-ref;return d>=0?'good':d<=-RING_TOL[k]?'bad':''}
-function ringDelta(k,v,ref,lower,dp,u){if(v==null||ref==null)return '';const d=v-ref,t=ringTone(k,v,ref,lower);const word=lower?(d>0?'more':'fewer'):(d>0?'above':'below');return `<span class="rdelta ${t}">${Math.abs(d)<0.05?'On par':`${fmt(Math.abs(d),dp)}${u} ${word}`}</span>`}
+function ringDelta(k,v,ref,lower,dp,u){if(v==null||ref==null)return '';const st=Math.pow(10,-(dp||0)),rr=x=>Math.round(x/st)*st;const d=rr(v)-rr(ref),t=ringTone(k,v,ref,lower);const word=lower?(d>0?'more':'fewer'):(d>0?'above':'below');return `<span class="rdelta ${t}">${Math.abs(d)<st/2?'Even':`${fmt(Math.abs(d),dp)}${u} ${word}`}</span>`}
 function ringKey(refLabel){return `<p class="ringkey"><span><i class="k-you"></i>You</span><span><i class="k-ref"></i>${refLabel}</span></p>`}
 function ringSvg(pct,val,good){
   const r=42,C=2*Math.PI*r,p=clamp(pct||0,0,100)/100;
@@ -1816,6 +1828,7 @@ function lineChart(points,opts){
   </svg>`;
 }
 const shortDate=d=>{const t=new Date(String(d)+'T12:00:00');return isNaN(t)?String(d):t.toLocaleDateString('en-US',{month:'short',day:'numeric'})};
+const longDate=d=>{const t=new Date(String(d)+'T12:00:00');return isNaN(t)?String(d||''):t.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
 function viewHome(c){
   if(!S.ready) return `<p class="muted">Loading your rounds…</p>`;
   const hcNum=c.index!=null?fmt(c.index,1):'<small class="hc-none">No index yet</small>';
@@ -1914,7 +1927,7 @@ function viewHome(c){
 }
 function roundRow(r){
   const a=agg([r]),n=a.holes,tp=a.score-a.par;
-  return `<button class="list-row" data-act="openReport" data-id="${esc(r.id)}"><span><b>${esc(r.course||'Round')}</b> ${r.example?'<span class="tag">Sample</span>':''}<br><span class="small muted">${esc(r.date||'')} · ${n} holes · ${esc(r.source==='photo'?'Scorecard photo':r.source==='text'?'Quick entry':'Live scorecard')}</span></span><span class="num rr-score"><span style="font-size:1.5rem;font-weight:500">${a.score||'—'}</span>${n&&n<18&&a.score?`<span class="rr18" title="18-hole equivalent, used for your stats">(${Math.round(a.score*18/n)} for 18)</span>`:''}</span></button>`;
+  return `<button class="list-row" data-act="openReport" data-id="${esc(r.id)}"><span><b>${esc(r.course||'Round')}</b> ${r.example?'<span class="tag">Sample</span>':''}<br><span class="small muted">${esc(longDate(r.date))} · ${n} holes · ${esc(r.source==='photo'?'Scorecard photo':r.source==='text'?'Quick entry':'Live scorecard')}</span></span><span class="num rr-score"><span style="font-size:1.5rem;font-weight:500">${a.score||'—'}</span>${n&&n<18&&a.score?`<span class="rr18" title="18-hole equivalent, used for your stats">(${Math.round(a.score*18/n)} for 18)</span>`:''}</span></button>`;
 }
 const DRILLS=[['scoring','Scoring'],['driving','Driving'],['approach','Approach'],['short','Short game'],['putting','Putting']];
 function dtabSel(k){const bs=document.querySelectorAll('#drill [data-act="drill"]');bs.forEach(b=>b.setAttribute('aria-selected',b.dataset.drill===k));const b=[...bs].find(x=>x.dataset.drill===k);const bar=b&&b.parentElement;if(bar&&bar.scrollWidth>bar.clientWidth){const l=b.offsetLeft-bar.offsetLeft-(bar.clientWidth-b.offsetWidth)/2;bar.scrollTo({left:Math.max(0,l),behavior:'smooth'})}}
@@ -1943,7 +1956,7 @@ function drillPanel(c){
   const you=c.you,b=c.b,goal=S.profile.goal&&S.profile.goal.index!=null?Number(S.profile.goal.index):Math.max(0,c.hc-5);
   const g=bench(goal); const d0=S.drill||'scoring';
   const pane=d=>{
-  const row=(lbl,y,bb,gg,dp=1,suf='')=>{const lw=/^(To par|Doubles|Penalty|Putts|Three-putts)/.test(lbl);const tn=y==null||bb==null?'':(lw?y<=bb:y>=bb)?'var(--volt)':'var(--loss)';const pl=lbl.startsWith('To par')&&y>0?'+':'';return `<tr><td>${lbl}</td><td class="num"><b${tn?` style="color:${tn}"`:''}>${y==null?'—':pl+fmt(y,dp)+suf}</b></td><td>${fmt(bb,dp)}${suf}</td><td>${fmt(gg,dp)}${suf}</td></tr>`};
+  const row=(lbl,y,bb,gg,dp=1,suf='')=>{const lw=/^(To par|Doubles|Penalty|Putts|Three-putts)/.test(lbl);const tn=y==null||bb==null?'':(lw?y<=bb:y>=bb)?'var(--volt)':'var(--loss)';const tp=lbl.startsWith('To par'),pl=v=>tp&&v>0?'+':'';return `<tr><td>${lbl}</td><td class="num"><b${tn?` style="color:${tn}"`:''}>${y==null?'—':pl(y)+fmt(y,dp)+suf}</b></td><td>${bb==null?'—':pl(bb)+fmt(bb,dp)+suf}</td><td>${gg==null?'—':pl(gg)+fmt(gg,dp)+suf}</td></tr>`};
   let rows='',note='',tr='';
   if(d==='scoring'){rows=row('To par, per 18',you.toPar,b.toPar,g.toPar)+row('Doubles or worse',you.dbl,b.dbl,g.dbl)+row('Birdies or better',you.bird,null,null)+row('Par 3 average',you.p3,null,null,2)+row('Par 4 average',you.p4,null,null,2)+row('Par 5 average',you.p5,null,null,2);
     note='Blow-up holes are usually the fastest strokes to save. When in trouble, take your medicine and get back in play.';tr=spark(trend(c,'toPar'),true)}
@@ -2321,13 +2334,13 @@ function viewReport(c){
   const vsAvg=avgO!=null&&p.score!=null?avgO-p.score:null;
   const lev=leverage(p,bench(c.hc)).filter(x=>x.gap>0.3)[0];
   const hi=[];
-  if(vsAvg!=null)hi.push(['vs your average',`${vsAvg>=0?'▲':'▼'} ${fmt(Math.abs(vsAvg),1)}`,vsAvg>=0.05?'strokes better than your recent average'+(a.holes===9?' (per 18)':''):vsAvg<=-0.05?'strokes above your recent average'+(a.holes===9?' (per 18)':''):'Right on your average',vsAvg>=0?'good':'bad']);
+  if(vsAvg!=null)hi.push(['vs your average',`${vsAvg>=0?'−':'+'}${fmt(Math.abs(vsAvg),1)}`,vsAvg>=0.05?'strokes better than your recent average'+(a.holes===9?' (per 18)':''):vsAvg<=-0.05?'strokes above your recent average'+(a.holes===9?' (per 18)':''):'Right on your average',vsAvg>=0?'good':'bad']);
   if(bestH&&bestH.d<=0)hi.push(['Best hole',`Hole ${hn(bestH.i)}`,`${names[bestH.d]||''} ${bestH.h.score} on a par ${bestH.h.par}`,'good']);
   if(streak>=3)hi.push(['Best stretch',`${streak} holes`,'in a row at par or better','good']);
   if(worstH&&worstH.d>=2)hi.push(['Toughest hole',`Hole ${hn(worstH.i)}`,`${names[worstH.d]||('+'+worstH.d)} ${worstH.h.score} on a par ${worstH.h.par}`,'bad']);
   if(lev)hi.push(['Where strokes went',lev.area,`About ${fmt(lev.gap,1)} strokes vs your level. ${lev.detail}`,'bad']);
   return `<section class="recap">
-    <span class="kicker">${esc(r.date)} · ${esc(r.source==='photo'?'Scorecard photo':r.source==='text'?'Quick entry':'Live scorecard')}${r.estimated?' · Estimated':''}${r.example?' · Sample':''}${r.tees?' · '+esc(r.tees):''}</span>
+    <span class="kicker">${esc(longDate(r.date))} · ${esc(r.source==='photo'?'Scorecard photo':r.source==='text'?'Quick entry':'Live scorecard')}${r.estimated?' · Estimated':''}${r.example?' · Sample':''}${r.tees?' · '+esc(r.tees):''}</span>
     <h2>${esc(r.course)}</h2>
     <div class="recap-score"><span class="rs-num">${a.score}</span><span class="rs-par ${tp<0?'u':tp===0?'e':''}">${tp===0?'E':(tp>0?'+':'')+tp}</span><span class="small muted">${a.holes} holes</span></div>
   </section>
@@ -2335,9 +2348,10 @@ function viewReport(c){
     ${nb.map(b=>`<div class="unlock-row">${achCard({id:b.id,name:b.name,desc:b.desc,tier:b.tier})}${socialOk()?`<button class="btn small primary" data-act="shareBadge" data-id="${esc(b.id)}" data-tier="${b.tier}">Share to Clubhouse</button>`:''}</div>`).join('')}</section>`:''}
   ${hi.length?`<section class="hilites">${hi.slice(0,4).map(([k,v,d,tone])=>`<div class="hl ${tone}"><span class="lbl">${k}</span><b>${esc(v)}</b><span class="small muted">${esc(d)}</span></div>`).join('')}</section>`:''}
   <section class="card">
-    <div class="grid3">${[['Putts',a.puttHoles?a.putts:'—'],['Greens',a.girHoles?`${a.gir}/${a.girHoles}`:'—'],['Fairways',a.firOpp?`${a.fir}/${a.firOpp}`:'—'],['3-putts',a.puttHoles?a.tp:'—'],['Doubles+',hs.length?a.dbl:'—'],['Birdies',hs.length?a.bird+a.eag:'—']].map(t=>`<div class="tile"><span class="lbl">${t[0]}</span><span class="val">${t[1]}</span></div>`).join('')}</div>
+    <div class="grid3">${[['Putts',a.puttHoles?a.putts:'—'],['Greens',a.girHoles?`${a.gir}/${a.girHoles}`:'—'],['Fairways',a.firOpp?`${a.fir}/${a.firOpp}`:'—'],['3-putts',a.tpHoles?a.tp:'—'],['Doubles+',hs.length?a.dbl:'—'],['Birdies',hs.length?a.bird+a.eag:'—']].map(t=>`<div class="tile"><span class="lbl">${t[0]}</span><span class="val">${t[1]}</span></div>`).join('')}</div>
     ${S.sharePrompt===r.id&&socialOk()?`<div class="shareask"><div><b>Share this round to The Clubhouse?</b><span class="small muted">Your crew sees the score${nb.length?' and what you unlocked':''}.</span></div><div class="row"><button class="btn primary small" data-act="shareRoundPost">Share</button><button class="btn small ghost" data-act="skipShare">Not this one</button></div></div>`:''}
     ${hs.length?nine(0,9)+nine(9,18):''}
+    ${hs.length?`<p class="small muted" style="margin:0">FW/GIR: a dot before the slash is a fairway hit, a dot after it is a green in regulation. Circles are birdies, squares are bogeys, double squares are doubles or worse.</p>`:''}
     <div class="row">${hs.length?`<button class="btn primary" data-act="cardImg">Share scorecard</button>`:''}<button class="btn" data-act="nav" data-view="home">See my stats</button></div>
   </section>
   <section class="card">${confirm?`<p><b>Delete this round?</b> This removes it from your stats and handicap.</p><div class="row"><button class="btn danger" data-act="delYes">Delete round</button><button class="btn" data-act="delNo">Keep it</button></div>`:`<button class="btn ghost danger" data-act="delAsk">Delete round</button>`}</section>`;
@@ -2463,6 +2477,7 @@ function monthTargets(c,aim){
    ['putts','Putts',1,true,'',d=>`${d} fewer putts`,['Make everything inside 4 feet and lag long putts into a 3-foot circle.','Track your make rate from 6 to 10 feet and own your speed from 40 feet.'][aim<8?1:0]],
    ['tp','Three-putts',1,true,'',d=>`${d} fewer 3-putts`,['On long putts, think speed first. Get it close, then tap in.','Hit speed drills from 40 to 60 feet until you leave every one inside 3 feet.'][aim<8?1:0]],
    ['gir','Greens hit',1,false,'',d=>`${d} more green${d==='1.0'?'':'s'}`,['Aim at the middle of the green and take one more club.','Dial in exact wedge numbers and aim by your dispersion, not the pin.'][aim<8?1:0]],
+   ['ud','Par saves',0,false,'%',d=>`${d}% more par saves`,['After a missed green, pick the simplest shot: putt it when you can, chip low when you can\'t.','Practice the lies that cost you most and pick the landing spot before the club.'][aim<8?1:0]],
    ['fir','Fairways',0,false,'%',d=>`${d}% more fairways`,['On tight holes, hit the club you can keep in play.','Own one shape off the tee and play it on every tight hole.'][aim<8?1:0]],
    ['dbl','Doubles or worse',1,true,'',d=>`${d} fewer doubles`,['From trouble, punch out to the fairway and play for bogey.','Stop short-siding yourself. Aim where your whole miss pattern is safe.'][aim<8?1:0]],
    ['toPar','Score',1,true,'',d=>`${d} strokes lower`,['This comes from the stats above. Fix those and the score follows.','Turn par 5s and short approaches into birdie chances.'][aim<8?1:0]]];
@@ -2522,7 +2537,7 @@ function viewProgress(c){
       <div class="lose-sum"><b class="mono">~${fmt(items.reduce((t,x)=>t+x.gap,0),1)}</b><span>strokes a round left on the table in these ${items.length} area${items.length===1?'':'s'}</span></div>
       <div class="plan">${items.map((x,i)=>`<article class="planitem"><div class="planno mono">${i+1}</div><div class="planbody">
         <div class="row between" style="align-items:baseline"><h4>${esc(x.title)}</h4><span class="pill bad mono">~${fmt(x.gap,1)} strokes</span></div>
-        <p class="small muted">${esc(x.measure)}: you're at <b class="mono" style="color:var(--ivory)">${fmt(x.t[0],x.t[3])}${esc(x.t[2])}</b>, ${anA} ${aimTxt} averages <b class="mono" style="color:var(--volt)">${fmt(x.t[1],x.t[3])}${esc(x.t[2])}</b>.</p>
+        <p class="small muted">${esc(x.measure)}: you're at <b class="mono" style="color:var(--ivory)">${fmt(x.t[0],x.t[3])}${esc(x.t[2])}</b>, ${anA} ${aimTxt} ${x.key==='putting'?'hitting your number of greens averages':'averages'} <b class="mono" style="color:var(--volt)">${fmt(x.t[1],x.t[3])}${esc(x.t[2])}</b>.</p>
         <p class="small"><span class="kicker" style="color:var(--volt)">On the course</span> ${esc(x.strategy)}</p></div></article>`).join('')}</div></section>
       <section class="sect panel">${(()=>{const pb=c.pb;if(!pb||pb.locked||!pb.builds.length)return `<div class="sect-head"><h3>Your work orders</h3><span class="small muted">Drills picked to fix the leaks above</span></div>`;const bs=pb.builds.slice(0,3);const id=buildIdentity(bs);const nm=bareBuild(bs.length>1?id.name:bs[0].name);
         return `<div class="pp-head"><div class="bc-ic">${[bs[1],bs[0],bs[2]].filter(Boolean).map(x=>hexBuild(x,x===bs[0]?46:34)).join('')}</div><div><h3>Your ${esc(nm)} work orders</h3><p>${esc(BUILD_COACH[bs[0].code]||'')} Each work order fixes a leak above.</p></div></div>`})()}
@@ -2720,7 +2735,7 @@ async function drawScorecard(r){
   x.fillStyle='#0D0F0F';x.fillRect(0,0,W,H);{const g=x.createRadialGradient(180,120,0,180,120,800);g.addColorStop(0,'rgba(30,120,70,.35)');g.addColorStop(1,'rgba(30,120,70,0)');x.fillStyle=g;x.fillRect(0,0,W,H)}
   x.fillStyle=G;x.fillRect(0,0,W,10);
   x.fillStyle=IV;x.font='700 34px "Sora", sans-serif';x.fillText('BLUPRINT',P,84);const bw=x.measureText('BLUPRINT').width;x.fillStyle=G;x.fillText('GOLF',P+bw,84);
-  x.fillStyle=SG;x.font='600 26px "Inter", sans-serif';x.textAlign='right';x.fillText(`${r.date}${r.tees?' · '+r.tees+' tees':''}${r.rating?` · ${r.rating}/${r.slope}`:''}`,W-P,84);x.textAlign='left';
+  x.fillStyle=SG;x.font='600 26px "Inter", sans-serif';x.textAlign='right';x.fillText(`${longDate(r.date)}${r.tees?' · '+r.tees+' tees':''}${r.rating?` · ${r.rating}/${r.slope}`:''}`,W-P,84);x.textAlign='left';
   x.fillStyle=IV;x.font='700 64px "Sora", sans-serif';wrap(x,r.course||'Round',P,180,W-2*P-300,68);
   x.font='600 220px "Barlow Condensed", "JetBrains Mono", sans-serif';x.textAlign='right';x.fillText(String(a.score),W-P,330);
   x.font='600 64px "Barlow Condensed", "JetBrains Mono", sans-serif';x.fillStyle=tp<0?G:tp===0?IV:RED;x.fillText(tp===0?'E':(tp>0?'+':'')+tp,W-P,410);x.textAlign='left';
@@ -2912,7 +2927,7 @@ async function shareStory(builds){
   const id=buildIdentity(bs);const nm=id.builds.length>1?id.name:id.builds[0].name;
   let blob=S.storyFor===nm&&S.storyBlob;
   if(blob){const file=new File([blob],'my-bluprint.png',{type:'image/png'});
-    try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'My BluPrint',text:"What's your BluPrint? bluprintgolf.com"});return}}catch(e){if(e&&e.name==='AbortError')return}}
+    try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(e){if(e&&e.name==='AbortError')return}}
   await openBluprintImage(bs);
 }
 async function openBluprintImage(builds){
@@ -2926,7 +2941,7 @@ async function openScorecardImage(){
 }
 async function sendScorecard(){
   const c=S.cardImg;if(!c)return;const file=new File([c.blob],c.name,{type:c.type||'image/jpeg'});
-  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:c.kind==='bp'?'My BluPrint':'My scorecard'});return}}catch(e){if(e&&e.name==='AbortError')return}
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(e){if(e&&e.name==='AbortError')return}
   if(dl){try{await dl.save({filename:c.name,data:c.blob});toast(c.kind==='bp'?'Saved. Post it from your photos.':'Scorecard saved. Text it from your photos or files.')}catch(e){if(e&&e.code!=='declined')toast('Could not save the image here.')}}
   else toast('Press and hold the image to save or share it.');
 }
@@ -2939,8 +2954,8 @@ function miniCard(card){if(!card||!card.h||!card.h.length)return '';const st=car
 
 async function shareRound(){
   const r=S.rounds.find(x=>x.id===S.report)||S.reportRound;const a=agg([r]);const tp=a.score-a.par;const nb=S.newBadges||[];
-  const blob=await drawCard({eyebrow:`${r.date} · ${a.holes} holes`,title:r.course,big:a.score,bigNote:`${tp>0?'+':''}${tp} TO PAR`,
-    stats:[['Putts',a.puttHoles?a.putts:'—'],['Greens',a.girHoles?a.gir:'—'],['Fairways',a.firOpp?`${a.fir}/${a.firOpp}`:'—'],['3-putts',a.puttHoles?a.tp:'—'],['Birdies',a.bird+a.eag],['Doubles+',a.dbl]],
+  const blob=await drawCard({eyebrow:`${longDate(r.date)} · ${a.holes} holes`,title:r.course,big:a.score,bigNote:`${tp>0?'+':''}${tp} TO PAR`,
+    stats:[['Putts',a.puttHoles?a.putts:'—'],['Greens',a.girHoles?a.gir:'—'],['Fairways',a.firOpp?`${a.fir}/${a.firOpp}`:'—'],['3-putts',a.tpHoles?a.tp:'—'],['Birdies',a.bird+a.eag],['Doubles+',a.dbl]],
     footer:nb.length?`UNLOCKED: ${nb.map(b=>b.name.toUpperCase()).join(' · ')}`:''});
   saveBlob(blob,`round-${r.date}.png`);
 }
