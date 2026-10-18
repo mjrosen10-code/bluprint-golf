@@ -886,7 +886,7 @@ button.idc-hc,button.idc-st{background:none;border:0;color:inherit;font:inherit;
 button.idc-hc:hover,button.idc-st:hover{background:rgba(255,255,255,.04)}
 .idc-hc span i,.idc-st span i{font-style:normal;opacity:.7}
 .idc-st{display:flex;align-items:center;gap:10px;text-align:left}
-.idc-ring{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;border:2.5px solid var(--stc);color:var(--stc);font-family:var(--cond);font-weight:600;font-size:1.35rem;box-shadow:0 0 14px -4px var(--stc)}
+.idc-ring svg{width:52%;height:52%}.hc-lv svg{width:15px;height:15px}.idc-ring{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;border:2.5px solid var(--stc);color:var(--stc);font-family:var(--cond);font-weight:600;font-size:1.35rem;box-shadow:0 0 14px -4px var(--stc)}
 .idc-stt b{display:block;font-size:.98rem;color:var(--stc);white-space:nowrap}.idc-stt span{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--sage);font-weight:700}
 .idc-exp{align-self:stretch;margin:-4px 0 14px;padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);display:flex;flex-direction:column;align-items:center;gap:10px;animation:rise .25s ease both}
 .stpanel{align-self:stretch;text-align:left;display:flex;flex-direction:column;gap:10px}
@@ -1586,6 +1586,7 @@ function badgeTier(b,rs,ctx){
 
 // Golfer status ladder and gated achievements
 const STATUS=[['Rookie',0],['Weekend Warrior',15],['Club Regular',35],['Low-Card Contender',60],['Club Champion',90],['Legend',125]];
+const STICON=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m6 13 6-5 6 5"/><path d="m6 18 6-5 6 5"/></svg>`;
 function statusOf(lvl){let i=0;STATUS.forEach((x,k)=>{if(lvl>=x[1])i=k});return {i,name:STATUS[i][0],next:STATUS[i+1]||null}}
 function badgeState(rs,ctx){
   const open=BADGES.filter(b=>!b.gate&&b.id!=='grandslam'&&b.id!=='halloffame');
@@ -1835,7 +1836,7 @@ function patchNode(x,y){
 function render(){S._popHtml="";
   const c=ctx();
   {const sti=myStatusI();let lv=0;try{lv=badgeState(S.rounds,{index:c.index!=null?c.index:c.est,diffs:c.diffs,goal:S.profile.goal}).lvl}catch(e){}
-  document.getElementById('hcChip').innerHTML=(S.profile.username?`<span class="hc-lv" style="--stc:${STC[sti]}" title="${esc(STATUS[sti][0])}">${lv}</span><span class="hc-u">@${esc(S.profile.username)}</span>`:'')+`<span class="hc-n">${c.index!=null?(c.verified?VCHECK+' ':'')+hcTxt(c.index,1):c.estQ!=null?'~'+hcTxt(c.estQ,1):(S.profile.username?'—':'Set handicap')}</span>`;try{updateNavBadge()}catch(e){}}
+  document.getElementById('hcChip').innerHTML=(S.profile.username?`<span class="hc-lv" style="--stc:${STC[sti]}" title="${esc(STATUS[sti][0])}" aria-label="Status: ${esc(STATUS[sti][0])}">${STICON}</span><span class="hc-u">@${esc(S.profile.username)}</span>`:'')+`<span class="hc-n">${c.index!=null?(c.verified?VCHECK+' ':'')+hcTxt(c.index,1):c.estQ!=null?'~'+hcTxt(c.estQ,1):(S.profile.username?'—':'Set handicap')}</span>`;try{updateNavBadge()}catch(e){}}
   const root=document.querySelector('[data-view-root]')||null;
   const navKey={caddie:'profile',findfriends:'clubhouse',player:'clubhouse',thread:'profile',inbox:'profile',notifs:'profile',gchat:'groups',setup:'log',live:'log',photo:'log',text:'log',report:'home'}[S.view]||S.view;
   document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===navKey?'page':'false'));{const hc=document.getElementById('hcChip');if(hc)hc.setAttribute('aria-current',navKey==='profile'?'page':'false')}
@@ -2809,10 +2810,10 @@ function viewProfile(c){
   const av=(sz)=>S.profile.avatar?`<img class="av st${myStatusI()}" src="${esc(S.profile.avatar)}" alt="Your profile photo" style="width:${sz}px;height:${sz}px;object-fit:cover">`:`<span class="av st${myStatusI()}" style="width:${sz}px;height:${sz}px;background:var(--forest);font-size:${sz/40}rem">${esc((S.profile.username||'?').slice(0,1).toUpperCase())}</span>`;
   const lvlName=ST.name;const stFrom=STATUS[ST.i][1],stTo=ST.next?ST.next[1]:maxLvl;const stPct=ST.next?100*(lvl-stFrom)/(stTo-stFrom):100;
   const ident=buildIdentity(c.pb.builds);
-  const stPanel=`<div class="pop-st" style="--stc:${STC[ST.i]}"><div class="ps-top"><div class="ps-ring">${lvl}<span>tiers</span></div><span class="eyebrow">Golfer status</span><h3>${esc(lvlName)}</h3><span class="small muted">${ST.next?`${stTo-lvl} more achievement tiers to ${ST.next[0]}`:'Top status reached'}</span>
+  const stPanel=`<div class="pop-st" style="--stc:${STC[ST.i]}"><div class="ps-top"><div class="ps-ring">${lvl}<span>level</span></div><span class="eyebrow">Golfer status</span><h3>${esc(lvlName)}</h3><span class="small muted">${ST.next?`${stTo-lvl} more level${stTo-lvl===1?'':'s'} to ${ST.next[0]}`:'Top status reached'}</span>
       ${ST.next?`<div class="ps-bar"><i style="width:${stPct}%"></i></div>`:''}</div>
-    <div class="ps-tl">${STATUS.map((x,i)=>{const n=BADGES.filter(b=>b.gate===i).length;const st=i<ST.i?'done':i===ST.i?'cur':'next';return `<div class="ps-step ${st}" style="--c:${STC[i]}"><span class="ps-dot">${i<ST.i?'✓':i===ST.i?'●':''}</span><div><b>${x[0]}</b><span>${i===0?'Where everyone starts':x[1]+' achievement tiers'}${n?` · unlocks ${n} new achievement${n===1?'':'s'}`:''}</span></div>${i===ST.i?'<em>You</em>':''}</div>`}).join('')}</div>
-    <p class="small muted" style="margin:0">Earn tiers by leveling up achievements. Every bronze, silver, gold, platinum and legend tier counts.</p></div>`;
+    <div class="ps-tl">${STATUS.map((x,i)=>{const n=BADGES.filter(b=>b.gate===i).length;const st=i<ST.i?'done':i===ST.i?'cur':'next';return `<div class="ps-step ${st}" style="--c:${STC[i]}"><span class="ps-dot">${i<ST.i?'✓':i===ST.i?'●':''}</span><div><b>${x[0]}</b><span>${i===0?'Where everyone starts':'Level '+x[1]}${n?` · unlocks ${n} new achievement${n===1?'':'s'}`:''}</span></div>${i===ST.i?'<em>You</em>':''}</div>`}).join('')}</div>
+    <p class="small muted" style="margin:0">Every achievement tier you earn (bronze, silver, gold, platinum, legend) adds a level.</p></div>`;
   const buildBlock=c.pb.locked?`<div class="buildcard"><div><b>BluPrint locked</b><span class="small muted">Log 3 rounds to reveal your BluPrint. It's based on what you do better than golfers at your handicap.</span></div></div>`:c.pb.builds.length?`<div class="builds">${c.pb.builds.map((bd,i)=>`<div class="buildcard ${i===0?'primary':''}">${hexBuild(bd,40)}<div><b>${esc(bd.name)}</b><span class="small muted">${esc(bd.desc)}</span></div></div>`).join('')}</div>`:`<div class="buildcard">${hexBuild({code:'AR'},40)}<div><b>All-Rounder</b><span class="small muted">No standout strength yet. Keep logging, and your BluPrint will sharpen.</span></div></div>`;
   const vOK=c.ver.index!=null,sOK=c.self!=null,useSelf=!c.verified&&sOK;
   const hcPick=`<div class="hcpick" role="group" aria-label="Handicap to show">
@@ -2844,7 +2845,7 @@ function viewProfile(c){
     <div class="psub"><label class="row" style="gap:8px;font-weight:600"><input type="checkbox" id="pf_share" ${S.profile.shareRounds!==false?'checked':''}> Ask to share each round to The Clubhouse</label>
       <div class="row"><button class="btn primary" data-act="saveAbout">Save profile</button><button class="btn ghost" data-act="profCancel">Cancel</button></div></div>`:''}
   </section>
-  <section class="sect panel"><div class="sect-head"><h3>Achievements</h3><span class="small muted">${bt.filter(x=>x.t.tier).length} of ${bt.length} started · ${lvl} tiers</span></div>
+  <section class="sect panel"><div class="sect-head"><h3>Achievements</h3><span class="small" style="text-align:right"><b style="color:${STC[ST.i]}">${esc(lvlName)}</b> <span class="muted">· Level ${lvl}</span></span></div>
     ${(()=>{const prog=x=>{if(x.locked||x.t.tier>=5)return 0;const nx=x.b.tiers[x.t.tier],pv=x.t.tier?x.b.tiers[x.t.tier-1]:0,v=x.t.v;if(v==null||nx==null)return 0;const f=x.b.lowerBetter?(x.t.tier?(pv-v)/((pv-nx)||1):0):(v-pv)/((nx-pv)||1);return Math.max(0,Math.min(1,f))};
       const active=bt.filter(x=>!x.locked&&(x.t.tier>0||prog(x)>0)).sort((a,c)=>(c.t.tier-a.t.tier)||(prog(c)-prog(a)));
       const top=active.slice(0,6),rest=bt.filter(x=>!top.includes(x)).sort((a,c)=>(a.locked-c.locked)||(c.t.tier-a.t.tier)||((a.b.gate||0)-(c.b.gate||0)));
@@ -3552,7 +3553,7 @@ function buildCoach(c){if(!c.pb||c.pb.locked||!c.pb.builds.length)return '';cons
     <div class="bc-row"><div class="bc-ic">${bs.map((x,i)=>hexBuild(x,i?34:44)).join('')}</div><p>${esc(BUILD_COACH[p.code]||'')}</p></div></section>`}
 function idHc(v,ver,act,est){return `<${act?'button':'div'} class="idc-hc${act?' tap':''}" ${act?`data-act="pexp" data-k="hc" aria-expanded="${S.pexp==='hc'}"`:''}><b>${v!=null?(est?'~':ver?VCHECK:'')+hcTxt(v,1):'—'}</b><span>${v==null?'Handicap':est?'Estimated':ver?'Verified':'Self-rep.'}${act?' <i>▾</i>':''}</span></${act?'button':'div'}>`}
 const STC=['#9AA4A1','#C77A45','#C9D3D8','#E8C15A','#A9CBEA','#2FD073'];
-function idStatus(i,lvl,act){const c=STC[i]||STC[0];return `<${act?'button':'div'} class="idc-st${act?' tap':''}" ${act?`data-act="pexp" data-k="st" aria-expanded="${S.pexp==='st'}"`:''} style="--stc:${c}"><span class="idc-ring">${lvl}</span><span class="idc-stt"><b>${esc(STATUS[i][0])}</b><span>Status${act?' <i>▾</i>':''}</span></span></${act?'button':'div'}>`}
+function idStatus(i,lvl,act){const c=STC[i]||STC[0];return `<${act?'button':'div'} class="idc-st${act?' tap':''}" ${act?`data-act="pexp" data-k="st" aria-expanded="${S.pexp==='st'}"`:''} style="--stc:${c}"><span class="idc-ring">${STICON}</span><span class="idc-stt"><b>${esc(STATUS[i][0])}</b><span>Status${act?' <i>▾</i>':''}</span></span></${act?'button':'div'}>`}
 // The number that earned each spec, so a BluPrint is never a mystery
 function specEvidence(code,c){const y=c.you||{},b=c.b||{};const f=(v,d)=>fmt(v,d);
   switch(code){case 'FF':return y.fir!=null?`${f(y.fir,0)}% fairways vs ${f(b.fir,0)}% typical`:'';
