@@ -1846,9 +1846,10 @@ function trackNav(blocked){
 }
 function goBack(){
   if(S.view==='thread'&&SOC.thread){try{markRead(threadId(me,SOC.thread))}catch(e){}if(SOC.msgUnsub){SOC.msgUnsub();SOC.msgUnsub=null}}
+  const fromChat=S.view==='gchat';if(fromChat){closeGroupChat();SOC.ginfo=false}
   let prev=NAV.stack.pop();
   while(prev&&prev.view==='live'&&!S.draft)prev=NAV.stack.pop();
-  if(!prev)prev={view:'home'};
+  if(!prev)prev={view:fromChat?'groups':'home'};
   NAV.back=true;S.confirmDel=null;
   if(prev.view==='thread'&&prev.thread){openThread(prev.thread);return}
   if(prev.view==='gchat'&&prev.gchat){openGroupChat(prev.gchat);return}
@@ -3369,8 +3370,8 @@ function openGroupChat(gid){S.cardUid=null;SOC.group=gid;SOC.gchat=gid;SOC.gmsgs
 function closeGroupChat(){if(SOC.gmUnsub){SOC.gmUnsub();SOC.gmUnsub=null}SOC.gchat=null}
 function viewGroupChat(c){const gid=SOC.gchat;const g=myGroups().find(x=>x.id===gid);if(!g){S.view='groups';return viewGroups(c)}
   const x=SOC.gdocs[gid]||{};const mem=groupMembers(gid);const own=groupOwner(gid)===me;let prev='';
-  return `<div class="row between" style="flex-wrap:nowrap"><button class="btn ghost" data-act="gchatBack" style="white-space:nowrap;flex:0 0 auto">◀ Groups</button>
-    <button class="plain row ghead" data-act="ginfo" aria-expanded="${!!SOC.ginfo}" style="gap:10px;flex-wrap:nowrap;min-width:0;text-align:left">${groupAvatar(gid,36)}<span style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.name||g.name)}</b><span class="small muted">${mem.length} golfer${mem.length===1?'':'s'} · ${SOC.ginfo?'hide info':'group info'} ›</span></span></button><button class="btn small primary gadd" data-act="grpInvite" aria-label="Add people to ${esc(x.name||g.name)}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.6 6-5.6 1.4 0 2.6.4 3.6 1"/><path d="M18 13v7M14.5 16.5h7"/></svg>Add</button></div>
+  return `<div class="row between" style="flex-wrap:nowrap;gap:12px">
+    <button class="plain row ghead" data-act="ginfo" aria-expanded="${!!SOC.ginfo}" style="gap:10px;flex-wrap:nowrap;min-width:0;text-align:left">${groupAvatar(gid,36)}<span style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.name||g.name)}</b><span class="small muted" style="white-space:nowrap">${mem.length} golfer${mem.length===1?'':'s'} · ${SOC.ginfo?'hide info':'group info'} ›</span></span></button><button class="btn small primary gadd" data-act="grpInvite" aria-label="Add people to ${esc(x.name||g.name)}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.6 6-5.6 1.4 0 2.6.4 3.6 1"/><path d="M18 13v7M14.5 16.5h7"/></svg>Add</button></div>
   ${SOC.ginfo?groupInfo(gid):''}
   ${SOC.ginfo&&SOC.grecap?recapView():''}
   <section class="card"><div class="msgs gmsgs" id="gmsgs">${SOC.gmsgs&&SOC.gmsgs.length?SOC.gmsgs.map(m=>{const mine=m.from===me;const showWho=!mine&&m.from!==prev;prev=m.from;
@@ -3779,7 +3780,7 @@ function socialPop(){const k=SOC.pop;if(!k)return '';let body='';
   if(k==='new')body=`<div class="gp"><span class="eyebrow">New group</span><h3>Name your golf group</h3><p class="small muted">The regular foursome, the Saturday game, the work league. You can invite friends next.</p>
     <label class="f">Group name<input class="t" id="grp_name" maxlength="40" placeholder="e.g. Saturday Skins" value="${esc(SOC.grpName||'')}"></label><button class="btn primary block" data-act="grpCreate">Create group</button></div>`;
   if(k==='add'){const g=curGroup();const giq=SOC.giq||'';const fr=friendIds().filter(u=>!giq||nameScore(pname(u),giq)).sort((a,b)=>nameScore(pname(b),giq)-nameScore(pname(a),giq)||pname(a).localeCompare(pname(b)));body=`<div class="gp"><span class="eyebrow">Invite to group</span><h3>${esc(g?g.name:'Your group')}</h3>
-    ${friendIds().length>5?`<input class="t" id="gi_q" data-field="gi.q" value="${esc(giq)}" placeholder="Search your friends" autocomplete="off" autocapitalize="off" spellcheck="false">`:''}${fr.length?`<div class="addlist">${fr.map(u=>{const st=g?groupInvState(u,g.id):'none';return `<div class="addrow" style="cursor:default">${avatar(u,40)}<span class="pt-txt"><b>@${hlName(pname(u),giq)}</b></span>${st==='member'?'<span class="pill good">In group</span>':st==='pending'?'<span class="pill neutral">Invited</span>':`<button class="btn small primary" data-act="grpSend" data-uid="${esc(u)}">Invite</button>`}</div>`}).join('')}</div>`:`<p class="small muted">Groups are made of your friends. Add friends first: search a username in the Clubhouse and tap Add friend.</p>`}
+    ${friendIds().length>5?`<input class="t" id="gi_q" data-field="gi.q" value="${esc(giq)}" placeholder="Search your friends" autocomplete="off" autocapitalize="off" spellcheck="false">`:''}${fr.length?`<div class="addlist">${fr.map(u=>{const st=g?groupInvState(u,g.id):'none';return `<div class="addrow" style="cursor:default">${avatar(u,40)}<span class="pt-txt"><b>@${hlName(pname(u),giq)}</b></span>${st==='member'?'<span class="pill good">In group</span>':st==='pending'?'<span class="pill neutral">Invited</span>':`<button class="btn small primary" data-act="grpSend" data-uid="${esc(u)}">Invite</button>`}</div>`}).join('')}</div>`:`<p class="small muted">None of your BluPrint friends to add yet. <button class="plain link small" data-act="afOpen">Find a golfer by username</button></p>`}
     <div class="glink"><b>Not on BluPrint yet?</b><span class="small muted">Text them a link. When they sign up, they land in ${esc(g?g.name:'the group')}.</span><button class="btn block" data-act="grpLink">Text an invite link</button></div></div>`}
   return `<div class="pop-wrap" role="dialog"><div class="pop-back" data-act="spClose"></div><div class="pop"><div class="pop-grab"></div><button class="pop-x" data-act="spClose" aria-label="Close">✕</button>${body}</div></div>`}
 function viewClubhouse(c){
