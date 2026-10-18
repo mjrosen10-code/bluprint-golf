@@ -18,6 +18,7 @@ export default {
     const url = new URL(req.url);
     const p = url.pathname;
     try {
+      if (p.startsWith('/_blob/') && req.method === 'GET') return await blobRoute(env, p.slice(7));
       if (p.startsWith('/auth/') || p.startsWith('/api/')) {
         if (req.method !== 'GET' && !sameOrigin(req, url)) return json({ error: 'bad_origin' }, 403);
         if (p === '/auth/start' && req.method === 'POST') return await authStart(req, env);
@@ -31,7 +32,9 @@ export default {
         if (p === '/auth/password' && req.method === 'POST') return await setPasswordRoute(req, env, user);
         if (p === '/api/doc') return await docRoute(req, env, user, url);
         if (p === '/api/query' && req.method === 'POST') return await queryRoute(req, env, user);
+        if (p === '/api/batch' && req.method === 'POST') return await batchRoute(req, env, user);
         if (p === '/api/ai' && req.method === 'POST') return await aiRoute(req, env, user);
+        if (p === '/api/upload' && req.method === 'POST') return await uploadRoute(req, env, user);
         return json({ error: 'not_found' }, 404);
       }
       const res = await env.ASSETS.fetch(req);
@@ -225,6 +228,11 @@ async function deleteAccount(env, user) {
   const uid = user.id;
   await env.DB.batch([
     env.DB.prepare("DELETE FROM docs WHERE path LIKE ? OR path=? OR (path LIKE 'usernames/%' AND owner=?)").bind(`data/users/${uid}/%`, `players/${uid}`, uid),
+    // social footprint: own posts, follows, comments, likes, groups they own, requests and conversations they are part of
+    env.DB.prepare("DELETE FROM docs WHERE path LIKE ? OR path LIKE ? OR (owner=? AND (path LIKE 'comments/%' OR path LIKE 'reactions/%' OR path LIKE 'groups/%' OR path LIKE 'friendreqs/%'))").bind(`posts/${uid}/%`, `follows/${uid}/%`, uid),
+    env.DB.prepare("DELETE FROM docs WHERE path LIKE 'friendreqs/%' AND json_extract(data,'$.to')=?").bind(uid),
+    env.DB.prepare("DELETE FROM docs WHERE path LIKE 'dms/%' AND (path LIKE ? OR path LIKE ?)").bind(`dms/${uid}~%`, `dms/%~${uid}%`),
+    env.DB.prepare('DELETE FROM blobs WHERE owner=?').bind(uid),
     env.DB.prepare('DELETE FROM sessions WHERE user_id=?').bind(uid),
     env.DB.prepare('DELETE FROM ai_usage WHERE user_id=?').bind(uid),
     env.DB.prepare('DELETE FROM login_codes WHERE email=?').bind(user.email),
@@ -243,46 +251,145 @@ function parsePath(path, wantDoc) {
   if (wantDoc !== undefined && (segs.length % 2 === 0) !== wantDoc) return null;
   return segs;
 }
-function canRead(segs, uid) {
+// ---- access rules ----
+// Private: data/users/<uid>/... (owner only), friendreqs (sender + recipient), dms and their messages (members).
+// Shared with signed-in members: players, usernames, clubs, posts, comments, reactions, follows.
+const SHARED = ['usernames', 'players', 'clubs', 'posts', 'comments', 'reactions', 'follows', 'groups'];
+function canReadPath(segs, uid) {
   if (segs[0] === 'data') return segs[1] === 'users' && segs[2] === uid;
-  return ['usernames', 'players', 'clubs'].includes(segs[0]);
+  if (SHARED.includes(segs[0])) return true;
+  if (segs[0] === 'friendreqs' && segs.length <= 2) return true;   // row-level check below
+  if (segs[0] === 'dms') return segs.length <= 2 || uidInThread(segs[1], uid); // thread ids are "<uidA>~<uidB>"
+  return false;
 }
+function uidInThread(tid, uid) { return String(tid).split('~').includes(uid); }
+// Row-level read check for single documents.
+function canReadDoc(segs, uid, data) {
+  if (!canReadPath(segs, uid)) return false;
+  if (!data) return true;
+  if (segs[0] === 'friendreqs') return data.from === uid || data.to === uid;
+  if (segs[0] === 'dms' && segs.length === 2) return Array.isArray(data.members) && data.members.includes(uid);
+  return true;
+}
+// Anything under groups/<gid>/... (the group chat) is for current members only.
+async function isGroupMember(env, gid, uid) {
+  const row = await env.DB.prepare('SELECT data FROM docs WHERE path=?').bind('groups/' + gid).first();
+  const g = row ? JSON.parse(row.data) : null;
+  return !!(g && (g.owner === uid || (g.members || []).includes(uid)));
+}
+async function groupGate(env, segs, uid) { return segs[0] !== 'groups' || segs.length < 3 || await isGroupMember(env, segs[1], uid); }
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 // Returns null when allowed, else an error code.
-function writeRule(segs, uid, existing, data) {
-  if (segs[0] === 'data') return segs[1] === 'users' && segs[2] === uid ? null : 'not_granted';
-  if (segs[0] === 'players') return segs.length === 2 && segs[1] === uid ? null : 'not_granted';
-  if (segs[0] === 'usernames' && segs.length === 2) {
-    if (existing && existing.owner !== uid) return 'taken';
-    if (data && data.uid !== uid) return 'not_granted';
-    return null;
+async function writeRule(env, segs, uid, existing, data) {
+  const old = existing ? JSON.parse(existing.data) : null;
+  const mine = !existing || existing.owner === uid;
+  const n = segs.length;
+  switch (segs[0]) {
+    case 'data': return segs[1] === 'users' && segs[2] === uid ? null : 'not_granted';
+    case 'players': return n === 2 && segs[1] === uid ? null : 'not_granted';
+    case 'usernames':
+      if (n !== 2) return 'not_granted';
+      if (existing && existing.owner !== uid) return 'taken';
+      return data && data.uid !== uid ? 'not_granted' : null;
+    case 'clubs': return n === 2 && mine ? null : 'not_granted';
+    case 'posts':     // posts/<uid>/items/<id>
+      if (n !== 4 || segs[1] !== uid || segs[2] !== 'items') return 'not_granted';
+      return data && data.uid !== uid ? 'not_granted' : null;
+    case 'follows':   // follows/<uid>/items/<target>
+      return n === 4 && segs[1] === uid && segs[2] === 'items' ? null : 'not_granted';
+    case 'comments':
+    case 'reactions':
+      if (n !== 2 || !mine) return 'not_granted';
+      return data && data.uid !== uid ? 'not_granted' : null;
+    case 'friendreqs': {
+      if (n !== 2) return 'not_granted';
+      if (!existing) return data && data.from === uid && typeof data.to === 'string' && data.to !== uid ? null : 'not_granted';
+      if (old.from !== uid && old.to !== uid) return 'not_granted';
+      if (!data) return null;                                  // either side may withdraw or clear
+      if (data.from !== old.from || data.to !== old.to) return 'not_granted';
+      if (data.status !== old.status && old.to !== uid && !['cancelled', 'pending'].includes(data.status)) return 'not_granted'; // only the recipient accepts/declines; the sender may resend or cancel
+      return null;
+    }
+    case 'dms':
+      if (n === 2) {
+        if (!data) return old && old.members && old.members.includes(uid) ? null : 'not_granted';
+        const m = data.members;
+        if (!Array.isArray(m) || m.length !== 2 || !m.includes(uid) || [...m].sort().join('~') !== segs[1]) return 'not_granted';
+        if (old && !same([...old.members].sort(), [...m].sort())) return 'not_granted';
+        return null;
+      }
+      if (n === 4 && segs[2] === 'msgs' && uidInThread(segs[1], uid)) {
+        if (!data) return mine ? null : 'not_granted';
+        return data.from === uid && mine ? null : 'not_granted';
+      }
+      return 'not_granted';
+    case 'groups': {  // groups/<gid>: {name, owner, members[], photo, last}; chat at groups/<gid>/msgs/<id>
+      if (n === 4 && segs[2] === 'msgs') {
+        if (!(await isGroupMember(env, segs[1], uid))) return 'not_granted';
+        if (!data) return mine ? null : 'not_granted';
+        return data.from === uid && mine && typeof data.text === 'string' && data.text.length <= 1000 ? null : 'not_granted';
+      }
+      if (n !== 2) return 'not_granted';
+      if (!old) return data && data.owner === uid && Array.isArray(data.members) && same(data.members, [uid]) ? null : 'not_granted';
+      if (old.owner === uid) return !data || (data.owner === uid && Array.isArray(data.members) && data.members.includes(uid)) ? null : 'not_granted';
+      if (!data) return 'not_granted';
+      if (data.owner !== old.owner || data.name !== old.name || data.photo !== old.photo || !Array.isArray(data.members)) return 'not_granted';
+      // a member posting in the group chat updates the "last message" preview only
+      if ((old.members || []).includes(uid) && same(data.members, old.members) && data.last && data.last.from === uid) return null;
+      const was = new Set(old.members || []), now = new Set(data.members);
+      const added = [...now].filter(x => !was.has(x)), removed = [...was].filter(x => !now.has(x));
+      if (!added.length && removed.length === 1 && removed[0] === uid) return null;           // leaving
+      if (!removed.length && added.length === 1 && added[0] === uid) {                         // joining needs an invite
+        const inv = await env.DB.prepare('SELECT data FROM docs WHERE path=?').bind(`friendreqs/g~${segs[1]}~${uid}`).first();
+        const d = inv ? JSON.parse(inv.data) : null;
+        return d && d.to === uid && d.gid === segs[1] ? null : 'not_granted';
+      }
+      return 'not_granted';
+    }
+    default: return 'not_granted';
   }
-  if (segs[0] === 'clubs' && segs.length === 2) return existing && existing.owner !== uid ? 'not_granted' : null;
-  return 'not_granted';
+}
+async function readDoc(env, user, path) {
+  const segs = parsePath(path, true);
+  if (!segs) return { status: 400, body: { error: 'bad_path' } };
+  if (!canReadPath(segs, user.id) || !(await groupGate(env, segs, user.id))) return { status: 403, body: { error: 'not_granted', code: 'not_granted' } };
+  const row = await env.DB.prepare('SELECT data FROM docs WHERE path=?').bind(segs.join('/')).first();
+  const d = row ? JSON.parse(row.data) : null;
+  if (d && !canReadDoc(segs, user.id, d)) return { status: 403, body: { error: 'not_granted', code: 'not_granted' } };
+  return { status: 200, body: d ? { exists: true, data: d } : { exists: false } };
+}
+// Many live views in one request: [{t:'doc', path} | {t:'q', collection, where, orderBy, limit}]
+async function batchRoute(req, env, user) {
+  const b = await body(req, 256 * 1024);
+  const ops = Array.isArray(b.ops) ? b.ops.slice(0, 100) : [];
+  const out = [];
+  for (const op of ops) {
+    try {
+      const r = op && op.t === 'q' ? await runQuery(env, user, op) : await readDoc(env, user, op && op.path);
+      out.push(r.status === 200 ? { ok: true, ...r.body } : { ok: false, status: r.status, ...r.body });
+    } catch (e) { out.push({ ok: false, status: 500, error: 'failed' }); }
+  }
+  return json({ results: out });
 }
 async function docRoute(req, env, user, url) {
-  if (req.method === 'GET') {
-    const segs = parsePath(url.searchParams.get('path'), true);
-    if (!segs) return json({ error: 'bad_path' }, 400);
-    if (!canRead(segs, user.id)) return json({ error: 'not_granted', code: 'not_granted' }, 403);
-    const row = await env.DB.prepare('SELECT data FROM docs WHERE path=?').bind(segs.join('/')).first();
-    return json(row ? { exists: true, data: JSON.parse(row.data) } : { exists: false });
-  }
+  if (req.method === 'GET') { const r = await readDoc(env, user, url.searchParams.get('path')); return json(r.body, r.status); }
   const b = await body(req, MAX_DOC_BYTES + 4096);
   const segs = parsePath(b.path, true);
   if (!segs) return json({ error: 'bad_path' }, 400);
   const path = segs.join('/');
   const existing = await env.DB.prepare('SELECT data, owner FROM docs WHERE path=?').bind(path).first();
   if (req.method === 'DELETE' || b.op === 'delete') {
-    const err = writeRule(segs, user.id, existing, null);
+    const err = await writeRule(env, segs, user.id, existing, null);
     if (err) return json({ error: err, code: 'not_granted' }, 403);
     await env.DB.prepare('DELETE FROM docs WHERE path=?').bind(path).run();
+    if (segs[0] === 'groups' && segs.length === 2) await env.DB.prepare('DELETE FROM docs WHERE path LIKE ?').bind(path + '/%').run(); // deleting a group removes its chat
     return json({ ok: true });
   }
   if (req.method !== 'PUT' && req.method !== 'POST') return json({ error: 'method' }, 405);
   let data = b.data;
   if (!data || typeof data !== 'object' || Array.isArray(data)) return json({ error: 'bad_data' }, 400);
   if (b.op === 'update' && existing) data = { ...JSON.parse(existing.data), ...data };
-  const err = writeRule(segs, user.id, existing, data);
+  const err = await writeRule(env, segs, user.id, existing, data);
   if (err) return json({ error: err, code: err === 'taken' ? 'already_exists' : 'not_granted' }, 403);
   const text = JSON.stringify(data);
   if (text.length > MAX_DOC_BYTES) return json({ error: 'too_large', code: 'quota_exceeded' }, 413);
@@ -293,31 +400,70 @@ async function docRoute(req, env, user, url) {
 }
 function getField(o, f) { return String(f).split('.').reduce((x, k) => (x == null ? undefined : x[k]), o); }
 function cmp(a, b) { if (a === b) return 0; if (a === undefined || a === null) return -1; if (b === undefined || b === null) return 1; return a < b ? -1 : 1; }
+const FIELD = /^[A-Za-z0-9_]{1,40}(\.[A-Za-z0-9_]{1,40}){0,3}$/;
+const sqlVal = v => (typeof v === 'boolean' ? (v ? 1 : 0) : v);
 async function queryRoute(req, env, user) {
-  const q = await body(req, 64 * 1024);
+  const r = await runQuery(env, user, await body(req, 64 * 1024));
+  return json(r.body, r.status);
+}
+async function runQuery(env, user, q) {
   const segs = parsePath(q.collection, false);
-  if (!segs) return json({ error: 'bad_path' }, 400);
-  if (!canRead(segs, user.id)) return json({ error: 'not_granted', code: 'not_granted' }, 403);
-  const { results } = await env.DB.prepare('SELECT id, data FROM docs WHERE parent=? LIMIT 5000').bind(segs.join('/')).all();
-  let docs = results.map(r => ({ id: r.id, data: JSON.parse(r.data) }));
+  if (!segs) return { status: 400, body: { error: 'bad_path' } };
+  if (!canReadPath(segs, user.id) || !(await groupGate(env, segs, user.id))) return { status: 403, body: { error: 'not_granted', code: 'not_granted' } };
+  const where = ['parent=?'], args = [segs.join('/')];
+  // private collections: only rows this person may see
+  if (segs[0] === 'friendreqs') { where.push("(json_extract(data,'$.from')=? OR json_extract(data,'$.to')=?)"); args.push(user.id, user.id); }
+  if (segs[0] === 'dms' && segs.length === 1) { where.push("EXISTS (SELECT 1 FROM json_each(data,'$.members') WHERE value=?)"); args.push(user.id); }
   for (const [f, op, v] of (q.where || []).slice(0, 8)) {
-    docs = docs.filter(d => {
-      const x = getField(d.data, f);
-      switch (op) {
-        case '==': return x === v; case '!=': return x !== v;
-        case '<': return cmp(x, v) < 0; case '<=': return cmp(x, v) <= 0;
-        case '>': return cmp(x, v) > 0; case '>=': return cmp(x, v) >= 0;
-        case 'in': return Array.isArray(v) && v.includes(x);
-        case 'array-contains': return Array.isArray(x) && x.includes(v);
-        default: return false;
-      }
-    });
+    if (!FIELD.test(String(f))) return { status: 400, body: { error: 'bad_query' } };
+    const col = `json_extract(data,'$.${f}')`;
+    if (op === 'in') {
+      const list = (Array.isArray(v) ? v : []).slice(0, 30);
+      if (!list.length) return { status: 200, body: { docs: [] } };
+      where.push(`${col} IN (${list.map(() => '?').join(',')})`); args.push(...list.map(sqlVal));
+    } else if (op === 'array-contains') {
+      where.push(`EXISTS (SELECT 1 FROM json_each(data,'$.${f}') WHERE value=?)`); args.push(sqlVal(v));
+    } else if (['==', '!=', '<', '<=', '>', '>='].includes(op)) {
+      if (v === null && (op === '==' || op === '!=')) where.push(`${col} IS ${op === '==' ? '' : 'NOT '}NULL`);
+      else { where.push(`${col} ${op === '==' ? '=' : op} ?`); args.push(sqlVal(v)); }
+    } else return { status: 400, body: { error: 'bad_query' } };
   }
-  for (const [f, dir] of (q.orderBy || []).slice(0, 3).reverse()) docs.sort((a, b) => cmp(getField(a.data, f), getField(b.data, f)) * (dir === 'desc' ? -1 : 1));
-  const lim = Math.min(Number(q.limit) || 1000, 2000);
-  return json({ docs: docs.slice(0, lim) });
+  const order = [];
+  for (const [f, dir] of (q.orderBy || []).slice(0, 3)) {
+    if (!FIELD.test(String(f))) return { status: 400, body: { error: 'bad_query' } };
+    order.push(`json_extract(data,'$.${f}') ${dir === 'desc' ? 'DESC' : 'ASC'}`);
+  }
+  const lim = Math.max(1, Math.min(Number(q.limit) || 1000, 2000));
+  const sql = `SELECT id, data FROM docs WHERE ${where.join(' AND ')}${order.length ? ' ORDER BY ' + order.join(', ') : ''} LIMIT ${lim}`;
+  const { results } = await env.DB.prepare(sql).bind(...args).all();
+  return { status: 200, body: { docs: results.map(r => ({ id: r.id, data: JSON.parse(r.data) })) } };
 }
 
+
+// ---------- photos ----------
+// Photos are shrunk in the browser, then stored in D1 (rows cap near 2 MB). Served by an unguessable id.
+const BLOB_MAX = 1800 * 1024, BLOB_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+async function uploadRoute(req, env, user) {
+  const type = (req.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+  if (!BLOB_TYPES.includes(type)) return json({ error: 'Photos only for now (JPEG, PNG or WebP).', code: 'bad_type' }, 415);
+  if (Number(req.headers.get('content-length') || 0) > BLOB_MAX) return json({ error: 'That photo is too large. Try a smaller one.', code: 'quota_exceeded' }, 413);
+  const buf = new Uint8Array(await req.arrayBuffer());
+  if (!buf.length) return json({ error: 'Empty file', code: 'bad_data' }, 400);
+  if (buf.length > BLOB_MAX) return json({ error: 'That photo is too large. Try a smaller one.', code: 'quota_exceeded' }, 413);
+  const day = new Date().toISOString().slice(0, 10);
+  const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM blobs WHERE owner=? AND created>=?").bind(user.id, day).first();
+  if (n && n.n >= 60) return json({ error: "You've hit today's photo limit.", code: 'rate_limited' }, 429);
+  const id = randomId('b') + randomId('');
+  await env.DB.prepare('INSERT INTO blobs(id, owner, type, data, size, created) VALUES(?,?,?,?,?,?)').bind(id, user.id, type, buf, buf.length, new Date().toISOString()).run();
+  return json({ id, url: '/_blob/' + id, sizeBytes: buf.length, contentType: type });
+}
+async function blobRoute(env, id) {
+  if (!/^[A-Za-z0-9_-]{8,80}$/.test(id)) return new Response('Not found', { status: 404 });
+  const row = await env.DB.prepare('SELECT type, data FROM blobs WHERE id=?').bind(id).first();
+  if (!row) return new Response('Not found', { status: 404 });
+  const bytes = row.data instanceof ArrayBuffer ? new Uint8Array(row.data) : new Uint8Array(row.data);
+  return new Response(bytes, { headers: { 'content-type': row.type, 'cache-control': 'public, max-age=31536000, immutable', 'x-content-type-options': 'nosniff' } });
+}
 // ---------- AI ----------
 async function aiRoute(req, env, user) {
   if (!env.ANTHROPIC_API_KEY) return json({ error: 'AI is not set up yet.', code: 'unavailable' }, 503);

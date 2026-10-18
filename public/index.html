@@ -1154,6 +1154,10 @@ input.t:focus,select.t:focus,textarea.t:focus{border-color:rgba(47,208,115,.6);b
  .ptile .idc-stt span{font-size:.52rem;letter-spacing:.06em;white-space:nowrap}
 }
 }
+
+.gmem{display:inline-flex;align-items:center;gap:2px}.gm-x{border:1px solid var(--line-2);background:transparent;color:var(--loss);width:26px;height:26px;border-radius:50%;font-size:.75rem;display:grid;place-items:center;cursor:pointer}
+
+.dot-un{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--loss);margin-left:6px;vertical-align:middle;flex:0 0 auto}.gchat-btn{display:flex;align-items:center;justify-content:center;gap:2px;overflow:hidden;white-space:nowrap}.gmsgs{max-height:min(60vh,520px);overflow-y:auto}
 </style>
 
 <div class="ambient" aria-hidden="true"><i class="glow g1"></i><i class="glow g2"></i><i class="glow g3"></i><div class="topo"></div><div class="topo2"></div><svg class="golfart bp" viewBox="740 170 420 1160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -1581,7 +1585,7 @@ function playerBuilds(rounds,hc,diffs,todayStr){
   if(full.length>=3){const d=full.map(r=>{const h=playedHoles(r);return h.slice(0,9).reduce((s,q)=>s+q.score-q.par,0)-h.slice(9).reduce((s,q)=>s+q.score-q.par,0)});x.closer=(d.reduce((s,v)=>s+v,0)/d.length)/1.5}
   else x.closer=null;
   if(diffs&&diffs.length>=6){const r3=diffs.slice(-3).map(d=>d.diff),e=diffs.slice(0,-3).map(d=>d.diff);x.rising=((e.reduce((s,v)=>s+v,0)/e.length)-(r3.reduce((s,v)=>s+v,0)/3))/2}else x.rising=null;
-  const t=new Date((todayStr||new Date().toISOString().slice(0,10))+'T12:00:00');const n30=rs.filter(r=>(t-new Date(r.date+'T12:00:00'))/864e5<=30).length;x.rat=(n30-3)/3;
+  const t=new Date((todayStr||today())+'T12:00:00');const n30=rs.filter(r=>(t-new Date(r.date+'T12:00:00'))/864e5<=30).length;x.rat=(n30-3)/3;
   {const s18=full.map(r=>playedHoles(r).reduce((s,h)=>s+h.score,0)).slice(0,10);if(s18.length>=5){const m=s18.reduce((a,b2)=>a+b2,0)/s18.length;const sd=Math.sqrt(s18.reduce((a,b2)=>a+(b2-m)**2,0)/s18.length);x.metro=(4.5-sd)/1}else x.metro=null}
   {let opp=0,hit=0,tot=0,good=0;for(const r of recent){const hs=playedHoles(r);hs.forEach((h,i)=>{tot++;if(h.score<=h.par)good++;if(i&&hs[i-1].score-hs[i-1].par>=1){opp++;if(h.score<=h.par)hit++}})}x.bounce=opp>=15&&tot?((hit/opp)-(good/tot))/0.08:null}
   {const pr=recent.filter(r=>r.source==='app'&&playedHoles(r).length>=9);if(pr.length>=3){const a=agg(pr);x.clean=(1.4-a.pen*18/(a.penHoles||a.holes))/0.6}else x.clean=null}
@@ -1604,7 +1608,9 @@ const S={cp:{},rounds:[],courses:[],profile:{},view:'home',drill:'scoring',ready
   draft:null,photo:null,parsed:null,textParsed:null,report:null,confirmDel:null,coach:null,coachBusy:false,newBadges:[],game:null};
 let db=null,sampleFn=null,dl=null,unsub=[];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const today=()=>new Date().toISOString().slice(0,10);
+// the golfer's own calendar date (toISOString is UTC, which rolls to tomorrow at 8pm Eastern)
+const localDate=d=>{const x=d||new Date();return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+const today=()=>localDate();
 const uid=p=>p+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function toast(msg){const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.append(t);try{navigator.vibrate&&navigator.vibrate(10)}catch(e){}setTimeout(()=>t.classList.add('out'),2300);setTimeout(()=>t.remove(),2600)}
 document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='ob_bag')S.onbBagOpen=e.target.open},true);
@@ -1713,10 +1719,13 @@ function slugId(s){return (s||'course').toLowerCase().replace(/[^a-z0-9]+/g,'-')
 
 // ---------- Navigation history (back arrow) ----------
 const NAV={stack:[],last:null,back:false};
-function locOf(){return {view:S.view,playerUid:S.playerUid,report:S.report,thread:(typeof SOC!=='undefined'?SOC.thread:null),drill:S.drill}}
+function locOf(){return {view:S.view,playerUid:S.playerUid,report:S.report,thread:(typeof SOC!=='undefined'?SOC.thread:null),gchat:(typeof SOC!=='undefined'?SOC.gchat:null),drill:S.drill}}
 function locKey(l){return [l.view,l.view==='player'?l.playerUid:'',l.view==='report'?l.report:'',l.view==='thread'?l.thread:''].join('|')}
 function trackNav(blocked){
   const cur=locOf();
+  // leaving a conversation stops its fast refresh
+  if(cur.view!=='gchat'&&typeof SOC!=='undefined'&&SOC.gmUnsub)closeGroupChat();
+  if(cur.view!=='thread'&&typeof SOC!=='undefined'&&SOC.msgUnsub){SOC.msgUnsub();SOC.msgUnsub=null}
   if(!blocked&&NAV.last&&!NAV.back&&locKey(NAV.last)!==locKey(cur)){NAV.stack.push(NAV.last);if(NAV.stack.length>30)NAV.stack.shift()}
   if(!blocked&&['home','progress','log','profile','clubhouse'].includes(cur.view))NAV.stack=[]; // bottom-nav tabs are top level: no back arrow
   NAV.back=false;if(!blocked)NAV.last=cur;
@@ -1729,6 +1738,7 @@ function goBack(){
   if(!prev)prev={view:'home'};
   NAV.back=true;S.confirmDel=null;
   if(prev.view==='thread'&&prev.thread){openThread(prev.thread);return}
+  if(prev.view==='gchat'&&prev.gchat){openGroupChat(prev.gchat);return}
   S.view=prev.view;S.playerUid=prev.playerUid;S.report=prev.report;if(prev.drill)S.drill=prev.drill;
   if(prev.view==='report'){S.reportRound=null;S.newBadges=[]}
   render();window.scrollTo(0,0);
@@ -1739,7 +1749,7 @@ function render(){S._popHtml="";
   {const sti=myStatusI();let lv=0;try{lv=badgeState(S.rounds,{index:c.index!=null?c.index:c.est,diffs:c.diffs,goal:S.profile.goal}).lvl}catch(e){}
   document.getElementById('hcChip').innerHTML=(S.profile.username?`<span class="hc-lv" style="--stc:${STC[sti]}" title="${esc(STATUS[sti][0])}">${lv}</span><span class="hc-u">@${esc(S.profile.username)}</span>`:'')+`<span class="hc-n">${c.index!=null?(c.verified?VCHECK+' ':'')+hcTxt(c.index,1):(S.profile.username?'—':'Set handicap')}</span>`}
   const root=document.querySelector('[data-view-root]')||null;
-  const navKey={caddie:'profile',findfriends:'clubhouse',player:'clubhouse',inbox:'clubhouse',thread:'clubhouse',setup:'log',live:'log',photo:'log',text:'log',report:'home'}[S.view]||S.view;
+  const navKey={caddie:'profile',findfriends:'clubhouse',player:'clubhouse',inbox:'clubhouse',thread:'clubhouse',gchat:'clubhouse',setup:'log',live:'log',photo:'log',text:'log',report:'home'}[S.view]||S.view;
   document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===navKey?'page':'false'));
   const v=S.view; let html='';
   document.body.classList.toggle('livemode',v==='live');
@@ -1768,6 +1778,7 @@ function render(){S._popHtml="";
   else if(v==='player')html=viewPlayer(c);
   else if(v==='inbox')html=viewInbox(c);
   else if(v==='thread')html=viewThread(c);
+  else if(v==='gchat')html=viewGroupChat(c);
   else if(v==='findfriends')html=viewFindFriends(c);
   else if(v==='caddie')html=viewCaddie(c);
   const el=document.getElementById('view');
@@ -2081,7 +2092,10 @@ async function loadSetupDetail(c){
   const d=await courseDetail(c);if(S.setup!==s)return;
   s.detail=d;s.detailState=d&&(d.t.length||d.h.length)?'ok':'none';
   if(d&&d.h.length){const hs=d.h.slice(0,18);s.full={pars:hs.map(h=>h[0]||4),si:hs.map(h=>h[1]||''),yds:hs.map(()=>'' )};s.n=hs.length>=18?18:9;s.nine='front'}
-  if(d&&d.t.length===1)applyTee(0);else applySetupHoles();
+  // one set of tees: use it; otherwise preselect the tees this golfer used last time here
+  let ti=d&&d.t.length===1?0:-1;
+  if(ti<0&&d&&d.t.length){const prev=S.rounds.find(r=>r.clubId===c.id&&r.tees);if(prev){const k=teeKey(prev.tees);ti=d.t.findIndex(t=>teeKey(t[0])===k)}}
+  if(ti>=0)applyTee(ti);else applySetupHoles();
   render();
 }
 function teeKey(name){return norm(name).replace(/\s+tees?$/,'')}
@@ -2218,18 +2232,36 @@ function badgeSnapshot(extra){
 
 // ----- Photo -----
 function viewPhoto(c){
-  const p=S.photo||(S.photo={file:null,url:null,name:'',busy:false,err:''});
+  if(!S.photo){S.photo={file:null,url:null,name:S.profile.first||'',busy:false,err:''};if(!S.photoKeep)S.setup=newSetup();S.photoKeep=false}
+  const p=S.photo;const s=S.setup||(S.setup=newSetup());const d=s.detail;
   if(S.parsed) return reviewParsed();
-  return `<section class="playhead"><span class="kicker">Already played</span><h2>Snap your scorecard</h2><p class="muted">We read your row, the ./. marks and your putts. You check it before it saves.</p></section>
-  <section class="card">
-    <label class="f">Scorecard photo<input class="t" type="file" accept="image/jpeg,image/png,image/webp" id="photoIn" data-field="photo"></label>
+  const picked=!!s.clubId;
+  return `<section class="playhead"><span class="kicker">Already played</span><h2>Snap your scorecard</h2><p class="muted">Pick the course, snap the card, check the numbers. About a minute.</p></section>
+  <section class="card"><span class="eyebrow">1 · Where did you play?</span>
+    ${clubPicker('setup','Course','Search courses, e.g. Harbor Club')}
+    ${s.detailState==='loading'?`<p class="small muted">Loading the scorecard…</p>`:''}
+    ${d&&d.t.length?`<div><span class="eyebrow">Your tees</span><div class="tees">${d.t.map((t,i)=>`<button class="teeb" aria-pressed="${s.teeIdx===i}" data-act="pickTee" data-i="${i}"><b>${esc(t[0])}${t[1]==='F'?' (W)':''}</b><span class="small">${t[2]} / ${t[3]}</span></button>`).join('')}</div></div>`:''}
+    ${picked&&s.detailState==='none'?`<p class="small muted">No scorecard on file for this course. We'll read par, rating and slope from your photo, and you can fix them before saving.</p>`:''}
+    <label class="f">Date played<input class="t" type="date" max="${today()}" id="s_date" data-field="s.date" value="${esc(s.date)}"></label>
+    ${!picked?`<p class="small muted">Picking the course loads par, hole handicaps, rating and slope, so the round counts toward your verified handicap. You can also skip this and we'll suggest the course from the card.</p>`:''}
+  </section>
+  <section class="card"><span class="eyebrow">2 · Snap the card</span>
+    <label class="btn ${p.file?'':'primary'} block" for="photoIn" style="cursor:pointer;text-align:center">${p.file?'Retake or choose another photo':'📷 Take or choose a photo'}</label>
+    <input type="file" accept="image/*" id="photoIn" data-field="photo" hidden>
     ${p.url?`<img class="preview-img" src="${p.url}" alt="Your scorecard">`:''}
     <label class="f">Your name or initials on the card<input class="t" id="p_name" data-field="p.name" value="${esc(p.name)}" placeholder="e.g. Mike or MR"></label>
-    <p class="small muted">We read your row's scores, the ./. marks (left dot = fairway hit, right dot = green in regulation) and the small putt numbers. You'll check everything before it saves.</p>
+    <p class="small muted">Lay the card flat in good light and fill the frame. We read your row's scores, the ./. marks (left dot = fairway hit, right dot = green in regulation) and the small putt numbers.</p>
     ${p.err?`<div class="notice">${esc(p.err)}</div>`:''}
-    <button class="btn primary" data-act="readCard" ${!p.file||p.busy?'disabled':''}>${p.busy?'Reading your card…':'Read my card'}</button>
+    <button class="btn primary block" data-act="readCard" ${!p.file||p.busy?'disabled':''}>${p.busy?'Reading your card…':'Read my card'}</button>
   </section>`;
 }
+// Course data the golfer picked (par, hole handicaps, tees) beats what the photo says.
+function mergeCourse(){const p=S.parsed,s=S.setup;if(!p||!s)return;const key=[s.clubId,s.teeIdx,!!s.full,s.course].join('|');if(p.mk===key)return;p.mk=key;
+  if(s.clubId){p.course=s.course;p.clubId=s.clubId;p.clubVerified=s.clubVerified}
+  if(s.full){const off=Math.max(0,(p.start||1)-1);p.parFix=0;p.holes.forEach((h,i)=>{const fp=s.full.pars[off+i],fs=s.full.si[off+i];
+    if(fp){if(h.par!==''&&Number(h.par)!==Number(fp))p.parFix++;h.par=Number(fp);if(Number(fp)===3)h.fw='na';else if(h.fw==='na')h.fw=''}if(fs)h.si=Number(fs)})}
+  if(s.detail&&s.teeIdx!=null){const t=s.detail.t[s.teeIdx];p.tees=t[0];if(p.holes.length>=18){p.rating=t[2];p.slope=t[3]}else{p.rating=Math.round(t[2]/2*10)/10;p.slope=t[3]}p.fromTee=true}
+  else if(s.tees&&!p.tees)p.tees=s.tees}
 const CARD_PROMPT=(name)=>`You are reading a photo of a golf scorecard for a stats app. Extract ONLY the row for the player ${name?`named or initialed "${name}"`:'whose row has the most handwriting (if several, the first player row)'}.
 Golfer shorthand on this card:
 - Hole scores are the main handwritten numbers in the player's row.
@@ -2245,8 +2277,17 @@ async function readCard(){
     const out=await sampleFn.json(CARD_PROMPT(p.name.trim()),{images:[p.file]});
     const holes=(out&&Array.isArray(out.holes)?out.holes:[]).filter(h=>h&&h.score!=null||h&&h.par!=null);
     if(!holes.length) throw {code:'empty'};
-    S.parsed={course:out.course||'',tees:out.tees||'',date:out.date||today(),rating:out.rating||'',slope:out.slope||'',confidence:out.confidence||'',notes:out.notes||'',
+    const st=S.setup||{};const picked=!!st.clubId;
+    S.parsed={start:Number(holes[0]&&holes[0].hole)>=10?10:1,readCourse:out.course||'',course:out.course||'',tees:out.tees||'',date:(st.date&&st.date!==today())?st.date:(out.date&&out.date<=today()?out.date:(st.date||today())),rating:out.rating||'',slope:out.slope||'',confidence:out.confidence||'',notes:out.notes||'',
       holes:holes.map(h=>({par:Number(h.par)||4,si:h.si?Number(h.si):null,score:h.score!=null?Number(h.score):'',putts:h.putts!=null?Number(h.putts):'',fw:Number(h.par)===3?'na':(h.fairway==='hit'?'hit':h.fairway==='miss'?'miss':''),gir:h.gir===true?'y':h.gir===false?'n':''}))};
+    if(!picked&&S.parsed.readCourse){
+      // a clear match for the name on the card is picked for you; anything less shows suggestions
+      const nm=norm(S.parsed.readCourse).replace(/\b(golf|country|club|course|cc|gc|the)\b/g,'').replace(/\s+/g,' ').trim();
+      const hits=clubSearch(S.parsed.readCourse,5);const strip=x=>norm(x).replace(/\b(golf|country|club|course|cc|gc|the)\b/g,'').replace(/\s+/g,' ').trim();
+      const exact=hits.filter(c=>nm&&strip(c.name)===nm);
+      if(exact.length===1){S.parsed.autoMatched=true;S.cp.setup={q:exact[0].name,open:false,adding:false,city:'',state:''};onClubPicked('setup',exact[0])}
+      else S.cp.setup={q:S.parsed.readCourse,open:true,adding:false,city:'',state:''}}
+    mergeCourse();
   }catch(e){
     p.err=e&&e.code==='not_granted'?'Claude access was declined, so the card could not be read. You can keep score live instead.':
       e&&e.code==='image_rejected'?'That photo could not be used. Try a JPEG or PNG under 20 MB.':
@@ -2256,11 +2297,16 @@ async function readCard(){
   p.busy=false;render();
 }
 function reviewParsed(){
-  const r=S.parsed;
+  mergeCourse();const r=S.parsed;
   return `<section class="playhead"><span class="kicker">Snap your scorecard</span><h2>Check your card</h2></section>
   ${r.confidence&&r.confidence!=='high'?`<div class="notice">Read with ${esc(r.confidence)} confidence. ${esc(r.notes||'Double-check the highlighted holes.')}</div>`:''}
-  <section class="card"><div class="grid2"><label class="f">Course<input class="t" id="pr_course" data-field="pr.course" value="${esc(r.course)}"></label><label class="f">Date<input class="t" type="date" max="${today()}" id="pr_date" data-field="pr.date" value="${esc(r.date)}"></label></div>
-  <div class="grid3"><label class="f">Tees<input class="t" id="pr_tees" data-field="pr.tees" value="${esc(r.tees)}"></label><label class="f">Rating<input class="t" id="pr_rating" inputmode="decimal" data-field="pr.rating" value="${esc(r.rating)}"></label><label class="f">Slope<input class="t" id="pr_slope" inputmode="numeric" data-field="pr.slope" value="${esc(r.slope)}"></label></div></section>
+  <section class="card">${r.clubId?`<div class="row between" style="flex-wrap:nowrap;gap:10px"><div style="min-width:0"><span class="eyebrow">Course${r.autoMatched?' · matched from your card':''}</span><b style="display:block">${clubName(clubById(r.clubId)||{name:r.course,verified:r.clubVerified})}</b></div><button class="btn small" data-act="prCourse">Change</button></div>`
+      :`<div>${r.readCourse?`<p class="small" style="margin:0 0 6px">The card says <b>${esc(r.readCourse)}</b>. Pick the match below so the round counts toward your verified handicap.</p>`:`<p class="small muted" style="margin:0 0 6px">Pick your course so the round counts toward your verified handicap.</p>`}${clubPicker('setup','Course','Search courses')}</div>`}
+    ${S.setup&&S.setup.detail&&S.setup.detail.t.length?`<div><span class="eyebrow">Your tees</span><div class="tees">${S.setup.detail.t.map((t,i)=>`<button class="teeb" aria-pressed="${S.setup.teeIdx===i}" data-act="pickTee" data-i="${i}"><b>${esc(t[0])}${t[1]==='F'?' (W)':''}</b><span class="small">${t[2]} / ${t[3]}</span></button>`).join('')}</div></div>`:''}
+    ${r.parFix?`<p class="small muted" style="margin:0">Par on ${r.parFix} hole${r.parFix===1?'':'s'} came from the course record instead of the photo.</p>`:''}
+    <label class="f">Date played<input class="t" type="date" max="${today()}" id="pr_date" data-field="pr.date" value="${esc(r.date)}"></label>
+  <div class="grid3"><label class="f">Tees<input class="t" id="pr_tees" data-field="pr.tees" value="${esc(r.tees)}"></label><label class="f">Rating<input class="t" id="pr_rating" inputmode="decimal" data-field="pr.rating" value="${esc(r.rating)}"></label><label class="f">Slope<input class="t" id="pr_slope" inputmode="numeric" data-field="pr.slope" value="${esc(r.slope)}"></label></div>
+  ${r.rating&&r.slope?`<p class="small muted" style="margin:0">${r.fromTee?`Rating and slope from the ${esc(r.tees)} tees.`:'Rating and slope as read from the card.'} This round counts toward your verified handicap.</p>`:`<p class="small" style="margin:0;color:var(--warn,#E8C468)">Add rating and slope (pick your tees, or copy them from the card) so this round counts toward your verified handicap.</p>`}</section>
   <section class="card"><span class="eyebrow">Tap any cell to fix it</span><div class="scroll-x"><table class="sc">
    <tr><th>Hole</th>${r.holes.map((_,i)=>`<th>${i+1}</th>`).join('')}</tr>
    ${[['par','Par'],['score','Score'],['putts','Putts']].map(([k,l])=>`<tr><td class="lab">${l}</td>${r.holes.map((h,i)=>`<td><input aria-label="${l} hole ${i+1}" id="pr_${k}${i}" data-field="prh" data-k="${k}" data-i="${i}" inputmode="numeric" value="${esc(h[k])}" style="width:30px;border:0;background:${h[k]===''&&k!=='putts'?'var(--warn-bg)':'none'};text-align:center;font-weight:${k==='score'?700:400}"></td>`).join('')}</tr>`).join('')}
@@ -2273,9 +2319,9 @@ async function saveParsed(){
   const p=S.parsed; const before=badgeSnapshot();
   const holes=p.holes.filter(h=>Number(h.score)>0).map(h=>({par:Number(h.par)||4,si:h.si||null,score:Number(h.score),putts:h.putts===''||h.putts==null?null:Number(h.putts),fw:Number(h.par)===3?'na':(h.fw||null),gir:h.gir==='y'?true:h.gir==='n'?false:null,pen:0}));
   if(!holes.length){toast('Add at least one hole score.');return}
-  const cm=exactClub(p.course);const r={id:uid('r'),clubId:cm?cm.id:'',clubVerified:!!(cm&&cm.verified),course:p.course||'Round',tees:p.tees,date:p.date||today(),rating:p.rating?Number(p.rating):null,slope:p.slope?Number(p.slope):null,source:'photo',created:new Date().toISOString(),holes};
+  const cm=p.clubId?{id:p.clubId,verified:p.clubVerified}:exactClub(p.course);const r={id:uid('r'),clubId:cm?cm.id:'',clubVerified:!!(cm&&cm.verified),course:p.course||'Round',tees:p.tees,date:p.date||today(),rating:p.rating?Number(p.rating):null,slope:p.slope?Number(p.slope):null,source:'photo',created:new Date().toISOString(),holes};
   try{await putRound(r)}catch(e){toast(writeErr(e));return}
-  S.parsed=null;S.photo=null;afterSave(r,before);
+  S.parsed=null;S.photo=null;S.setup=null;afterSave(r,before);
 }
 
 // ----- Text -----
@@ -3039,7 +3085,7 @@ Write exactly 3 short coaching points, most valuable first. Each: one bold-free 
 // ---------- The Clubhouse (social) ----------
 // Shared data: players/<uid> (public profile), posts/<uid>/items/<id>, follows/<uid>/items/<target>,
 // reactions (likes), comments, friendreqs, dms/<thread>/msgs. Each person writes only their own profile, posts and follows.
-const SOC={inited:false,players:{},follows:new Set(),posts:{},postSubs:{},reqsIn:[],reqsOut:[],threads:[],thread:null,msgs:[],msgUnsub:null,
+const SOC={gdocs:{},gsubs:{},inited:false,players:{},follows:new Set(),posts:{},postSubs:{},reqsIn:[],reqsOut:[],threads:[],thread:null,msgs:[],msgUnsub:null,
   reacts:[],comments:[],rcKey:'',rcUnsubs:[],feed:'friends',club:'',q:'',openC:{},cdraft:{},draft:'',posting:false,tee:null,mdraft:''};
 const norm=s=>String(s||'').trim().toLowerCase();
 const myName=()=>norm(S.profile.username);
@@ -3055,7 +3101,43 @@ function initSocial(){
   db.collection('friendreqs').where('from','==',me).onSnapshot(s=>{SOC.reqsOut=s.docs.map(d=>({...d.data(),id:d.id}));softRender()},()=>{});
   db.collection('dms').where('members','array-contains',me).onSnapshot(s=>{SOC.threads=s.docs.map(d=>({...d.data(),id:d.id}));softRender()},()=>{});
   db.doc('players/'+me).get().then(d=>{if(!d.exists)syncPlayer().catch(()=>{})}).catch(()=>{});
+  watchGroups();
 }
+// Shared group records: groups/<gid> {name, owner, members[]}. The owner manages members; anyone can leave.
+function watchGroups(){if(!db||!me)return;const ids=new Set(myGroups().map(g=>g.id));
+  for(const id of Object.keys(SOC.gsubs))if(!ids.has(id)){try{SOC.gsubs[id]()}catch(e){}delete SOC.gsubs[id];delete SOC.gdocs[id]}
+  for(const g of myGroups()){if(SOC.gsubs[g.id])continue;
+    SOC.gsubs[g.id]=db.doc('groups/'+g.id).onSnapshot(async d=>{
+      if(d.exists){const x=d.data();SOC.gdocs[g.id]=x;
+        if(!(x.members||[]).includes(me)&&x.owner!==me){await dropGroup(g.id);toast('You were removed from '+(x.name||'a group'));return}
+        if(x.name&&x.name!==g.name){await putProfile({groups:myGroups().map(y=>y.id===g.id?{...y,name:x.name}:y)}).catch(()=>{})}}
+      else{delete SOC.gdocs[g.id];
+        if(g.owner===me){const legacy=legacyMembers(g.id);try{await db.doc('groups/'+g.id).set({name:g.name,owner:me,members:[me],created:nowIso()});if(legacy.length>1)await db.doc('groups/'+g.id).set({name:g.name,owner:me,members:legacy,created:nowIso()})}catch(e){}}
+        else if(SOC.gseen&&SOC.gseen[g.id]){await dropGroup(g.id);toast((g.name||'A group')+' was deleted')}}
+      (SOC.gseen=SOC.gseen||{})[g.id]=d.exists;softRender()},()=>{})}}
+async function dropGroup(gid){if(SOC.gsubs[gid]){try{SOC.gsubs[gid]()}catch(e){}delete SOC.gsubs[gid]}delete SOC.gdocs[gid];
+  await putProfile({groups:myGroups().filter(x=>x.id!==gid)}).catch(()=>{});if(SOC.group===gid)SOC.group=null;await syncPlayer().catch(()=>{});render()}
+async function freshGroup(gid){const d=await db.doc('groups/'+gid).get();if(!d.exists)return null;const x=d.data();SOC.gdocs[gid]=x;return x}
+
+// ----- Group chat: groups/<gid>/msgs, members only -----
+function groupAvatar(gid,sz){const x=SOC.gdocs[gid]||{};const g=myGroups().find(y=>y.id===gid)||{};const nm=x.name||g.name||'G';
+  if(x.photo)return `<img class="av gav" src="${esc(x.photo)}" alt="" style="width:${sz}px;height:${sz}px;object-fit:cover;border-radius:${Math.round(sz/4)}px">`;
+  return `<span class="av gav" style="width:${sz}px;height:${sz}px;border-radius:${Math.round(sz/4)}px;background:var(--forest);font-size:${(sz/40).toFixed(2)}rem;display:inline-grid;place-items:center;font-weight:700">${esc(nm.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase())}</span>`}
+function groupUnread(gid){const x=SOC.gdocs[gid];if(!x||!x.last||x.last.from===me)return false;const r=ls('gread_'+gid);return !r||String(r)<String(x.last.at)}
+function openGroupChat(gid){S.cardUid=null;SOC.group=gid;SOC.gchat=gid;SOC.gmsgs=[];SOC.gmdraft='';if(SOC.gmUnsub)SOC.gmUnsub();
+  SOC.gmUnsub=db.collection('groups/'+gid+'/msgs').orderBy('at','desc').limit(150).onSnapshot(s=>{SOC.gmsgs=s.docs.map(d=>({...d.data(),id:d.id})).reverse();const x=SOC.gdocs[gid];ls('gread_'+gid,(x&&x.last&&x.last.at)||nowIso());softRender();const box=document.getElementById('gmsgs');if(box)box.scrollTop=box.scrollHeight},()=>{});
+  ls('gread_'+gid,nowIso());S.view='gchat';render();setTimeout(()=>{const box=document.getElementById('gmsgs');if(box)box.scrollTop=box.scrollHeight},60)}
+function closeGroupChat(){if(SOC.gmUnsub){SOC.gmUnsub();SOC.gmUnsub=null}SOC.gchat=null}
+function viewGroupChat(c){const gid=SOC.gchat;const g=myGroups().find(x=>x.id===gid);if(!g){S.view='clubhouse';return viewClubhouse(c)}
+  const x=SOC.gdocs[gid]||{};const mem=groupMembers(gid);const own=groupOwner(gid)===me;let prev='';
+  return `<div class="row between" style="flex-wrap:nowrap"><button class="btn ghost" data-act="gchatBack">◀ Clubhouse</button>
+    <span class="row" style="gap:10px;flex-wrap:nowrap;min-width:0">${groupAvatar(gid,36)}<span style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.name||g.name)}</b><span class="small muted">${mem.length} golfer${mem.length===1?'':'s'}</span></span></span></div>
+  ${own?`<div class="row" style="gap:8px"><label class="btn small ghost" for="gphoto_file" style="cursor:pointer">${x.photo?'Change group photo':'Add a group photo'}</label><input type="file" id="gphoto_file" accept="image/*" data-field="gphoto.file" hidden></div>`:''}
+  <section class="card"><div class="msgs gmsgs" id="gmsgs">${SOC.gmsgs&&SOC.gmsgs.length?SOC.gmsgs.map(m=>{const mine=m.from===me;const showWho=!mine&&m.from!==prev;prev=m.from;
+      return `<div class="msg ${mine?'mine':''}">${showWho?`<span class="small" style="font-weight:700;color:var(--sage)">@${esc(pname(m.from))}</span>`:''}<span>${linkify(m.text)}</span><span class="small muted">${ago(m.at)}</span></div>`}).join(''):`<p class="small muted">Start the group chat. Everyone in ${esc(x.name||g.name)} sees it.</p>`}</div>
+    <div class="row" style="gap:6px;flex-wrap:nowrap"><input class="t" id="gm_draft" data-field="gm.draft" value="${esc(SOC.gmdraft||'')}" placeholder="Message ${esc(x.name||g.name)}" maxlength="1000" style="flex:1" autocomplete="off"><button class="btn primary" data-act="gmSend">Send</button></div></section>`}
+function legacyMembers(gid){const out=new Set([me]);for(const p of Object.values(SOC.players))if((p.groups||[]).some(g=>g&&g.id===gid))out.add(p.uid);return [...out]}
+function groupOwner(gid){const d=SOC.gdocs[gid];if(d)return d.owner;const g=myGroups().find(x=>x.id===gid);return g&&g.owner}
 function ensurePostSubs(){
   const ids=Object.keys(SOC.players).slice(0,45);
   for(const u of ids){ if(SOC.postSubs[u])continue;
@@ -3065,7 +3147,7 @@ function ensurePostSubs(){
 function softRender(){
   updateNavBadge();
   if(S.shareBadge)return; // don't wipe the caption while composing
-  const v=S.view; if(['clubhouse','player','inbox','thread','profile','findfriends'].includes(v)||S.cardUid) render();
+  const v=S.view; if(['clubhouse','player','inbox','thread','gchat','profile','findfriends'].includes(v)||S.cardUid) render();
 }
 function unreadCount(){return SOC.threads.filter(t=>t.lastFrom&&t.lastFrom!==me&&(!t.readAt||!t.readAt[me]||t.readAt[me]<t.lastAt)).length}
 function pendingIn(){return SOC.reqsIn.filter(r=>r.status==='pending'&&r.kind!=='group')}
@@ -3441,10 +3523,13 @@ function storyStep(d){const st=S.story;if(!st)return;const by=activeStories();co
 
 function groupBar(){const gs=myGroups();const g=curGroup();
   if(!g)return `<section class="card grpcta"><span class="kicker" style="color:var(--volt)">My group</span><b class="gc-t">Start your golf group</b><p class="small muted">Everyone has a regular group. Bring yours in to share rounds, compare stats and get a group recap every Monday.</p><div class="row" style="gap:8px"><button class="btn primary" data-act="grpNew">Create a group</button><button class="btn" data-act="invMenu">Invite friends</button></div></section>`;
-  const mem=groupMembers(g.id);
+  const mem=groupMembers(g.id);const own=groupOwner(g.id)===me;
   return `<section class="card grpcard">${gs.length>1?`<div class="row" style="gap:6px">${gs.map(x=>`<button class="pill ${x.id===g.id?'good':'neutral'}" data-act="grpPick" data-id="${esc(x.id)}">${esc(x.name)}</button>`).join('')}</div>`:''}
-    <div class="row between" style="align-items:center;flex-wrap:nowrap"><div><span class="kicker" style="color:var(--volt)">My group</span><b class="gc-t">${esc(g.name)}</b><span class="small muted">${mem.length} golfer${mem.length===1?'':'s'}</span></div><button class="btn small primary" data-act="grpInvite">Invite to group</button></div>
-    <div class="row" style="gap:10px">${mem.map(u=>`<button class="plain row" style="gap:6px" data-act="openUid" data-uid="${esc(u)}">${avatar(u,30)}<span class="small">${u===me?'You':'@'+esc(pname(u))}</span></button>`).join('')}</div></section>`}
+    <div class="row between" style="align-items:center;flex-wrap:nowrap;gap:10px"><div class="row" style="gap:12px;flex-wrap:nowrap;min-width:0">${groupAvatar(g.id,48)}<div style="min-width:0"><span class="kicker" style="color:var(--volt)">My group</span><b class="gc-t">${esc((SOC.gdocs[g.id]||{}).name||g.name)}</b><span class="small muted">${mem.length} golfer${mem.length===1?'':'s'}</span></div></div><button class="btn small" data-act="grpInvite">Invite</button></div>
+    <button class="btn primary block gchat-btn" data-act="gchatOpen" data-id="${esc(g.id)}">Group chat${groupUnread(g.id)?' <span class="dot-un" aria-label="Unread"></span>':''}${(SOC.gdocs[g.id]||{}).last?`<span class="small" style="font-weight:500;opacity:.8;margin-left:6px">· ${esc(((SOC.gdocs[g.id].last.from===me)?'You':'@'+pname(SOC.gdocs[g.id].last.from))+': '+String(SOC.gdocs[g.id].last.text).slice(0,28))}</span>`:''}</button>
+    <div class="row" style="gap:10px;flex-wrap:wrap">${mem.map(u=>`<span class="gmem"><button class="plain row" style="gap:6px" data-act="openUid" data-uid="${esc(u)}">${avatar(u,30)}<span class="small">${u===me?'You':'@'+esc(pname(u))}${groupOwner(g.id)===u?' <i class="muted" style="font-style:normal">· owner</i>':''}</span></button>${SOC.gmanage&&own&&u!==me?`<button class="gm-x" data-act="grpRemove" data-uid="${esc(u)}" aria-label="Remove @${esc(pname(u))} from the group">✕</button>`:''}</span>`).join('')}</div>
+    ${SOC.gconfirm?`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span class="small">${SOC.gconfirm==='delete'?`Delete ${esc(g.name)} for everyone?`:`Leave ${esc(g.name)}?`}</span><button class="btn small danger" data-act="${SOC.gconfirm==='delete'?'grpDelete':'grpLeave'}">${SOC.gconfirm==='delete'?'Delete group':'Leave'}</button><button class="btn small" data-act="grpCancel">Cancel</button></div>`
+      :`<div class="row" style="gap:14px">${own?`<button class="plain link small" data-act="grpManage">${SOC.gmanage?'Done':'Manage members'}</button><button class="plain link small" data-act="grpDelete">Delete group</button>`:`<button class="plain link small" data-act="grpLeave">Leave group</button>`}</div>`}</section>`}
 function reqCards(){const fr=pendingIn(),gr=pendingGroupIn();if(!fr.length&&!gr.length)return '';
   return `<section class="card"><span class="eyebrow">Requests</span>${gr.map(r=>`<div class="row between"><div class="row" style="gap:10px">${avatar(r.from,32)}<span><b>@${esc(pname(r.from))}</b> <span class="small muted">invited you to</span> <b>${esc(r.gname||'their group')}</b></span></div><div class="row" style="gap:6px"><button class="btn small primary" data-act="grpAccept" data-id="${esc(r.id)}">Join</button><button class="btn small" data-act="grpDecline" data-id="${esc(r.id)}">Decline</button></div></div>`).join('')}
     ${fr.map(r=>`<div class="row between"><button class="plain row" style="gap:10px" data-act="openUid" data-uid="${esc(r.from)}">${avatar(r.from,32)}<span><b>@${esc(pname(r.from))}</b> <span class="small muted">wants to be friends</span></span></button><div class="row" style="gap:6px"><button class="btn small primary" data-act="acceptReq" data-uid="${esc(r.from)}">Accept</button><button class="btn small" data-act="declineReq" data-uid="${esc(r.from)}">Decline</button></div></div>`).join('')}</section>`}
@@ -3460,6 +3545,7 @@ function socialPop(){const k=SOC.pop;if(!k)return '';let body='';
     <button class="btn block" data-act="invite">Invite someone new to BluPrint Golf</button></div>`}
   return `<div class="pop-wrap" role="dialog"><div class="pop-back" data-act="spClose"></div><div class="pop"><div class="pop-grab"></div><button class="pop-x" data-act="spClose" aria-label="Close">✕</button>${body}</div></div>`}
 function viewClubhouse(c){
+  if(!SOC.mode)SOC.mode='feed';if(!SOC.feedPicked)SOC.feed=curGroup()?'group':'friends'; // open on your group's activity
   if(!socialOk()) return window.BP_WEB?`<section class="chtop"><h2 class="cht-title">The Clubhouse</h2></section><section class="card"><p><b>Coming soon.</b> Forum threads, your group's feed and the Monday recap are on the way. Keep logging rounds so your BluPrint is ready when it opens.</p></section>`:`<section class="playhead"><span class="kicker">The Clubhouse</span><h2>Around the club</h2></section>${storeNote()}<section class="card"><p>The Clubhouse needs a BluPrint Golf profile. Open the link in Claude while signed in, and pick a username.</p></section>`;
   initSocial();
   if(SOC.feed==='club'&&!SOC.club&&myClubs()[0])SOC.club=myClubs()[0].id;
@@ -3487,9 +3573,9 @@ function viewClubhouse(c){
     ${q?`<div class="results">${users.map(p=>`<button class="list-row" data-act="openUid" data-uid="${esc(p.uid)}"><span class="row" style="gap:10px">${avatar(p.uid,32)}<b>@${esc(p.username)}</b>${buildTag((p.builds||[])[0],true)}</span><span class="small muted row" style="gap:4px">${p.index!=null?(p.verified?VCHECK:'')+hcTxt(p.index,1):''}</span></button>`).join('')}
      ${clubs.map(x=>`<button class="list-row" data-act="cpPick" data-key="search" data-id="${esc(x.id)}"><span class="row" style="gap:8px">${IC.flag}<span><b>${clubName(x)}</b><br><span class="small muted">${esc(clubPlace(x)||'Self-entered club')}</span></span></span><span class="small muted">Club feed</span></button>`).join('')}
      ${!users.length&&!clubs.length?`<p class="small muted" style="padding:8px 0">No golfers or clubs match "${esc(SOC.q)}".</p>`:''}</div>`:''}`:''}</section>
+  ${reqCards()}
   <div class="modes modes3" role="tablist"><button role="tab" aria-selected="${SOC.mode!=='feed'&&SOC.mode!=='recap'}" data-act="chmode" data-mode="forum">The Forum</button><button role="tab" aria-selected="${SOC.mode==='feed'}" data-act="chmode" data-mode="feed">The Feed</button><button role="tab" aria-selected="${SOC.mode==='recap'}" data-act="chmode" data-mode="recap">Group recap</button></div>
   ${SOC.mode==='recap'?recapView():SOC.mode==='feed'?`
-  ${reqCards()}
   <div class="feedbar"><div class="modes feedpills" role="tablist">${[['friends','My friends'],['group','My group'],['club','My club']].map(x=>`<button role="tab" aria-selected="${SOC.feed===x[0]}" data-act="feed" data-feed="${x[0]}">${x[1]}</button>`).join('')}</div></div>
 
 
@@ -3543,7 +3629,7 @@ function friendIds(){const f=new Set();SOC.reqsIn.forEach(r=>{if(r.kind!=='group
 // ----- Groups: a golf group is friends you invite in. Membership lives on each golfer's public player doc.
 function myGroups(){return (S.profile.groups||[]).filter(g=>g&&g.id)}
 function curGroup(){const gs=myGroups();if(!gs.length)return null;return gs.find(g=>g.id===SOC.group)||gs[0]}
-function groupMembers(gid){if(!gid)return [];const out=new Set();for(const p of Object.values(SOC.players))if((p.groups||[]).some(g=>g&&g.id===gid))out.add(p.uid);if(myGroups().some(g=>g.id===gid))out.add(me);return [...out]}
+function groupMembers(gid){if(!gid)return [];if(SOC.gdocs[gid])return [...(SOC.gdocs[gid].members||[])].sort((x,y)=>(x===me?-1:y===me?1:0));const out=new Set();for(const p of Object.values(SOC.players))if((p.groups||[]).some(g=>g&&g.id===gid))out.add(p.uid);if(myGroups().some(g=>g.id===gid))out.add(me);return [...out]}
 function groupCircle(){const g=curGroup();return g?new Set(groupMembers(g.id)):new Set([me,...friendIds()])}
 function groupInvState(u,gid){const r=SOC.reqsOut.find(x=>x.kind==='group'&&x.to===u&&x.gid===gid);if(groupMembers(gid).includes(u))return 'member';return r?r.status:'none'}
 function pendingGroupIn(){return SOC.reqsIn.filter(r=>r.kind==='group'&&r.status==='pending'&&!myGroups().some(g=>g.id===r.gid))}
@@ -3687,7 +3773,7 @@ async function onbSaveRounds(){onbSnap();const R=onbRounds();const num=x=>x===''
     const p=num(r.putts);if(p!=null&&(p<r.n*0.8||p>sc)){toast(`Putts look off for a ${sc}.`);return}
     if(num(r.fir)!=null&&num(r.fir)>(r.n===9?7:14)){toast('Fairways can be at most '+(r.n===9?7:14)+'.');return}
     if(num(r.gir)!=null&&num(r.gir)>r.n){toast('Greens can be at most '+r.n+'.');return}}
-  const d0=new Date();const rounds=filled.map((r,i)=>{const dt=r.date||new Date(d0.getTime()-(i+1)*7*864e5).toISOString().slice(0,10);const n=r.n;
+  const d0=new Date();const rounds=filled.map((r,i)=>{const dt=r.date||localDate(new Date(d0.getTime()-(i+1)*7*864e5));const n=r.n;
     return {id:uid('r'),clubId:'',clubVerified:false,course:r.course||'Recent round',tees:'',date:dt,rating:null,slope:null,source:'text',estimated:est,created:new Date().toISOString(),holes:[],
       totals:{holes:n,score:num(r.score),par:n===9?36:72,putts:num(r.putts),gir:num(r.gir),fir:num(r.fir),firOpp:num(r.fir)!=null?(n===9?7:14):null,threePutts:null,penalties:null}}});
   S.onbBusy=true;try{for(const r of rounds)await putRound(r);await putProfile({onboarded:true})}catch(e){S.onbBusy=false;toast(writeErr(e));return}
@@ -3798,25 +3884,26 @@ function viewInbox(c){
   initSocial();
   const ts=[...SOC.threads].sort((a,b)=>String(b.lastAt).localeCompare(String(a.lastAt)));
   return `<section class="playhead"><span class="kicker">The Clubhouse</span><h2>Messages</h2><p class="muted">Chat with golfers and lock in tee times.</p></section>
+  ${myGroups().length?`<section class="card"><span class="eyebrow">Group chats</span>${myGroups().map(g=>{const x=SOC.gdocs[g.id]||{};const un=groupUnread(g.id);return `<button class="list-row" data-act="gchatOpen" data-id="${esc(g.id)}"><span class="row" style="gap:10px;flex-wrap:nowrap;min-width:0">${groupAvatar(g.id,40)}<span style="min-width:0"><b>${esc(x.name||g.name)}</b><br><span class="small ${un?'':'muted'}" style="${un?'font-weight:700':''}">${x.last?esc((x.last.from===me?'You':'@'+pname(x.last.from))+': '+String(x.last.text).slice(0,60)):'No messages yet'}</span></span></span>${un?'<span class="dot-un" aria-label="Unread"></span>':''}</button>`}).join('')}</section>`:''}
   <section class="card">${ts.length?ts.map(t=>{const o=t.members.find(x=>x!==me);const un=t.lastFrom&&t.lastFrom!==me&&(!t.readAt||!t.readAt[me]||t.readAt[me]<t.lastAt);
     return `<button class="list-row" data-act="openThread" data-uid="${esc(o)}"><span class="row" style="gap:10px;flex-wrap:nowrap;min-width:0">${avatar(o,40)}<span style="min-width:0"><b>@${esc(pname(o))}</b><br><span class="small ${un?'':'muted'}" style="${un?'font-weight:700':''}">${esc(String(t.last||'').slice(0,60))}</span></span></span><span class="small muted">${ago(t.lastAt)}${un?' <span class="count">new</span>':''}</span></button>`}).join(''):`<p class="muted">No messages yet. Open a golfer's profile and tap Message.</p>`}</section>
-  <p class="small muted">Beta note: messages are stored with the app's shared data, so keep them golf talk. Don't send anything private.</p>`;
+  ${IS_WEB?'':`<p class="small muted">Beta note: messages are stored with the app's shared data, so keep them golf talk. Don't send anything private.</p>`}`;
 }
-function openThread(u){
+function openThread(u){S.cardUid=null;
   SOC.thread=u;SOC.msgs=[];SOC.tee=null;SOC.mdraft='';
   if(SOC.msgUnsub)SOC.msgUnsub();
   const tid=threadId(me,u);
   SOC.msgUnsub=db.collection('dms/'+tid+'/msgs').orderBy('at','desc').limit(100).onSnapshot(s=>{SOC.msgs=s.docs.map(d=>({...d.data(),id:d.id})).reverse();softRender();const box=document.getElementById('msgs');if(box)box.scrollTop=box.scrollHeight},()=>{});
   markRead(tid);S.view='thread';render();
 }
-async function markRead(tid){const t=SOC.threads.find(x=>x.id===tid);if(!t)return;try{await db.doc('dms/'+tid).update({readAt:{[me]:nowIso()}})}catch(e){}}
+async function markRead(tid){const t=SOC.threads.find(x=>x.id===tid);if(!t)return;try{await db.doc('dms/'+tid).update({readAt:{...(t.readAt||{}),[me]:nowIso()}})}catch(e){}}
 function viewThread(c){
   const u=SOC.thread;const tee=SOC.tee;
   return `<div class="row between"><button class="btn ghost" data-act="leaveThread">◀ Messages</button><button class="plain row" style="gap:8px" data-act="openUid" data-uid="${esc(u)}">${avatar(u,32)}<b>@${esc(pname(u))}</b></button></div>
   <section class="card"><div class="msgs" id="msgs">${SOC.msgs.length?SOC.msgs.map(m=>{const mine=m.from===me;
       if(m.type==='tee')return `<div class="msg ${mine?'mine':''} tee"><span class="eyebrow">Tee time</span><b>${esc(m.course)}</b><span>${esc(m.date)}${m.time?' at '+esc(m.time):''}</span>${!mine?`<button class="btn small flag" data-act="teeIn" data-id="${esc(m.id)}">I'm in</button>`:''}<span class="small muted">${ago(m.at)}</span></div>`;
       return `<div class="msg ${mine?'mine':''}"><span>${linkify(m.text)}</span><span class="small muted">${ago(m.at)}</span></div>`}).join(''):`<p class="small muted">Say hello, or propose a tee time.</p>`}</div>
-    ${tee?`<div class="card" style="background:var(--sunk)"><span class="eyebrow">Propose a tee time</span><div class="grid3"><label class="f">Course<input class="t" id="tee_course" data-field="tee.course" value="${esc(tee.course)}" list="clubList"></label><label class="f">Date<input class="t" type="date" max="${today()}" id="tee_date" data-field="tee.date" value="${esc(tee.date)}"></label><label class="f">Time<input class="t" type="time" id="tee_time" data-field="tee.time" value="${esc(tee.time)}"></label></div>
+    ${tee?`<div class="card" style="background:var(--sunk)"><span class="eyebrow">Propose a tee time</span><div class="grid3"><label class="f">Course<input class="t" id="tee_course" data-field="tee.course" value="${esc(tee.course)}" list="clubList"></label><label class="f">Date<input class="t" type="date" min="${today()}" id="tee_date" data-field="tee.date" value="${esc(tee.date)}"></label><label class="f">Time<input class="t" type="time" id="tee_time" data-field="tee.time" value="${esc(tee.time)}"></label></div>
       <datalist id="clubList">${myClubs().map(x=>`<option value="${esc(x.name)}">`).join('')}</datalist>
       <div class="row"><button class="btn primary" data-act="sendTee">Send invite</button><button class="btn" data-act="teeCancel">Cancel</button></div></div>`:''}
     <div class="row" style="gap:6px;flex-wrap:nowrap"><input class="t" id="m_draft" data-field="m.draft" value="${esc(SOC.mdraft)}" placeholder="Message @${esc(pname(u))}" maxlength="500" style="flex:1"><button class="btn primary" data-act="sendMsg">Send</button></div>
@@ -3861,7 +3948,7 @@ async function socialAct(act,a){
     SOC.sbPosting=false;render();return true}
   if(act==='openUser'){const p=Object.values(SOC.players).find(x=>norm(x.username)===a.dataset.name);if(p){S.cardUid=p.uid;render()}else toast('No golfer named @'+a.dataset.name);return true}
   if(act==='clubFeed'){const id=a.dataset.club;const nm=a.dataset.name||'';const cc=id?clubById(id):null;SOC.feed='club';SOC.club=id||('name:'+norm(nm));SOC.clubObj=cc||{id:SOC.club,name:nm||((myClubs().find(x=>x.id===id)||{}).name)||'Club',verified:false};SOC.q='';S.view='clubhouse';render();window.scrollTo(0,0);return true}
-  if(act==='feed'){SOC.feed=a.dataset.feed;if(SOC.feed==='club'&&!SOC.club&&myClubs()[0]){SOC.club=myClubs()[0].id;SOC.clubObj=myClubs()[0]}render();return true}
+  if(act==='feed'){SOC.feed=a.dataset.feed;SOC.feedPicked=true;if(SOC.feed==='club'&&!SOC.club&&myClubs()[0]){SOC.club=myClubs()[0].id;SOC.clubObj=myClubs()[0]}render();return true}
   if(act==='follow'){try{await db.collection('follows/'+me+'/items').doc(u).set({at:nowIso()})}catch(e){toast(writeErr(e))}return true}
   if(act==='unfollow'){try{await db.collection('follows/'+me+'/items').doc(u).delete()}catch(e){toast(writeErr(e))}return true}
   if(act==='invMenu'){SOC.pop='inv';render();return true}
@@ -3870,9 +3957,22 @@ async function socialAct(act,a){
   if(act==='grpPick'){SOC.group=a.dataset.id;render();return true}
   if(act==='grpInvite'){SOC.pop=curGroup()?'add':'new';render();return true}
   if(act==='grpCreate'){const nm=(document.getElementById('grp_name')||{}).value||'';if(!nm.trim()){toast('Give your group a name');return true}const g={id:'g_'+uid('x').slice(2),name:nm.trim().slice(0,40),owner:me};
-    try{await putProfile({groups:[...myGroups(),g]});SOC.group=g.id;await syncPlayer().catch(()=>{});SOC.pop='add';SOC.feed='group';SOC.mode='feed';toast('Group created')}catch(e){toast(writeErr(e))}render();return true}
+    try{await db.doc('groups/'+g.id).set({name:g.name,owner:me,members:[me],created:nowIso()});await putProfile({groups:[...myGroups(),g]});SOC.group=g.id;watchGroups();await syncPlayer().catch(()=>{});SOC.pop='add';SOC.feed='group';SOC.mode='feed';toast('Group created')}catch(e){toast(writeErr(e))}render();return true}
   if(act==='grpSend'){const g=curGroup();if(!g){SOC.pop='new';render();return true}try{await db.doc('friendreqs/g~'+g.id+'~'+u).set({kind:'group',gid:g.id,gname:g.name,from:me,to:u,status:'pending',at:nowIso()});toast('Group invite sent to @'+pname(u))}catch(e){toast(writeErr(e))}render();return true}
-  if(act==='grpAccept'){const r=SOC.reqsIn.find(x=>x.id===a.dataset.id);if(!r)return true;try{await db.doc('friendreqs/'+r.id).update({status:'accepted',decided:nowIso()});await putProfile({groups:[...myGroups(),{id:r.gid,name:r.gname||'Group'}]});SOC.group=r.gid;await syncPlayer().catch(()=>{});toast('You joined '+(r.gname||'the group'))}catch(e){toast(writeErr(e))}render();return true}
+  if(act==='grpAccept'){const r=SOC.reqsIn.find(x=>x.id===a.dataset.id);if(!r)return true;try{await db.doc('friendreqs/'+r.id).update({status:'accepted',decided:nowIso()});const gd=await db.doc('groups/'+r.gid).get();if(gd.exists){const x=gd.data();if(!(x.members||[]).includes(me))await db.doc('groups/'+r.gid).set({...x,members:[...(x.members||[]),me]})}await putProfile({groups:[...myGroups().filter(y=>y.id!==r.gid),{id:r.gid,name:(gd.exists&&gd.data().name)||r.gname||'Group',owner:gd.exists?gd.data().owner:r.from}]});watchGroups();SOC.group=r.gid;await syncPlayer().catch(()=>{});toast('You joined '+(r.gname||'the group'))}catch(e){toast(writeErr(e))}render();return true}
+  if(act==='gchatOpen'){openGroupChat(a.dataset.id||(curGroup()||{}).id);return true}
+  if(act==='gchatBack'){closeGroupChat();S.view='clubhouse';render();return true}
+  if(act==='gmSend'){const gid=SOC.gchat;const t=(SOC.gmdraft||'').trim();if(!gid||!t)return true;SOC.gmdraft='';const at=nowIso();
+    SOC.gmsgs=[...(SOC.gmsgs||[]),{from:me,text:t,at,id:'tmp'}];render();const box=document.getElementById('gmsgs');if(box)box.scrollTop=box.scrollHeight;document.getElementById('gm_draft')?.focus();
+    try{await db.collection('groups/'+gid+'/msgs').doc(uid('m')).set({from:me,text:t.slice(0,1000),at});const x=await freshGroup(gid);if(x)await db.doc('groups/'+gid).set({...x,last:{from:me,text:t.slice(0,120),at}});ls('gread_'+gid,at)}catch(e){toast(writeErr(e))}return true}
+  if(act==='grpManage'){SOC.gmanage=!SOC.gmanage;render();return true}
+  if(act==='grpRemove'){const g=curGroup();if(!g||u===me)return true;
+    try{const x=await freshGroup(g.id);if(!x||x.owner!==me)return true;await db.doc('groups/'+g.id).set({...x,members:(x.members||[]).filter(m=>m!==u)});await db.doc('friendreqs/g~'+g.id+'~'+u).delete().catch(()=>{});toast('Removed @'+pname(u)+' from '+g.name)}catch(e){toast(writeErr(e))}render();return true}
+  if(act==='grpLeave'){const g=curGroup();if(!g)return true;if(SOC.gconfirm!=='leave'){SOC.gconfirm='leave';render();return true}SOC.gconfirm=null;
+    try{const x=await freshGroup(g.id);if(x&&(x.members||[]).includes(me))await db.doc('groups/'+g.id).set({...x,members:(x.members||[]).filter(m=>m!==me)});await dropGroup(g.id);toast('You left '+g.name)}catch(e){toast(writeErr(e))}return true}
+  if(act==='grpDelete'){const g=curGroup();if(!g||groupOwner(g.id)!==me)return true;if(SOC.gconfirm!=='delete'){SOC.gconfirm='delete';render();return true}SOC.gconfirm=null;
+    try{await db.doc('groups/'+g.id).delete();await dropGroup(g.id);toast('Deleted '+g.name)}catch(e){toast(writeErr(e))}return true}
+  if(act==='grpCancel'){SOC.gconfirm=null;render();return true}
   if(act==='grpDecline'){const r=SOC.reqsIn.find(x=>x.id===a.dataset.id);if(r){try{await db.doc('friendreqs/'+r.id).update({status:'declined',decided:nowIso()})}catch(e){toast(writeErr(e))}}render();return true}
   if(act==='friendReq'){try{await db.doc('friendreqs/'+me+'~'+u).set({from:me,to:u,status:'pending',at:nowIso()});toast('Friend request sent')}catch(e){toast(writeErr(e))}return true}
   if(act==='acceptReq'){try{await db.doc('friendreqs/'+u+'~'+me).update({status:'accepted',decided:nowIso()});if(!SOC.follows.has(u))await db.collection('follows/'+me+'/items').doc(u).set({at:nowIso()});toast('You and @'+pname(u)+' are friends')}catch(e){toast(writeErr(e))}return true}
@@ -3914,11 +4014,14 @@ function socialInput(f,el){
   if(f==='ff.q'){S.ffQ=v;render();return true}
   if(f==='sb.caption'){SOC.sbCaption=v;return true}
   if(f==='m.draft'){SOC.mdraft=v;return true}
+  if(f==='gm.draft'){SOC.gmdraft=v;return true}
+  if(f==='gphoto.file'){const file=el.files&&el.files[0];el.value='';if(!file)return true;const g=curGroup();if(!g)return true;toast('Uploading group photo…');
+    (async()=>{try{const ph=await uploadPhoto(file);const x=await freshGroup(g.id);if(!x||x.owner!==me)return;await db.doc('groups/'+g.id).set({...x,photo:ph.imgUrl||('/_blob/'+ph.img)});toast('Group photo updated')}catch(e){toast(e&&e.message?e.message:writeErr(e))}})();return true}
   if(f.startsWith('tee.')){SOC.tee[f.slice(4)]=v;return true}
   return false;
 }
 
-const SOCIAL_ACTS=new Set(['invMenu','spClose','grpNew','grpPick','grpInvite','grpCreate','grpSend','grpAccept','grpDecline','revealClose','revealShare','dimgRemove','storySound','fmediaRemove','chSearch','compOpen','compClose','storyOpen','storyClose','storyNext','storyPrev','chmode','fcat','fsort','fcompose','fpickcat','fopen','fback','fpost','fvote','shareBadge','closeShareBadge','postBadge','openFull','closeCard','openUid','openUser','clubFeed','feed','follow','unfollow','friendReq','acceptReq','declineReq','message','teeWith','openThread','leaveThread','sendMsg','teeOpen','teeCancel','sendTee','teeIn','like','toggleC','sendC','pickMention','postStatus']);
+const SOCIAL_ACTS=new Set(['gchatOpen','gchatBack','gmSend','grpManage','grpRemove','grpLeave','grpDelete','grpCancel','invMenu','spClose','grpNew','grpPick','grpInvite','grpCreate','grpSend','grpAccept','grpDecline','revealClose','revealShare','dimgRemove','storySound','fmediaRemove','chSearch','compOpen','compClose','storyOpen','storyClose','storyNext','storyPrev','chmode','fcat','fsort','fcompose','fpickcat','fopen','fback','fpost','fvote','shareBadge','closeShareBadge','postBadge','openFull','closeCard','openUid','openUser','clubFeed','feed','follow','unfollow','friendReq','acceptReq','declineReq','message','teeWith','openThread','leaveThread','sendMsg','teeOpen','teeCancel','sendTee','teeIn','like','toggleC','sendC','pickMention','postStatus']);
 
 // ---------- Club directory ----------
 // Verified clubs come from the OpenGolf course database (bundled as courses.json beside the page).
@@ -4156,7 +4259,8 @@ document.addEventListener('click',async e=>{
   if(act==='renameSave'){const n=(S.renameVal||'').trim();if(n===S.profile.username){S.renaming=false;render();return}
     try{await claimUsername(n,null);syncPlayer().catch(()=>{});S.renaming=false;toast('Username updated')}catch(e){S.renameErr=e&&e.msg?e.msg:writeErr(e)}render();return}
   if(act==='readCard'){readCard();return}
-  if(act==='redoPhoto'){S.parsed=null;S.photo=null;render();return}
+  if(act==='redoPhoto'){S.parsed=null;S.photo=null;S.photoKeep=true;render();return}
+  if(act==='prCourse'){const p=S.parsed;if(p){p.clubId='';p.mk=null;p.fromTee=false}S.setup.clubId='';S.setup.detail=null;S.setup.teeIdx=null;S.setup.full=null;S.cp.setup={q:'',open:true,adding:false,city:'',state:''};render();setTimeout(()=>document.getElementById('cp_setup')?.focus(),50);return}
   if(act==='cyc'){const h=S.parsed.holes[Number(a.dataset.i)];const k=a.dataset.k;const seq=k==='fw'?['hit','miss','']:['y','n',''];h[k]=seq[(seq.indexOf(h[k])+1)%3];render();return}
   if(act==='saveParsed'){saveParsed();return}
   if(act==='parseText'){parseText();return}
@@ -4209,7 +4313,7 @@ document.addEventListener('input',e=>{
   if(f.startsWith('gm.')&&f!=='gm.course'&&f!=='gm.format'){S.game[f.slice(3)]=v;document.getElementById('gameOut').innerHTML=gameOut();return}
   if(f==='gp.name'||f==='gp.index'){S.game.players[Number(el.dataset.i)][f.slice(3)]=v;document.getElementById('gameOut').innerHTML=gameOut();return}
 });
-document.addEventListener('keydown',e=>{if(e.target&&e.target.id==='cc_draft'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();caddieSend(S.cchat?S.cchat.draft:'')}});
+document.addEventListener('keydown',e=>{if(e.target&&(e.target.id==='gm_draft'||e.target.id==='m_draft')&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();const b=document.querySelector(e.target.id==='gm_draft'?'[data-act=gmSend]':'[data-act=sendMsg]');if(b)b.click();return}if(e.target&&e.target.id==='cc_draft'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();caddieSend(S.cchat?S.cchat.draft:'')}});
 document.addEventListener('change',e=>{
   const el=e.target,f=el.dataset&&el.dataset.field;if(!f)return;
   if(f==='setCourse'){const cc=S.courses.find(x=>x.id===el.value);if(cc){S.cp.setup={q:cc.name,open:false,adding:false,city:'',state:''};Object.assign(S.setup,{courseId:cc.id,course:cc.name,clubId:cc.clubId||'',clubVerified:!!cc.clubVerified,tees:cc.tees||'',rating:cc.rating??'',slope:cc.slope??'',n:cc.pars.length,pars:[...cc.pars,...Array(18).fill(4)].slice(0,18),yds:[...(cc.yds||[]),...Array(18).fill('')].slice(0,18),start:cc.start||1,detail:null,detailState:'',full:null,teeIdx:null,si:[...(cc.si||[]).map(x=>x??''),...Array(18).fill('')].slice(0,18)})}else S.setup.courseId='';render();return}

@@ -2,7 +2,7 @@
 // (db, user, sample, downloads), backed by this site's Worker.
 (function () {
   'use strict';
-  window.BP_WEB = { clubhouse: false };
+  window.BP_WEB = { clubhouse: true };
   // Session: an HttpOnly cookie, plus the same token kept on this device for browsers that drop the cookie.
   const TK = 'bp_t';
   const getTok = () => { try { return localStorage.getItem(TK) || ''; } catch (e) { return ''; } };
@@ -29,19 +29,52 @@
   window.BP_AUTH = auth;
 
   // ---- document store with live-ish snapshots ----
+  // Every live view on screen is refreshed together in ONE request (/api/batch):
+  // every 4s while a conversation is open, 15s otherwise, paused when the tab is hidden.
   const listeners = new Set();
-  let refreshTimer = null;
-  const refreshAll = () => { clearTimeout(refreshTimer); refreshTimer = setTimeout(() => listeners.forEach(l => l.run()), 60); };
-  setInterval(() => { if (document.visibilityState === 'visible') listeners.forEach(l => l.run()); }, 45000);
+  let refreshTimer = null, pollTimer = null, inFlight = false, again = false;
+  const fastPath = l => /^dms\/[^/]+\/msgs$/.test(l.spec.collection || '') || /^groups\/[^/]+\/msgs$/.test(l.spec.collection || '');
+  async function pollAll() {
+    if (inFlight) { again = true; return; }
+    const ls = [...listeners];
+    if (!ls.length) return;
+    inFlight = true;
+    try {
+      for (let i = 0; i < ls.length; i += 100) {
+        const chunk = ls.slice(i, i + 100);
+        const d = await api('POST', '/api/batch', { ops: chunk.map(l => l.spec) });
+        chunk.forEach((l, k) => l.apply((d.results || [])[k]));
+      }
+    } catch (e) { ls.forEach(l => l.fail(e)); }
+    inFlight = false;
+    if (again) { again = false; pollAll(); }
+  }
+  const refreshAll = () => { clearTimeout(refreshTimer); refreshTimer = setTimeout(pollAll, 60); };
+  let nextAt = 0;
+  // Keep the running countdown: views re-subscribing must not push the next refresh back.
+  // Only move it sooner (e.g. a conversation just opened and needs the 4s rate).
+  function schedule(force) {
+    const wait = [...listeners].some(fastPath) ? 4000 : 15000, due = Date.now() + wait;
+    if (!force && pollTimer && nextAt <= due) return;
+    clearTimeout(pollTimer); nextAt = due;
+    pollTimer = setTimeout(() => { pollTimer = null; if (document.visibilityState === 'visible') pollAll(); schedule(true); }, wait);
+  }
+  schedule();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshAll(); });
+  window.addEventListener('focus', refreshAll);
 
   const docSnap = (id, d) => ({ id, exists: !!d.exists, data: () => (d.exists ? JSON.parse(JSON.stringify(d.data)) : undefined) });
   const qSnap = docs => { const ds = docs.map(x => ({ id: x.id, exists: true, data: () => JSON.parse(JSON.stringify(x.data)) })); return { docs: ds, size: ds.length, empty: !ds.length, forEach: f => ds.forEach(f) }; };
-  const listen = (fetcher, cb, err) => {
+  const listen = (spec, toSnap, cb, err) => {
     let last = null, alive = true;
-    const l = { run: async () => { if (!alive) return; try { const s = await fetcher(); const sig = JSON.stringify(s.sig); if (sig !== last) { last = sig; cb(s.snap); } } catch (e) { if (err) err(e); } } };
-    listeners.add(l); l.run();
-    return () => { alive = false; listeners.delete(l); };
+    const l = {
+      spec,
+      apply(r) { if (!alive || !r) return; if (!r.ok) { if (err) err({ code: r.code || 'not_granted', message: r.error, status: r.status }); return; }
+        const sig = JSON.stringify(r); if (sig !== last) { last = sig; cb(toSnap(r)); } },
+      fail(e) { if (alive && err) err(e); }
+    };
+    listeners.add(l); refreshAll(); schedule();
+    return () => { alive = false; listeners.delete(l); schedule(); };
   };
 
   class DocRef {
@@ -52,7 +85,7 @@
     async update(data) { await api('PUT', '/api/doc', { path: this.path, data, op: 'update' }); refreshAll(); }
     async delete() { await api('POST', '/api/doc', { path: this.path, op: 'delete' }); refreshAll(); }
     async acquire() { return { acquired: true, release: async () => {} }; }
-    onSnapshot(cb, err) { return listen(async () => { const d = await api('GET', '/api/doc?path=' + encodeURIComponent(this.path)); return { sig: d, snap: docSnap(this.id, d) }; }, cb, err); }
+    onSnapshot(cb, err) { return listen({ t: 'doc', path: this.path }, r => docSnap(this.id, r), cb, err); }
   }
   class Query {
     constructor(path, q) { this.path = path; this.q = q || { where: [], orderBy: [], limit: null }; }
@@ -63,7 +96,7 @@
     doc(id) { return new DocRef(this.path + '/' + id); }
     async _run() { return (await api('POST', '/api/query', { collection: this.path, ...this.q })).docs; }
     async get() { return qSnap(await this._run()); }
-    onSnapshot(cb, err) { return listen(async () => { const docs = await this._run(); return { sig: docs, snap: qSnap(docs) }; }, cb, err); }
+    onSnapshot(cb, err) { return listen({ t: 'q', collection: this.path, ...this.q }, r => qSnap(r.docs || []), cb, err); }
   }
   const db = { doc: p => new DocRef(p), collection: p => new Query(p) };
 
@@ -119,6 +152,19 @@
     }
   };
 
+
+  // ---- photos (videos need separate storage; not on the web yet) ----
+  const assets = {
+    async upload(blob, opts) {
+      const type = String((opts && opts.type) || blob.type || '').toLowerCase();
+      if (type.startsWith('video/')) throw { code: 'bad_type', message: 'Video posts are coming soon. Photos work now.' };
+      const r = await fetch('/api/upload', { method: 'POST', credentials: 'same-origin', headers: { ...authHeaders(), 'content-type': type || 'image/jpeg' }, body: blob });
+      let d = null; try { d = await r.json(); } catch (e) {}
+      if (!r.ok) throw { code: (d && d.code) || 'unavailable', message: (d && d.error) || 'Upload failed', status: r.status };
+      return d;
+    }
+  };
+
   window.claude = {
     async use(name) {
       if (name === 'downloads') return downloads;
@@ -127,6 +173,7 @@
       if (name === 'db') return db;
       if (name === 'user') return user;
       if (name === 'sample') return sample;
+      if (name === 'assets') return assets;
       return null;
     }
   };

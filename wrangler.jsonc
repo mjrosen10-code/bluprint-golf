@@ -7,7 +7,7 @@
     "directory": "./public",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*", "/auth/*"]
+    "run_worker_first": ["/api/*", "/auth/*", "/_blob/*"]
   },
   "d1_databases": [
     { "binding": "DB", "database_name": "bluprint-golf", "database_id": "32f3eff9-9354-4b27-92d7-5b27775719f0" }
