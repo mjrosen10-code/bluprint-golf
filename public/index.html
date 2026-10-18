@@ -1805,7 +1805,7 @@ function render(){S._popHtml="";
   if(!same){requestAnimationFrame(()=>enhanceDates(el));const _st=el.querySelector('.strip'),_sl=_st?_st.scrollLeft:0;el.innerHTML=html;if(_st){const n=el.querySelector('.strip');if(n)n.scrollLeft=_sl}if(v==='home')requestAnimationFrame(()=>dcarSync(true))}
   el.querySelectorAll(FSEL).forEach(i=>{const x=S._fc[i.id];if(!x||i.dataset.field||i.type==='file')return;if('c' in x)i.checked=x.c;else i.value=x.v});
   if(S._lv!==v){S._lv=v;el.classList.remove('enter');void el.offsetWidth;[...el.children].forEach((ch,i)=>ch.style.setProperty('--i',Math.min(i,8)));el.classList.add('enter');clearTimeout(S._et);S._et=setTimeout(()=>el.classList.remove('enter'),1100);countUp(el)}
-  const sh=document.getElementById('sheet');if(sh)sh.innerHTML=S.reveal?revealView():S._popHtml&&(S.view==='profile'||S.view==='progress'||S.view==='home')?S._popHtml:typeof SOC!=='undefined'&&SOC.pop&&(S.view==='clubhouse'||S.view==='player'||S.view==='groups'||S.view==='gchat')?socialPop():S.showFriends&&typeof SOC!=='undefined'?`<div class="sheet-back" data-act="hideFriends"></div><section class="sheet" role="dialog" aria-label="Friends"><div class="sheet-grab"></div>${friendsSection()}<button class="btn ghost" data-act="hideFriends">Close</button></section>`:S.story&&typeof SOC!=='undefined'?storyViewer():S.cardImg?scorecardSheet():S.inviteText?inviteSheet():(S.shareBadge&&typeof SOC!=='undefined')?shareBadgeSheet():(S.cchat&&S.cchat.mode==='course'&&S.view==='live')?courseCaddieSheet():(S.cardUid&&typeof SOC!=='undefined'?playerCard(S.cardUid):'');
+  const sh=document.getElementById('sheet');if(sh)sh.innerHTML=S.reveal?revealView():S._popHtml&&(S.view==='profile'||S.view==='progress'||S.view==='home')?S._popHtml:typeof SOC!=='undefined'&&SOC.pop&&(S.view==='clubhouse'||S.view==='player'||S.view==='groups'||S.view==='gchat')?socialPop():S.showFriends&&typeof SOC!=='undefined'?`<div class="sheet-back" data-act="hideFriends"></div><section class="sheet" role="dialog" aria-label="Friends"><div class="sheet-grab"></div>${friendsSection()}<button class="btn ghost" data-act="hideFriends">Close</button></section>`:S.cardImg?scorecardSheet():S.inviteText?inviteSheet():(S.shareBadge&&typeof SOC!=='undefined')?shareBadgeSheet():(S.cchat&&S.cchat.mode==='course'&&S.view==='live')?courseCaddieSheet():(S.cardUid&&typeof SOC!=='undefined'?playerCard(S.cardUid):'');
   const fab=document.getElementById('fab');if(fab)fab.hidden=!(S.view==='live'&&S.draft)||!!(S.cchat&&S.cchat.mode==='course');
   if(active){const n=document.getElementById(active);if(n&&n!==document.body){n.focus();try{if(sel!=null)n.setSelectionRange(sel,sel)}catch(e){}}}
 }
@@ -3470,39 +3470,7 @@ async function uploadMedia(file){if(!file)return {};if(!String(file.type).starts
   const r=await assetsFn.upload(file,{type:file.type||'video/mp4'});return {vid:r.id,vidUrl:r.url}}
 function mediaHtml(p,cls,who){const v=vidSrc(p);if(v)return `<video class="${cls}" src="${esc(v)}" controls playsinline preload="metadata"></video>`;const i=imgSrc(p);return i?`<img class="${cls}" src="${esc(i)}" alt="Photo${who?' from @'+esc(who):''}" loading="lazy">`:''}
 function draftMedia(d,act){if(!d)return '';return `<div class="dimg">${d.video?`<video src="${d.preview}" muted playsinline controls></video>`:`<img src="${d.preview}" alt="Attached photo">`}<button class="sv-x" data-act="${act}" aria-label="Remove">✕</button></div>`}
-const MEDIA_ACCEPT='image/*,video/mp4,video/quicktime,video/webm';
-function activeStories(){const now=Date.now();const by={};for(const u in SOC.posts)for(const p of SOC.posts[u]){if(p.type!=='story'||!hasMedia(p))continue;if(new Date(p.expiresAt).getTime()<=now)continue;(by[p.uid]=by[p.uid]||[]).push(p)}
-  for(const u in by)by[u].sort((a,b)=>String(a.createdAt).localeCompare(String(b.createdAt)));return by}
-function seenStories(){try{return JSON.parse(localStorage.getItem('bg_seen')||'{}')}catch(e){return {}}}
-function markSeen(key){try{const s=seenStories();s[key]=Date.now();localStorage.setItem('bg_seen',JSON.stringify(s))}catch(e){}}
-function storyCircle(){if(SOC.feed==='club'&&SOC.club)return new Set(clubMembers(SOC.club).map(p=>p.uid));if(SOC.feed==='group')return groupCircle();return new Set(friendIds())}
-function storyBar(){
-  const by=activeStories();const circle=storyCircle();const seen=seenStories();
-  const others=Object.keys(by).filter(u=>u!==me&&circle.has(u)).sort((a,b)=>{const ua=by[a].every(p=>seen[p.key]),ub=by[b].every(p=>seen[p.key]);return ua-ub||String(by[b].at(-1).createdAt).localeCompare(String(by[a].at(-1).createdAt))});
-  const mine=by[me]||[];
-  return `<div class="stories">
-    <div class="st-item">${mine.length?`<button class="st-ring" data-act="storyOpen" data-uid="${esc(me)}" aria-label="Your story">${avatar(me,56)}</button>`:`<label class="st-ring add" for="st_file" aria-label="Add to your story">${avatar(me,56)}<span class="st-plus">+</span></label>`}<span>${mine.length?'Your story':'Add story'}</span></div>
-    ${mine.length?`<div class="st-item"><label class="st-ring add" for="st_file" aria-label="Add another story"><span class="st-addonly">+</span></label><span>Add</span></div>`:''}
-    ${others.map(u=>{const all=by[u].every(p=>seen[p.key]);return `<div class="st-item"><button class="st-ring ${all?'seen':''}" data-act="storyOpen" data-uid="${esc(u)}">${avatar(u,56)}</button><span>${esc(pname(u))}</span></div>`}).join('')}
-    <input type="file" id="st_file" data-field="story.file" accept="${MEDIA_ACCEPT}" style="position:absolute;width:1px;height:1px;opacity:0">
-  </div>`;
-}
-function storyViewer(){
-  const st=S.story;const by=activeStories();const list=by[st.uid]||[];const p=list[st.i];if(!p){S.story=null;return ''}
-  markSeen(p.key);clearTimeout(S.storyTimer);const isV=!!vidSrc(p);
-  if(isV)setTimeout(()=>{const v=document.querySelector('.storyview video');const bar=document.querySelector('.sv-bars i.run');if(!v)return;v.onloadedmetadata=()=>{if(bar&&v.duration)bar.style.setProperty('--svd',v.duration+'s')};v.onended=()=>storyStep(1)},0);
-  else S.storyTimer=setTimeout(()=>storyStep(1),5500);
-  return `<div class="storyview" role="dialog" aria-label="Story from @${esc(pname(st.uid))}">
-    <div class="sv-bars">${list.map((x,i)=>`<i class="${i<st.i?'done':i===st.i?'run':''}"></i>`).join('')}</div>
-    <div class="sv-head">${avatar(st.uid,32)}<b>@${esc(pname(st.uid))}</b><span class="small">${ago(p.createdAt)}</span><button class="sv-x" data-act="storyClose" aria-label="Close">✕</button></div>
-    ${vidSrc(p)?`<video src="${esc(vidSrc(p))}" autoplay playsinline muted></video><button class="sv-sound" data-act="storySound" aria-label="Sound on">🔇</button>`:`<img src="${esc(imgSrc(p))}" alt="Story photo">`}${p.text?`<p class="sv-cap">${esc(p.text)}</p>`:''}
-    <button class="sv-prev" data-act="storyPrev" aria-label="Previous"></button><button class="sv-next" data-act="storyNext" aria-label="Next"></button></div>`;
-}
-function storyStep(d){const st=S.story;if(!st)return;const by=activeStories();const list=by[st.uid]||[];const ni=st.i+d;
-  if(ni>=0&&ni<list.length){st.i=ni;render();return}
-  if(d>0){const order=st.order||[];const k=order.indexOf(st.uid);const nu=order[k+1];if(nu&&by[nu]){S.story={uid:nu,i:0,order};render();return}}
-  clearTimeout(S.storyTimer);S.story=null;render()}
-
+const MEDIA_ACCEPT=(typeof window!=='undefined'&&window.BP_WEB)?'image/*':'image/*,video/mp4,video/quicktime,video/webm'; // web: photos only for now
 function groupBar(){const gs=myGroups();const g=curGroup();
   if(!g)return `<section class="card grpcta"><span class="kicker" style="color:var(--volt)">My group</span><b class="gc-t">Start your golf group</b><p class="small muted">Everyone has a regular group. Bring yours in to share rounds, compare stats and get a group recap every Monday.</p><div class="row" style="gap:8px"><button class="btn primary" data-act="grpNew">Create a group</button><button class="btn" data-act="invMenu">Invite friends</button></div></section>`;
   const mem=groupMembers(g.id);const own=groupOwner(g.id)===me;
@@ -3562,10 +3530,9 @@ const low=lowW;
 
   ${SOC.feed==='club'?clubHeader():''}
   ${SOC.feed==='group'?groupFeedBar():''}
-  ${storyBar()}
   ${SOC.compOpen||SOC.draft||SOC.dimg?`  <section class="composer tile"><div class="row" style="gap:12px;flex-wrap:nowrap;align-items:flex-start">${avatar(me,40)}<textarea class="t" id="ch_draft" data-field="ch.draft" maxlength="280" placeholder="What happened on the course? Tag friends with @" style="min-height:70px">${esc(SOC.draft)}</textarea></div>
     ${sugg.length?`<div class="row" style="gap:6px">${sugg.map(p=>`<button class="pill neutral" data-act="pickMention" data-name="${esc(p.username)}">@${esc(p.username)}</button>`).join('')}</div>`:''}
-    ${draftMedia(SOC.dimg,'dimgRemove')}<div class="row between"><div class="row" style="gap:6px">${assetsFn?`<label class="btn small ghost" for="post_file">📷 Photo / video</label><input type="file" id="post_file" data-field="post.file" accept="${MEDIA_ACCEPT}" style="position:absolute;width:1px;height:1px;opacity:0"><label class="btn small ghost" for="st_file">＋ Story</label>`:''}<span class="small muted">${SOC.draft.length}/280</span></div><div class="row" style="gap:6px"><button class="btn small ghost" data-act="compClose">Cancel</button><button class="btn primary" data-act="postStatus" ${(!SOC.draft.trim()&&!SOC.dimg)||SOC.posting?'disabled':''}>${SOC.posting?'Posting…':'Post'}</button></div></div></section>`:`<button class="fstart compbar" data-act="compOpen">${avatar(me,36)}<span>What happened on the course?</span><span class="cb-ic" aria-hidden="true">📷</span></button>`}
+    ${draftMedia(SOC.dimg,'dimgRemove')}<div class="row between"><div class="row" style="gap:6px">${assetsFn?`<label class="btn small ghost" for="post_file">📷 ${IS_WEB?'Photo':'Photo / video'}</label><input type="file" id="post_file" data-field="post.file" accept="${MEDIA_ACCEPT}" style="position:absolute;width:1px;height:1px;opacity:0">`:''}<span class="small muted">${SOC.draft.length}/280</span></div><div class="row" style="gap:6px"><button class="btn small ghost" data-act="compClose">Cancel</button><button class="btn primary" data-act="postStatus" ${(!SOC.draft.trim()&&!SOC.dimg)||SOC.posting?'disabled':''}>${SOC.posting?'Posting…':'Post'}</button></div></div></section>`:`<button class="fstart compbar" data-act="compOpen">${avatar(me,36)}<span>What happened on the course?</span><span class="cb-ic" aria-hidden="true">📷</span></button>`}
   <section class="feed">${posts.length?posts.map(postCard).join(''):!SOC.playersLoaded?[1,2,3].map(()=>`<div class="post skelpost"><div class="post-head"><span class="sk-av"></span><div class="skel" style="flex:1;margin-top:4px"><i style="width:40%"></i><i></i><i style="width:70%"></i></div></div></div>`).join(''):`<div class="card"><p class="muted">${SOC.feed==='friends'?'Nothing from your friends yet. Search a username above and tap Add friend, or post your first status.':SOC.feed==='group'?'No posts from your group yet.':SOC.feed==='club'?(SOC.club?'No activity at this club yet.':'Pick a club to see who is playing there. Add your clubs in Progress.'):SOC.feed==='mentions'?'No one has tagged you yet.':'No posts yet. Be the first.'}</p></div>`}</section>`:''}`;
 }
 function clubHeader(){
@@ -3986,10 +3953,6 @@ async function socialAct(act,a){
   if(act==='postStatus'){const t=SOC.draft.trim();if(!t&&!SOC.dimg)return true;SOC.posting=true;render();try{SOC.compOpen=false;let ph={};if(SOC.dimg)ph=await uploadMedia(SOC.dimg.file);await createPost({type:'status',text:t,...ph});SOC.draft='';if(SOC.dimg)URL.revokeObjectURL(SOC.dimg.preview);SOC.dimg=null;SOC.feed='following'}catch(e){toast(e&&e.message?e.message:writeErr(e))}SOC.posting=false;render();return true}
   if(act==='storySound'){const v=document.querySelector('.storyview video');if(v){v.muted=!v.muted;a.textContent=v.muted?'🔇':'🔊';if(!v.muted)v.play().catch(()=>{})}return true}
   if(act==='dimgRemove'){if(SOC.dimg)URL.revokeObjectURL(SOC.dimg.preview);SOC.dimg=null;render();return true}
-  if(act==='storyOpen'){const by=activeStories();const circle=storyCircle();const order=[me,...Object.keys(by).filter(u=>u!==me&&circle.has(u))];S.story={uid:a.dataset.uid,i:0,order};render();return true}
-  if(act==='storyClose'){clearTimeout(S.storyTimer);S.story=null;render();return true}
-  if(act==='storyNext'){storyStep(1);return true}
-  if(act==='storyPrev'){storyStep(-1);return true}
   return false;
 }
 function socialInput(f,el){
@@ -3999,7 +3962,6 @@ function socialInput(f,el){
   if(f==='cdraft'){SOC.cdraft[el.dataset.key]=v;return true}
   if(f==='pa.date'){S.paDate=v;return true}
   if(f==='post.file'){const file=el.files&&el.files[0];if(!file)return true;if(SOC.dimg)URL.revokeObjectURL(SOC.dimg.preview);SOC.dimg={file,video:String(file.type).startsWith('video/'),preview:URL.createObjectURL(file)};el.value='';render();return true}
-  if(f==='story.file'){const file=el.files&&el.files[0];if(!file)return true;el.value='';toast(String(file.type).startsWith('video/')?'Uploading your video story…':'Posting your story…');uploadMedia(file).then(ph=>createPost({type:'story',text:'',...ph,expiresAt:new Date(Date.now()+864e5).toISOString()})).then(()=>toast('Story posted. It disappears in 24 hours.')).catch(e=>toast(e&&e.message?e.message:writeErr(e)));return true}
   if(f==='ff.q'){S.ffQ=v;render();return true}
   if(f==='sb.caption'){SOC.sbCaption=v;return true}
   if(f==='m.draft'){SOC.mdraft=v;return true}
@@ -4010,7 +3972,7 @@ function socialInput(f,el){
   return false;
 }
 
-const SOCIAL_ACTS=new Set(['grecap','ginfo','grpNewFromList','gchatOpen','gchatBack','gmSend','grpManage','grpRemove','grpLeave','grpDelete','grpCancel','invMenu','spClose','grpNew','grpPick','grpInvite','grpCreate','grpSend','grpAccept','grpDecline','revealClose','revealShare','dimgRemove','storySound','chSearch','compOpen','compClose','storyOpen','storyClose','storyNext','storyPrev','shareBadge','closeShareBadge','postBadge','openFull','closeCard','openUid','openUser','clubFeed','feed','follow','unfollow','friendReq','acceptReq','declineReq','message','teeWith','openThread','leaveThread','sendMsg','teeOpen','teeCancel','sendTee','teeIn','like','toggleC','sendC','pickMention','postStatus']);
+const SOCIAL_ACTS=new Set(['grecap','ginfo','grpNewFromList','gchatOpen','gchatBack','gmSend','grpManage','grpRemove','grpLeave','grpDelete','grpCancel','invMenu','spClose','grpNew','grpPick','grpInvite','grpCreate','grpSend','grpAccept','grpDecline','revealClose','revealShare','dimgRemove','storySound','chSearch','compOpen','compClose','shareBadge','closeShareBadge','postBadge','openFull','closeCard','openUid','openUser','clubFeed','feed','follow','unfollow','friendReq','acceptReq','declineReq','message','teeWith','openThread','leaveThread','sendMsg','teeOpen','teeCancel','sendTee','teeIn','like','toggleC','sendC','pickMention','postStatus']);
 
 // ---------- Club directory ----------
 // Verified clubs come from the OpenGolf course database (bundled as courses.json beside the page).
