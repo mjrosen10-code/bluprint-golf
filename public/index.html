@@ -304,7 +304,7 @@ body.firstrun #backBtn,body.firstrun #hcChip{display:none!important}
 .or-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:10px}.or-nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.or-nums label{white-space:nowrap;letter-spacing:.06em}.or-nums i{margin-left:3px;font-style:normal;color:var(--sage);font-weight:400;text-transform:none;letter-spacing:0}
 @media(max-width:420px){.or-grid{grid-template-columns:1fr}}
 .hc-none{font-size:1.6rem;font-weight:600;color:var(--sage);letter-spacing:0}
-body.web-noclub #nav button[data-view="clubhouse"]{display:none}body.web-noclub #nav{grid-template-columns:repeat(4,1fr)!important}
+body.web-noclub #nav button[data-view="clubhouse"]{display:none}body.web-noclub #nav button[data-view="groups"]{display:none}body.web-noclub #nav{grid-template-columns:repeat(3,1fr)!important}
 .signin .si-home{align-self:flex-start;margin-bottom:-6px}
 .signin .si-box{display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:var(--r-lg);background:#171A1A;border:1px solid rgba(255,255,255,.08)}.si-code{font-family:'JetBrains Mono',monospace;font-size:1.6rem;letter-spacing:.4em;text-align:center}
 .rv2{overflow:hidden}.rv2-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(207,232,218,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(207,232,218,.05) 1px,transparent 1px);background-size:28px 28px;-webkit-mask-image:radial-gradient(60% 50% at 50% 40%,#000,transparent);mask-image:radial-gradient(60% 50% at 50% 40%,#000,transparent)}
@@ -1167,6 +1167,11 @@ input.t:focus,select.t:focus,textarea.t:focus{border-color:rgba(47,208,115,.6);b
 .dot-un{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--loss);margin-left:6px;vertical-align:middle;flex:0 0 auto}.gchat-btn{display:flex;align-items:center;justify-content:center;gap:2px;overflow:hidden;white-space:nowrap}.gmsgs{max-height:min(60vh,520px);overflow-y:auto}
 
 .wel-mark{display:block;width:76px;height:76px;margin:0 0 10px -6px}
+
+
+.ginfo{display:flex;flex-direction:column;gap:12px}.gmembers{display:flex;flex-direction:column;gap:8px}.ghead:hover b{text-decoration:underline}.glist .list-row{padding:12px 0}
+
+.chip-hc[aria-current="page"]{border-color:var(--volt);box-shadow:0 0 0 1px var(--volt) inset}
 </style>
 
 <div class="ambient" aria-hidden="true"><i class="glow g1"></i><i class="glow g2"></i><i class="glow g3"></i><div class="topo"></div><div class="topo2"></div><svg class="golfart bp" viewBox="740 170 420 1160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -1292,7 +1297,7 @@ input.t:focus,select.t:focus,textarea.t:focus{border-color:rgba(47,208,115,.6);b
   <button data-act="nav" data-view="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="6"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/></svg>My coach</button>
   <button data-act="nav" data-view="log" class="log-btn"><span class="plus">+</span>Play now</button>
   <button data-act="nav" data-view="clubhouse" class="ch-btn"><span class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span class="nbadge" id="chBadge" hidden>0</span></span>Clubhouse</button>
-  <button data-act="nav" data-view="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Profile</button>
+  <button data-act="nav" data-view="groups" class="gr-btn"><span class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.6 6-5.6s6 2.3 6 5.6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.6 14.6c.5-.1.9-.2 1.4-.2 2.6 0 4.5 1.8 4.5 4.6"/></svg><span class="nbadge" id="grBadge" hidden>0</span></span>Groups</button>
 </nav>
 
 <script>
@@ -1736,7 +1741,7 @@ function trackNav(blocked){
   if(cur.view!=='gchat'&&typeof SOC!=='undefined'&&SOC.gmUnsub)closeGroupChat();
   if(cur.view!=='thread'&&typeof SOC!=='undefined'&&SOC.msgUnsub){SOC.msgUnsub();SOC.msgUnsub=null}
   if(!blocked&&NAV.last&&!NAV.back&&locKey(NAV.last)!==locKey(cur)){NAV.stack.push(NAV.last);if(NAV.stack.length>30)NAV.stack.shift()}
-  if(!blocked&&['home','progress','log','profile','clubhouse'].includes(cur.view))NAV.stack=[]; // bottom-nav tabs are top level: no back arrow
+  if(!blocked&&['home','progress','log','profile','clubhouse','groups'].includes(cur.view))NAV.stack=[]; // bottom-nav tabs are top level: no back arrow
   NAV.back=false;if(!blocked)NAV.last=cur;
   const b=document.getElementById('backBtn');if(b)b.hidden=blocked||!NAV.stack.length;
 }
@@ -1758,8 +1763,8 @@ function render(){S._popHtml="";
   {const sti=myStatusI();let lv=0;try{lv=badgeState(S.rounds,{index:c.index!=null?c.index:c.est,diffs:c.diffs,goal:S.profile.goal}).lvl}catch(e){}
   document.getElementById('hcChip').innerHTML=(S.profile.username?`<span class="hc-lv" style="--stc:${STC[sti]}" title="${esc(STATUS[sti][0])}">${lv}</span><span class="hc-u">@${esc(S.profile.username)}</span>`:'')+`<span class="hc-n">${c.index!=null?(c.verified?VCHECK+' ':'')+hcTxt(c.index,1):(S.profile.username?'—':'Set handicap')}</span>`}
   const root=document.querySelector('[data-view-root]')||null;
-  const navKey={caddie:'profile',findfriends:'clubhouse',player:'clubhouse',inbox:'clubhouse',thread:'clubhouse',gchat:'clubhouse',setup:'log',live:'log',photo:'log',text:'log',report:'home'}[S.view]||S.view;
-  document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===navKey?'page':'false'));
+  const navKey={caddie:'profile',findfriends:'clubhouse',player:'clubhouse',inbox:'clubhouse',thread:'clubhouse',gchat:'groups',setup:'log',live:'log',photo:'log',text:'log',report:'home'}[S.view]||S.view;
+  document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===navKey?'page':'false'));{const hc=document.getElementById('hcChip');if(hc)hc.setAttribute('aria-current',navKey==='profile'?'page':'false')}
   const v=S.view; let html='';
   document.body.classList.toggle('livemode',v==='live');
   const needsName=S.store==='db'&&S.profileReady&&!S.profile.username&&!S.readOnly;
@@ -1788,6 +1793,7 @@ function render(){S._popHtml="";
   else if(v==='inbox')html=viewInbox(c);
   else if(v==='thread')html=viewThread(c);
   else if(v==='gchat')html=viewGroupChat(c);
+  else if(v==='groups')html=viewGroups(c);
   else if(v==='findfriends')html=viewFindFriends(c);
   else if(v==='caddie')html=viewCaddie(c);
   const el=document.getElementById('view');
@@ -1799,7 +1805,7 @@ function render(){S._popHtml="";
   if(!same){requestAnimationFrame(()=>enhanceDates(el));const _st=el.querySelector('.strip'),_sl=_st?_st.scrollLeft:0;el.innerHTML=html;if(_st){const n=el.querySelector('.strip');if(n)n.scrollLeft=_sl}if(v==='home')requestAnimationFrame(()=>dcarSync(true))}
   el.querySelectorAll(FSEL).forEach(i=>{const x=S._fc[i.id];if(!x||i.dataset.field||i.type==='file')return;if('c' in x)i.checked=x.c;else i.value=x.v});
   if(S._lv!==v){S._lv=v;el.classList.remove('enter');void el.offsetWidth;[...el.children].forEach((ch,i)=>ch.style.setProperty('--i',Math.min(i,8)));el.classList.add('enter');clearTimeout(S._et);S._et=setTimeout(()=>el.classList.remove('enter'),1100);countUp(el)}
-  const sh=document.getElementById('sheet');if(sh)sh.innerHTML=S.reveal?revealView():S._popHtml&&(S.view==='profile'||S.view==='progress'||S.view==='home')?S._popHtml:typeof SOC!=='undefined'&&SOC.pop&&(S.view==='clubhouse'||S.view==='player')?socialPop():S.showFriends&&typeof SOC!=='undefined'?`<div class="sheet-back" data-act="hideFriends"></div><section class="sheet" role="dialog" aria-label="Friends"><div class="sheet-grab"></div>${friendsSection()}<button class="btn ghost" data-act="hideFriends">Close</button></section>`:S.story&&typeof SOC!=='undefined'?storyViewer():S.cardImg?scorecardSheet():S.inviteText?inviteSheet():(S.shareBadge&&typeof SOC!=='undefined')?shareBadgeSheet():(S.cchat&&S.cchat.mode==='course'&&S.view==='live')?courseCaddieSheet():(S.cardUid&&typeof SOC!=='undefined'?playerCard(S.cardUid):'');
+  const sh=document.getElementById('sheet');if(sh)sh.innerHTML=S.reveal?revealView():S._popHtml&&(S.view==='profile'||S.view==='progress'||S.view==='home')?S._popHtml:typeof SOC!=='undefined'&&SOC.pop&&(S.view==='clubhouse'||S.view==='player'||S.view==='groups'||S.view==='gchat')?socialPop():S.showFriends&&typeof SOC!=='undefined'?`<div class="sheet-back" data-act="hideFriends"></div><section class="sheet" role="dialog" aria-label="Friends"><div class="sheet-grab"></div>${friendsSection()}<button class="btn ghost" data-act="hideFriends">Close</button></section>`:S.story&&typeof SOC!=='undefined'?storyViewer():S.cardImg?scorecardSheet():S.inviteText?inviteSheet():(S.shareBadge&&typeof SOC!=='undefined')?shareBadgeSheet():(S.cchat&&S.cchat.mode==='course'&&S.view==='live')?courseCaddieSheet():(S.cardUid&&typeof SOC!=='undefined'?playerCard(S.cardUid):'');
   const fab=document.getElementById('fab');if(fab)fab.hidden=!(S.view==='live'&&S.draft)||!!(S.cchat&&S.cchat.mode==='course');
   if(active){const n=document.getElementById(active);if(n&&n!==document.body){n.focus();try{if(sel!=null)n.setSelectionRange(sel,sel)}catch(e){}}}
 }
@@ -3139,7 +3145,7 @@ function watchGroups(){if(!db||!me)return;const ids=new Set(myGroups().map(g=>g.
         if(g.owner===me){const legacy=legacyMembers(g.id);try{await db.doc('groups/'+g.id).set({name:g.name,owner:me,members:[me],created:nowIso()});if(legacy.length>1)await db.doc('groups/'+g.id).set({name:g.name,owner:me,members:legacy,created:nowIso()})}catch(e){}}
         else if(SOC.gseen&&SOC.gseen[g.id]){await dropGroup(g.id);toast((g.name||'A group')+' was deleted')}}
       (SOC.gseen=SOC.gseen||{})[g.id]=d.exists;softRender()},()=>{})}}
-async function dropGroup(gid){if(SOC.gsubs[gid]){try{SOC.gsubs[gid]()}catch(e){}delete SOC.gsubs[gid]}delete SOC.gdocs[gid];
+async function dropGroup(gid){if(SOC.gchat===gid){closeGroupChat();SOC.ginfo=false;if(S.view==='gchat')S.view='groups'}if(SOC.gsubs[gid]){try{SOC.gsubs[gid]()}catch(e){}delete SOC.gsubs[gid]}delete SOC.gdocs[gid];
   await putProfile({groups:myGroups().filter(x=>x.id!==gid)}).catch(()=>{});if(SOC.group===gid)SOC.group=null;await syncPlayer().catch(()=>{});render()}
 async function freshGroup(gid){const d=await db.doc('groups/'+gid).get();if(!d.exists)return null;const x=d.data();SOC.gdocs[gid]=x;return x}
 
@@ -3152,11 +3158,12 @@ function openGroupChat(gid){S.cardUid=null;SOC.group=gid;SOC.gchat=gid;SOC.gmsgs
   SOC.gmUnsub=db.collection('groups/'+gid+'/msgs').orderBy('at','desc').limit(150).onSnapshot(s=>{SOC.gmsgs=s.docs.map(d=>({...d.data(),id:d.id})).reverse();const x=SOC.gdocs[gid];ls('gread_'+gid,(x&&x.last&&x.last.at)||nowIso());softRender();const box=document.getElementById('gmsgs');if(box)box.scrollTop=box.scrollHeight},()=>{});
   ls('gread_'+gid,nowIso());S.view='gchat';render();setTimeout(()=>{const box=document.getElementById('gmsgs');if(box)box.scrollTop=box.scrollHeight},60)}
 function closeGroupChat(){if(SOC.gmUnsub){SOC.gmUnsub();SOC.gmUnsub=null}SOC.gchat=null}
-function viewGroupChat(c){const gid=SOC.gchat;const g=myGroups().find(x=>x.id===gid);if(!g){S.view='clubhouse';return viewClubhouse(c)}
+function viewGroupChat(c){const gid=SOC.gchat;const g=myGroups().find(x=>x.id===gid);if(!g){S.view='groups';return viewGroups(c)}
   const x=SOC.gdocs[gid]||{};const mem=groupMembers(gid);const own=groupOwner(gid)===me;let prev='';
-  return `<div class="row between" style="flex-wrap:nowrap"><button class="btn ghost" data-act="gchatBack">◀ Clubhouse</button>
-    <span class="row" style="gap:10px;flex-wrap:nowrap;min-width:0">${groupAvatar(gid,36)}<span style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.name||g.name)}</b><span class="small muted">${mem.length} golfer${mem.length===1?'':'s'}</span></span></span></div>
-  ${own?`<div class="row" style="gap:8px"><label class="btn small ghost" for="gphoto_file" style="cursor:pointer">${x.photo?'Change group photo':'Add a group photo'}</label><input type="file" id="gphoto_file" accept="image/*" data-field="gphoto.file" hidden></div>`:''}
+  return `<div class="row between" style="flex-wrap:nowrap"><button class="btn ghost" data-act="gchatBack">◀ Groups</button>
+    <button class="plain row ghead" data-act="ginfo" aria-expanded="${!!SOC.ginfo}" style="gap:10px;flex-wrap:nowrap;min-width:0;text-align:left">${groupAvatar(gid,36)}<span style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.name||g.name)}</b><span class="small muted">${mem.length} golfer${mem.length===1?'':'s'} · ${SOC.ginfo?'hide info':'group info'} ›</span></span></button></div>
+  ${SOC.ginfo?groupInfo(gid):''}
+  ${SOC.ginfo&&SOC.grecap?recapView():''}
   <section class="card"><div class="msgs gmsgs" id="gmsgs">${SOC.gmsgs&&SOC.gmsgs.length?SOC.gmsgs.map(m=>{const mine=m.from===me;const showWho=!mine&&m.from!==prev;prev=m.from;
       return `<div class="msg ${mine?'mine':''}">${showWho?`<span class="small" style="font-weight:700;color:var(--sage)">@${esc(pname(m.from))}</span>`:''}<span>${linkify(m.text)}</span><span class="small muted">${ago(m.at)}</span></div>`}).join(''):`<p class="small muted">Start the group chat. Everyone in ${esc(x.name||g.name)} sees it.</p>`}</div>
     <div class="row" style="gap:6px;flex-wrap:nowrap"><input class="t" id="gm_draft" data-field="gm.draft" value="${esc(SOC.gmdraft||'')}" placeholder="Message ${esc(x.name||g.name)}" maxlength="1000" style="flex:1" autocomplete="off"><button class="btn primary" data-act="gmSend">Send</button></div></section>`}
@@ -3171,11 +3178,12 @@ function ensurePostSubs(){
 function softRender(){
   updateNavBadge();
   if(S.shareBadge)return; // don't wipe the caption while composing
-  const v=S.view; if(['clubhouse','player','inbox','thread','gchat','profile','findfriends'].includes(v)||S.cardUid) render();
+  const v=S.view; if(['clubhouse','player','inbox','thread','gchat','groups','profile','findfriends'].includes(v)||S.cardUid) render();
 }
 function unreadCount(){return SOC.threads.filter(t=>t.lastFrom&&t.lastFrom!==me&&(!t.readAt||!t.readAt[me]||t.readAt[me]<t.lastAt)).length}
 function pendingIn(){return SOC.reqsIn.filter(r=>r.status==='pending'&&r.kind!=='group')}
-function updateNavBadge(){const n=unreadCount()+pendingIn().length+pendingGroupIn().length;const b=document.getElementById('chBadge');if(b){b.hidden=!n;b.textContent=n}}
+function updateNavBadge(){const n=unreadCount()+pendingIn().length;const b=document.getElementById('chBadge');if(b){b.hidden=!n;b.textContent=n}
+  const g=pendingGroupIn().length+myGroups().filter(x=>groupUnread(x.id)).length;const gb=document.getElementById('grBadge');if(gb){gb.hidden=!g;gb.textContent=g}}
 function friendState(u){
   const out=SOC.reqsOut.find(r=>r.to===u&&r.kind!=='group'),inn=SOC.reqsIn.find(r=>r.from===u&&r.kind!=='group');
   if((out&&out.status==='accepted')||(inn&&inn.status==='accepted'))return 'friends';
@@ -3442,56 +3450,6 @@ function postCard(p){
       <div class="row" style="gap:6px;flex-wrap:nowrap"><input class="t" id="c_${esc(p.key)}" data-field="cdraft" data-key="${esc(p.key)}" value="${esc(SOC.cdraft[p.key]||'')}" placeholder="Add a comment" style="flex:1" maxlength="280"><button class="btn small" data-act="sendC" data-key="${esc(p.key)}">Post</button></div></div>`:''}
   </article>`;
 }
-// ----- The Forum (reddit-style threads inside the Clubhouse) -----
-const FCATS=[['general','General','#9AA29F'],['equipment','Equipment','#8FD3E8'],['beginner','Beginner questions','#E8C15A'],['memes','Memes','#C792EA'],['swing','Swing help','#2FD073'],['pro','Pro golf','#F5A15B'],['news','News','#6FA8FF'],['bst','Buy / Sell / Trade','#FF8F7A']];
-const fcat=id=>FCATS.find(c=>c[0]===id)||FCATS[0];
-function ensureForumSubs(){
-  SOC.forumSubs=SOC.forumSubs||{};SOC.forum=SOC.forum||{};
-  for(const u of Object.keys(SOC.players).slice(0,60)){if(SOC.forumSubs[u])continue;
-    SOC.forumSubs[u]=db.collection('posts/'+u+'/items').where('type','==','forum').limit(40).onSnapshot(s=>{SOC.forum[u]=s.docs.map(d=>({...d.data(),id:d.id,key:u+'~'+d.id}));softRender()},()=>{});}
-}
-function forumThreads(){let all=[];for(const u in (SOC.forum||{}))all.push(...SOC.forum[u]);return all}
-function voteScore(k){return SOC.reacts.filter(r=>r.post===k&&r.kind==='vote').reduce((s,r)=>s+(r.v||0),0)}
-function myVote(k){const r=SOC.reacts.find(r=>r.post===k&&r.kind==='vote'&&r.uid===me);return r?r.v:0}
-function cvScore(cid){return SOC.reacts.filter(r=>r.cid===cid&&r.kind==='cvote').reduce((s,r)=>s+(r.v||0),0)}
-function myCV(cid){const r=SOC.reacts.find(r=>r.cid===cid&&r.kind==='cvote'&&r.uid===me);return r?r.v:0}
-function cvoteRow(k,cid){const v=myCV(cid),sc=cvScore(cid);return `<div class="cvotes"><button class="cvb up ${v===1?'on':''}" data-act="cvote" data-key="${esc(k)}" data-cid="${esc(cid)}" data-v="1" aria-label="Upvote comment" aria-pressed="${v===1}">▲</button><b class="${v===1?'up':v===-1?'down':''}">${sc}</b><button class="cvb down ${v===-1?'on':''}" data-act="cvote" data-key="${esc(k)}" data-cid="${esc(cid)}" data-v="-1" aria-label="Downvote comment" aria-pressed="${v===-1}">▼</button></div>`}
-function fCount(k){return SOC.comments.filter(c=>c.post===k).length}
-function voteCol(k){const v=myVote(k),sc=voteScore(k);return `<div class="votes"><button class="vb up ${v===1?'on':''}" data-act="fvote" data-key="${esc(k)}" data-v="1" aria-label="Upvote" aria-pressed="${v===1}">▲</button><b class="${v===1?'up':v===-1?'down':''}">${sc}</b><button class="vb down ${v===-1?'on':''}" data-act="fvote" data-key="${esc(k)}" data-v="-1" aria-label="Downvote" aria-pressed="${v===-1}">▼</button></div>`}
-function flair(id){const c=fcat(id);return `<span class="flair" style="--fc:${c[2]}">${esc(c[1])}</span>`}
-function forumView(){
-  ensureForumSubs();
-  if(SOC.fthread)return forumThreadView();
-  const F=SOC.fdraft||(SOC.fdraft={title:'',body:'',cat:'general',open:false});const cat=SOC.fcat||'all',sort=SOC.fsort||'hot';
-  let list=forumThreads();if(cat!=='all')list=list.filter(t=>t.cat===cat);
-  setTimeout(()=>ensureRC([...list.map(t=>t.key),...feedPosts().map(p=>p.key)].slice(0,90)),0);
-  const age=t=>Math.max(0,(Date.now()-new Date(t.createdAt).getTime())/36e5);
-  if(sort==='new')list.sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
-  else if(sort==='top')list.sort((a,b)=>voteScore(b.key)-voteScore(a.key)||String(b.createdAt).localeCompare(String(a.createdAt)));
-  else list.sort((a,b)=>(voteScore(b.key)+fCount(b.key)*.5+1)/Math.pow(age(b)+2,1.5)-(voteScore(a.key)+fCount(a.key)*.5+1)/Math.pow(age(a)+2,1.5));
-  return `<div class="fcats">${[['all','All','#F4F5F3'],...FCATS].map(c=>`<button class="fchip ${cat===c[0]?'on':''}" style="--fc:${c[2]}" data-act="fcat" data-cat="${c[0]}">${esc(c[1])}</button>`).join('')}</div>
-  <section class="composer tile">${F.open?`<input class="t ftitle" id="fo_title" data-field="fo.title" maxlength="120" value="${esc(F.title)}" placeholder="Title">
-    <textarea class="t" id="fo_body" data-field="fo.body" maxlength="2000" placeholder="Share it with the forum. Ask a question, post a take, list something for sale…" style="min-height:90px">${esc(F.body)}</textarea>
-    ${draftMedia(F.media,'fmediaRemove')}${assetsFn&&!F.media?`<div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap"><label class="btn small ghost" for="fo_file" style="white-space:nowrap">📷 Add photo / video</label><input type="file" id="fo_file" data-field="fo.file" accept="${MEDIA_ACCEPT}" style="position:absolute;width:1px;height:1px;opacity:0"><span class="small muted">Videos up to 60s</span></div>`:''}
-    <div><span class="eyebrow">Tag a category</span><div class="fcats wrap" style="margin-top:8px">${FCATS.map(c=>`<button class="fchip ${F.cat===c[0]?'on':''}" style="--fc:${c[2]}" data-act="fpickcat" data-cat="${c[0]}">${esc(c[1])}</button>`).join('')}</div></div>
-    <div class="row between"><button class="btn ghost small" data-act="fcompose">Cancel</button><button class="btn primary" data-act="fpost" ${!F.title.trim()||SOC.fposting?'disabled':''}>${SOC.fposting?'Posting…':'Post to the Forum'}</button></div>`
-    :`<button class="fstart" data-act="fcompose">${avatar(me,36)}<span>Start a thread in the Forum…</span></button>`}</section>
-  <div class="tabs fsort" role="tablist">${[['hot','🔥 Hot'],['new','New'],['top','Top']].map(x=>`<button role="tab" aria-selected="${sort===x[0]}" data-act="fsort" data-sort="${x[0]}">${x[1]}</button>`).join('')}</div>
-  <section class="flist">${list.length?list.slice(0,60).map(t=>`<article class="fthread">${voteCol(t.key)}<button class="fbody" data-act="fopen" data-key="${esc(t.key)}"><span class="fmeta">${flair(t.cat)}<span class="small muted">@${esc(t.username||pname(t.uid))} · ${ago(t.createdAt)}</span></span><b class="ftitle-t">${esc(t.title)}</b>${t.text?`<span class="fsnip">${esc(String(t.text).slice(0,160))}${String(t.text).length>160?'…':''}</span>`:''}<span class="small muted">💬 ${fCount(t.key)} comment${fCount(t.key)===1?'':'s'}${vidSrc(t)?' · 🎬 Video':imgSrc(t)?' · 📷 Photo':''}</span></button></article>`).join('')
-    :`<div class="card"><p class="muted">${cat==='all'?'No threads yet. Start the first one.':`Nothing in ${esc(fcat(cat)[1])} yet. Be the first to post.`}</p></div>`}</section>`;
-}
-function forumThreadView(){
-  const all=forumThreads();const t=all.find(x=>x.key===SOC.fthread);
-  if(!t)return `<button class="plain link small onb-back" data-act="fback">‹ Back to the Forum</button><div class="card"><p class="muted">Loading thread…</p></div>`;
-  setTimeout(()=>ensureRC([t.key]),0);
-  const srt=SOC.csort||'top';const cs=SOC.comments.filter(c=>c.post===t.key).sort((a,b)=>srt==='top'?(cvScore(b.id)-cvScore(a.id))||String(a.at).localeCompare(String(b.at)):String(b.at).localeCompare(String(a.at)));
-  return `<button class="plain link small onb-back" data-act="fback">‹ Back to the Forum</button>
-  <article class="fthread big">${voteCol(t.key)}<div class="fbody"><span class="fmeta">${flair(t.cat)}<button class="plain small muted" data-act="openUid" data-uid="${esc(t.uid)}">@${esc(t.username||pname(t.uid))}</button><span class="small muted">· ${ago(t.createdAt)}</span></span>
-    <h2 class="fth">${esc(t.title)}</h2>${t.text?`<p class="ftext">${linkify(t.text)}</p>`:''}${mediaHtml(t,'fmedia',t.username||'')}</div></article>
-  <section class="composer tile"><div class="row" style="gap:10px;flex-wrap:nowrap;align-items:flex-start">${avatar(me,32)}<textarea class="t" id="c_${esc(t.key)}" data-field="cdraft" data-key="${esc(t.key)}" maxlength="1000" placeholder="Add a comment" style="min-height:56px">${esc(SOC.cdraft[t.key]||'')}</textarea></div><div class="row" style="justify-content:flex-end"><button class="btn primary small" data-act="sendC" data-key="${esc(t.key)}">Comment</button></div></section>
-  <section class="fcomments"><div class="row between" style="align-items:center"><span class="eyebrow">${cs.length} comment${cs.length===1?'':'s'}</span>${cs.length>1?`<div class="csort">${[['top','Top'],['new','New']].map(x=>`<button class="${srt===x[0]?'on':''}" data-act="csort" data-v="${x[0]}">${x[1]}</button>`).join('')}</div>`:''}</div>${cs.map(c=>`<div class="fc">${avatar(c.uid,28)}<div><span class="small"><button class="plain uname small" data-act="openUid" data-uid="${esc(c.uid)}">@${esc(c.username||pname(c.uid))}</button> <span class="muted">· ${ago(c.at)}</span></span><p>${linkify(c.text)}</p>${cvoteRow(t.key,c.id)}</div></div>`).join('')||'<p class="small muted">No comments yet. Start the conversation.</p>'}</section>`;
-}
-
 // ----- Photos and 24-hour stories -----
 let assetsFn=null;
 async function shrinkImage(file,max=1280,q=.82){
@@ -3582,15 +3540,15 @@ function viewClubhouse(c){
   const sugg=mentioning!=null?Object.values(SOC.players).filter(p=>p.uid!==me&&norm(p.username).startsWith(norm(mentioning))).slice(0,5):[];
   const srch=SOC.searchOpen||!!SOC.q;
   const wk=Date.now()-7*864e5,day=Date.now()-864e5;let rWk=0,lowW=null;const act=new Set();for(const u in SOC.posts)for(const p of SOC.posts[u]){const t=new Date(p.createdAt).getTime();if(t<wk)continue;if(p.type!=='forum'&&p.type!=='story')act.add(u);if((p.type==='round'||p.type==='milestone')&&p.score){rWk++;const eq=p.holes===9?p.score*2:p.score;if(!lowW||eq<lowW.best.eq)lowW={uid:u,bestCourse:p.course||'',best:{raw:p.score,eq,holes:p.holes||18}}}}
-  const thToday=forumThreads().filter(t=>new Date(t.createdAt).getTime()>=day).length;const low=lowW;
+const low=lowW;
   const GC=groupCircle(),m30=Date.now()-30*864e5;let best=null;for(const u of GC)for(const p of (SOC.posts[u]||[])){if(new Date(p.createdAt).getTime()<m30)continue;
     const cand=[];if(p.type==='badge'&&p.badge)cand.push({tier:p.badge.tier||1,id:p.badge.id,name:p.badge.name});(p.badges||[]).forEach(t=>{const m=String(t).match(/^(Bronze|Silver|Gold|Platinum|Legend)\s+(.*)$/);if(m){const B=BADGES.find(b=>b.name===m[2]);cand.push({tier:TIERS.indexOf(m[1])+1,id:B&&B.id,name:m[2]})}});
     for(const x of cand)if(!best||x.tier>best.tier||(x.tier===best.tier&&p.createdAt>best.at))best={...x,uid:u,at:p.createdAt}}
   const chStats=(()=>{const fr=friendIds().length,g=curGroup(),gm=g?groupMembers(g.id).length:0;let posts=0,likes=0,cmts=0;const wk7=Date.now()-7*864e5;const C=new Set([me,...friendIds()]);
       for(const u in SOC.posts)if(C.has(u))for(const p of SOC.posts[u])if(new Date(p.createdAt).getTime()>=wk7&&p.type!=='story')posts++;
       const mine=new Set((SOC.posts[me]||[]).map(p=>p.key));likes=SOC.reacts.filter(r=>!r.kind&&mine.has(r.post)).length;cmts=SOC.comments.filter(c=>new Date(c.at).getTime()>=wk7).length;
-      return [['Friends',fr],['Group',gm||'—'],['Active',act.size],['Rounds',rWk],['Posts',posts],['Likes',likes],['Comments',cmts],['Threads',thToday]]})();
-  return `<section class="chtop"><div class="cht-row"><div><h2 class="cht-title">The Clubhouse</h2><span class="small muted">Start a thread, post your round, see how your group stacks up</span></div>
+      return [['Friends',fr],['Group',gm||'—'],['Active',act.size],['Rounds',rWk],['Posts',posts],['Likes',likes],['Comments',cmts],['Groups',myGroups().length]]})();
+  return `<section class="chtop"><div class="cht-row"><div><h2 class="cht-title">The Clubhouse</h2><span class="small muted">Post your round, see what your group and friends are up to</span></div>
     <div class="row" style="gap:8px;flex-wrap:nowrap"><button class="icbtn ${srch?'on':''}" data-act="chSearch" aria-label="Find friends" title="Find friends" aria-pressed="${srch}">${IC.search}</button><button class="icbtn" data-act="invMenu" aria-label="Invite friends to your group" title="Invite friends to your group">${IC.addUser}</button><button class="icbtn" data-act="nav" data-view="inbox" aria-label="Messages${unread?`, ${unread} unread`:''}">${IC.mail}${unread?`<span class="icdot">${unread>9?'9+':unread}</span>`:''}</button></div></div>
     <div class="chstrip" role="list">${chStats.map(([l,v])=>`<div role="listitem"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
     ${srch?`<div class="search chsearch"><input class="t" id="ch_q" data-field="ch.q" value="${esc(SOC.q)}" placeholder="Find friends by name, username or club" autocomplete="off" autocapitalize="off" aria-label="Find friends"><button class="plain link small" data-act="nav" data-view="findfriends">Browse all</button></div>
@@ -3598,18 +3556,17 @@ function viewClubhouse(c){
      ${clubs.map(x=>`<button class="list-row" data-act="cpPick" data-key="search" data-id="${esc(x.id)}"><span class="row" style="gap:8px">${IC.flag}<span><b>${clubName(x)}</b><br><span class="small muted">${esc(clubPlace(x)||'Self-entered club')}</span></span></span><span class="small muted">Club feed</span></button>`).join('')}
      ${!users.length&&!clubs.length?`<p class="small muted" style="padding:8px 0">No golfers or clubs match "${esc(SOC.q)}".</p>`:''}</div>`:''}`:''}</section>
   ${reqCards()}
-  <div class="modes modes3" role="tablist"><button role="tab" aria-selected="${SOC.mode!=='feed'&&SOC.mode!=='recap'}" data-act="chmode" data-mode="forum">The Forum</button><button role="tab" aria-selected="${SOC.mode==='feed'}" data-act="chmode" data-mode="feed">The Feed</button><button role="tab" aria-selected="${SOC.mode==='recap'}" data-act="chmode" data-mode="recap">Group recap</button></div>
-  ${SOC.mode==='recap'?recapView():SOC.mode==='feed'?`
-  <div class="feedbar"><div class="modes feedpills" role="tablist">${[['friends','My friends'],['group','My group'],['club','My club']].map(x=>`<button role="tab" aria-selected="${SOC.feed===x[0]}" data-act="feed" data-feed="${x[0]}">${x[1]}</button>`).join('')}</div></div>
+  ${true?`
+  <div class="feedbar"><div class="modes feedpills" role="tablist">${[['group','My group'],['friends','My friends'],['club','Club']].map(x=>`<button role="tab" aria-selected="${SOC.feed===x[0]}" data-act="feed" data-feed="${x[0]}">${x[1]}</button>`).join('')}</div></div>
 
 
   ${SOC.feed==='club'?clubHeader():''}
-  ${SOC.feed==='group'?groupBar():''}
+  ${SOC.feed==='group'?groupFeedBar():''}
   ${storyBar()}
   ${SOC.compOpen||SOC.draft||SOC.dimg?`  <section class="composer tile"><div class="row" style="gap:12px;flex-wrap:nowrap;align-items:flex-start">${avatar(me,40)}<textarea class="t" id="ch_draft" data-field="ch.draft" maxlength="280" placeholder="What happened on the course? Tag friends with @" style="min-height:70px">${esc(SOC.draft)}</textarea></div>
     ${sugg.length?`<div class="row" style="gap:6px">${sugg.map(p=>`<button class="pill neutral" data-act="pickMention" data-name="${esc(p.username)}">@${esc(p.username)}</button>`).join('')}</div>`:''}
     ${draftMedia(SOC.dimg,'dimgRemove')}<div class="row between"><div class="row" style="gap:6px">${assetsFn?`<label class="btn small ghost" for="post_file">📷 Photo / video</label><input type="file" id="post_file" data-field="post.file" accept="${MEDIA_ACCEPT}" style="position:absolute;width:1px;height:1px;opacity:0"><label class="btn small ghost" for="st_file">＋ Story</label>`:''}<span class="small muted">${SOC.draft.length}/280</span></div><div class="row" style="gap:6px"><button class="btn small ghost" data-act="compClose">Cancel</button><button class="btn primary" data-act="postStatus" ${(!SOC.draft.trim()&&!SOC.dimg)||SOC.posting?'disabled':''}>${SOC.posting?'Posting…':'Post'}</button></div></div></section>`:`<button class="fstart compbar" data-act="compOpen">${avatar(me,36)}<span>What happened on the course?</span><span class="cb-ic" aria-hidden="true">📷</span></button>`}
-  <section class="feed">${posts.length?posts.map(postCard).join(''):!SOC.playersLoaded?[1,2,3].map(()=>`<div class="post skelpost"><div class="post-head"><span class="sk-av"></span><div class="skel" style="flex:1;margin-top:4px"><i style="width:40%"></i><i></i><i style="width:70%"></i></div></div></div>`).join(''):`<div class="card"><p class="muted">${SOC.feed==='friends'?'Nothing from your friends yet. Search a username above and tap Add friend, or post your first status.':SOC.feed==='group'?'No posts from your group yet.':SOC.feed==='club'?(SOC.club?'No activity at this club yet.':'Pick a club to see who is playing there. Add your clubs in Progress.'):SOC.feed==='mentions'?'No one has tagged you yet.':'No posts yet. Be the first.'}</p></div>`}</section>`:forumView()}`;
+  <section class="feed">${posts.length?posts.map(postCard).join(''):!SOC.playersLoaded?[1,2,3].map(()=>`<div class="post skelpost"><div class="post-head"><span class="sk-av"></span><div class="skel" style="flex:1;margin-top:4px"><i style="width:40%"></i><i></i><i style="width:70%"></i></div></div></div>`).join(''):`<div class="card"><p class="muted">${SOC.feed==='friends'?'Nothing from your friends yet. Search a username above and tap Add friend, or post your first status.':SOC.feed==='group'?'No posts from your group yet.':SOC.feed==='club'?(SOC.club?'No activity at this club yet.':'Pick a club to see who is playing there. Add your clubs in Progress.'):SOC.feed==='mentions'?'No one has tagged you yet.':'No posts yet. Be the first.'}</p></div>`}</section>`:''}`;
 }
 function clubHeader(){
   const co=currentClub();const mine=myClubs();
@@ -3654,6 +3611,27 @@ function friendIds(){const f=new Set();SOC.reqsIn.forEach(r=>{if(r.kind!=='group
 function myGroups(){return (S.profile.groups||[]).filter(g=>g&&g.id)}
 function curGroup(){const gs=myGroups();if(!gs.length)return null;return gs.find(g=>g.id===SOC.group)||gs[0]}
 function groupMembers(gid){if(!gid)return [];if(SOC.gdocs[gid])return [...(SOC.gdocs[gid].members||[])].sort((x,y)=>(x===me?-1:y===me?1:0));const out=new Set();for(const p of Object.values(SOC.players))if((p.groups||[]).some(g=>g&&g.id===gid))out.add(p.uid);if(myGroups().some(g=>g.id===gid))out.add(me);return [...out]}
+// ----- Groups tab: your groups, invites, and each group's chat + info -----
+function viewGroups(c){
+  if(!socialOk())return viewClubhouse(c);
+  initSocial();watchGroups();
+  const gs=myGroups().map(g=>({g,x:SOC.gdocs[g.id]||{}})).sort((a,b)=>String((b.x.last||{}).at||'').localeCompare(String((a.x.last||{}).at||'')));
+  const inv=pendingGroupIn();
+  return `<section class="playhead"><span class="kicker">The Clubhouse</span><h2>My groups</h2><p class="muted">Your regular games: group chat, members and tee times in one place.</p></section>
+  ${inv.length?`<section class="card"><span class="eyebrow">Invites</span>${inv.map(r=>`<div class="row between" style="flex-wrap:nowrap;gap:10px"><div class="row" style="gap:10px;flex-wrap:nowrap;min-width:0">${avatar(r.from,36)}<span style="min-width:0"><b>${esc(r.gname||'A group')}</b><br><span class="small muted">from @${esc(pname(r.from))}</span></span></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn small primary" data-act="grpAccept" data-id="${esc(r.id)}">Join</button><button class="btn small" data-act="grpDecline" data-id="${esc(r.id)}">Decline</button></div></div>`).join('')}</section>`:''}
+  ${gs.length?`<section class="card glist">${gs.map(({g,x})=>{const un=groupUnread(g.id);const n=groupMembers(g.id).length;const l=x.last;
+      return `<button class="list-row" data-act="gchatOpen" data-id="${esc(g.id)}"><span class="row" style="gap:12px;flex-wrap:nowrap;min-width:0">${groupAvatar(g.id,48)}<span style="min-width:0"><b>${esc(x.name||g.name)}</b><br><span class="small ${un?'':'muted'}" style="${un?'font-weight:700;color:var(--ivory)':''};display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l&&l.text?`${l.from===me?'You':'@'+esc(pname(l.from))}: ${esc(String(l.text).slice(0,60))}`:`${n} golfer${n===1?'':'s'} · say hi`}</span></span></span><span class="small muted" style="flex:0 0 auto;text-align:right">${l&&l.at?ago(l.at):''}${un?' <span class="dot-un" aria-label="Unread"></span>':''}</span></button>`}).join('')}</section>`
+    :`<section class="card grpcta"><span class="kicker" style="color:var(--volt)">No groups yet</span><b class="gc-t">Start your golf group</b><p class="small muted">The regular foursome, the Saturday game, the work league. Groups get a chat, a shared feed and a weekly recap.</p></section>`}
+  <button class="btn primary block" data-act="grpNewFromList">＋ Create a group</button>`}
+function groupInfo(gid){const x=SOC.gdocs[gid]||{};const g=myGroups().find(y=>y.id===gid)||{};const own=groupOwner(gid)===me;const mem=groupMembers(gid);
+  return `<section class="card ginfo"><div class="row" style="gap:14px;flex-wrap:nowrap">${groupAvatar(gid,64)}<div style="min-width:0"><b style="font-size:1.2rem;display:block">${esc(x.name||g.name)}</b><span class="small muted">${mem.length} golfer${mem.length===1?'':'s'}${groupOwner(gid)?` · owner @${esc(groupOwner(gid)===me?S.profile.username:pname(groupOwner(gid)))}`:''}</span></div></div>
+    ${own?`<label class="btn small ghost" for="gphoto_file" style="cursor:pointer;align-self:flex-start">${x.photo?'Change group photo':'Add a group photo'}</label><input type="file" id="gphoto_file" accept="image/*" data-field="gphoto.file" hidden>`:''}
+    <div class="gmembers">${mem.map(u=>`<div class="row between" style="flex-wrap:nowrap"><button class="plain row" style="gap:10px" data-act="openUid" data-uid="${esc(u)}">${avatar(u,34)}<span>${u===me?'You':'@'+esc(pname(u))}${groupOwner(gid)===u?' <span class="small muted">· owner</span>':''}</span></button>${SOC.gmanage&&own&&u!==me?`<button class="btn small danger" data-act="grpRemove" data-uid="${esc(u)}">Remove</button>`:''}</div>`).join('')}</div>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn small primary" data-act="grpInvite">Invite friends</button><button class="btn small" data-act="grecap">${SOC.grecap?'Hide weekly recap':'Weekly recap'}</button>${own?`<button class="btn small" data-act="grpManage">${SOC.gmanage?'Done':'Manage members'}</button>`:''}</div>
+    ${SOC.gconfirm?`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span class="small">${SOC.gconfirm==='delete'?`Delete ${esc(x.name||g.name)} and its chat for everyone?`:`Leave ${esc(x.name||g.name)}?`}</span><button class="btn small danger" data-act="${SOC.gconfirm==='delete'?'grpDelete':'grpLeave'}">${SOC.gconfirm==='delete'?'Delete group':'Leave'}</button><button class="btn small" data-act="grpCancel">Cancel</button></div>`
+      :`<div>${own?`<button class="plain link small" style="color:var(--loss)" data-act="grpDelete">Delete group</button>`:`<button class="plain link small" style="color:var(--loss)" data-act="grpLeave">Leave group</button>`}</div>`}</section>`}
+function groupFeedBar(){const gs=myGroups();if(!gs.length)return `<section class="card"><p class="small muted" style="margin:0">You're not in a group yet. <button class="plain link small" data-act="nav" data-view="groups">Start one in Groups</button> to see your group's activity here.</p></section>`;
+  return gs.length>1?`<div class="row" style="gap:6px">${gs.map(x=>`<button class="pill ${x.id===(curGroup()||{}).id?'good':'neutral'}" data-act="grpPick" data-id="${esc(x.id)}">${esc((SOC.gdocs[x.id]||{}).name||x.name)}</button>`).join('')}</div>`:''}
 function groupCircle(){const g=curGroup();return g?new Set(groupMembers(g.id)):new Set([me,...friendIds()])}
 function groupInvState(u,gid){const r=SOC.reqsOut.find(x=>x.kind==='group'&&x.to===u&&x.gid===gid);if(groupMembers(gid).includes(u))return 'member';return r?r.status:'none'}
 function pendingGroupIn(){return SOC.reqsIn.filter(r=>r.kind==='group'&&r.status==='pending'&&!myGroups().some(g=>g.id===r.gid))}
@@ -3908,7 +3886,6 @@ function viewInbox(c){
   initSocial();
   const ts=[...SOC.threads].sort((a,b)=>String(b.lastAt).localeCompare(String(a.lastAt)));
   return `<section class="playhead"><span class="kicker">The Clubhouse</span><h2>Messages</h2><p class="muted">Chat with golfers and lock in tee times.</p></section>
-  ${myGroups().length?`<section class="card"><span class="eyebrow">Group chats</span>${myGroups().map(g=>{const x=SOC.gdocs[g.id]||{};const un=groupUnread(g.id);return `<button class="list-row" data-act="gchatOpen" data-id="${esc(g.id)}"><span class="row" style="gap:10px;flex-wrap:nowrap;min-width:0">${groupAvatar(g.id,40)}<span style="min-width:0"><b>${esc(x.name||g.name)}</b><br><span class="small ${un?'':'muted'}" style="${un?'font-weight:700':''}">${x.last?esc((x.last.from===me?'You':'@'+pname(x.last.from))+': '+String(x.last.text).slice(0,60)):'No messages yet'}</span></span></span>${un?'<span class="dot-un" aria-label="Unread"></span>':''}</button>`}).join('')}</section>`:''}
   <section class="card">${ts.length?ts.map(t=>{const o=t.members.find(x=>x!==me);const un=t.lastFrom&&t.lastFrom!==me&&(!t.readAt||!t.readAt[me]||t.readAt[me]<t.lastAt);
     return `<button class="list-row" data-act="openThread" data-uid="${esc(o)}"><span class="row" style="gap:10px;flex-wrap:nowrap;min-width:0">${avatar(o,40)}<span style="min-width:0"><b>@${esc(pname(o))}</b><br><span class="small ${un?'':'muted'}" style="${un?'font-weight:700':''}">${esc(String(t.last||'').slice(0,60))}</span></span></span><span class="small muted">${ago(t.lastAt)}${un?' <span class="count">new</span>':''}</span></button>`}).join(''):`<p class="muted">No messages yet. Open a golfer's profile and tap Message.</p>`}</section>
   ${IS_WEB?'':`<p class="small muted">Beta note: messages are stored with the app's shared data, so keep them golf talk. Don't send anything private.</p>`}`;
@@ -3950,17 +3927,6 @@ async function socialAct(act,a){
   if(act==='chSearch'){SOC.searchOpen=!(SOC.searchOpen||SOC.q);if(!SOC.searchOpen)SOC.q='';render();if(SOC.searchOpen)setTimeout(()=>{const i=document.getElementById('ch_q');if(i)i.focus()},30);return true}
   if(act==='compOpen'){SOC.compOpen=true;render();setTimeout(()=>{const t=document.getElementById('ch_draft');if(t)t.focus()},30);return true}
   if(act==='compClose'){SOC.compOpen=false;SOC.draft='';if(SOC.dimg)URL.revokeObjectURL(SOC.dimg.preview);SOC.dimg=null;render();return true}
-  if(act==='chmode'){SOC.mode=a.dataset.mode;SOC.fthread=null;render();return true}
-  if(act==='fcat'){SOC.fcat=a.dataset.cat;render();return true}
-  if(act==='fsort'){SOC.fsort=a.dataset.sort;render();return true}
-  if(act==='fcompose'){SOC.fdraft.open=!SOC.fdraft.open;render();return true}
-  if(act==='fpickcat'){SOC.fdraft.cat=a.dataset.cat;render();return true}
-  if(act==='fopen'){SOC.fthread=a.dataset.key;render();window.scrollTo(0,0);return true}
-  if(act==='fback'){SOC.fthread=null;render();return true}
-  if(act==='fpost'){const F=SOC.fdraft;if(!F.title.trim())return true;SOC.fposting=true;render();try{const md=F.media?await uploadMedia(F.media.file):{};await createPost({type:'forum',title:F.title.trim().slice(0,120),text:F.body.trim().slice(0,2000),cat:F.cat,...md});if(F.media)URL.revokeObjectURL(F.media.preview);SOC.fdraft={title:'',body:'',cat:F.cat,open:false};SOC.fsort='new';toast('Posted to the Forum')}catch(e){toast(e&&e.message&&!e.code?e.message:writeErr(e))}SOC.fposting=false;render();return true}
-  if(act==='cvote'){const k=a.dataset.key,cid=a.dataset.cid,v=Number(a.dataset.v);const ref=db.doc('reactions/'+k+'~cv~'+cid+'~'+me);const cur=myCV(cid);try{cur===v?await ref.delete():await ref.set({post:k,cid,uid:me,kind:'cvote',v,at:nowIso()})}catch(e){toast(writeErr(e))}return true}
-  if(act==='csort'){SOC.csort=a.dataset.v;render();return true}
-  if(act==='fvote'){const k=a.dataset.key,v=Number(a.dataset.v);const ref=db.doc('reactions/'+k+'~v~'+me);const cur=myVote(k);try{cur===v?await ref.delete():await ref.set({post:k,uid:me,kind:'vote',v,at:nowIso()})}catch(e){toast(writeErr(e))}return true}
   if(act==='revealClose'){S.reveal=null;S.revealImg=null;render();return true}
   if(act==='revealProfile'){S.reveal=null;S.revealImg=null;S.view='profile';render();window.scrollTo(0,0);return true}
   if(act==='revealStory'){shareStory(S.reveal&&S.reveal.builds);return true}
@@ -3981,11 +3947,14 @@ async function socialAct(act,a){
   if(act==='grpPick'){SOC.group=a.dataset.id;render();return true}
   if(act==='grpInvite'){SOC.pop=curGroup()?'add':'new';render();return true}
   if(act==='grpCreate'){const nm=(document.getElementById('grp_name')||{}).value||'';if(!nm.trim()){toast('Give your group a name');return true}const g={id:'g_'+uid('x').slice(2),name:nm.trim().slice(0,40),owner:me};
-    try{await db.doc('groups/'+g.id).set({name:g.name,owner:me,members:[me],created:nowIso()});await putProfile({groups:[...myGroups(),g]});SOC.group=g.id;watchGroups();await syncPlayer().catch(()=>{});SOC.pop='add';SOC.feed='group';SOC.mode='feed';toast('Group created')}catch(e){toast(writeErr(e))}render();return true}
+    try{await db.doc('groups/'+g.id).set({name:g.name,owner:me,members:[me],created:nowIso()});await putProfile({groups:[...myGroups(),g]});SOC.group=g.id;watchGroups();await syncPlayer().catch(()=>{});SOC.ginfo=true;openGroupChat(g.id);SOC.pop='add';toast('Group created')}catch(e){toast(writeErr(e))}render();return true}
   if(act==='grpSend'){const g=curGroup();if(!g){SOC.pop='new';render();return true}try{await db.doc('friendreqs/g~'+g.id+'~'+u).set({kind:'group',gid:g.id,gname:g.name,from:me,to:u,status:'pending',at:nowIso()});toast('Group invite sent to @'+pname(u))}catch(e){toast(writeErr(e))}render();return true}
   if(act==='grpAccept'){const r=SOC.reqsIn.find(x=>x.id===a.dataset.id);if(!r)return true;try{await db.doc('friendreqs/'+r.id).update({status:'accepted',decided:nowIso()});const gd=await db.doc('groups/'+r.gid).get();if(gd.exists){const x=gd.data();if(!(x.members||[]).includes(me))await db.doc('groups/'+r.gid).set({...x,members:[...(x.members||[]),me]})}await putProfile({groups:[...myGroups().filter(y=>y.id!==r.gid),{id:r.gid,name:(gd.exists&&gd.data().name)||r.gname||'Group',owner:gd.exists?gd.data().owner:r.from}]});watchGroups();SOC.group=r.gid;await syncPlayer().catch(()=>{});toast('You joined '+(r.gname||'the group'))}catch(e){toast(writeErr(e))}render();return true}
   if(act==='gchatOpen'){openGroupChat(a.dataset.id||(curGroup()||{}).id);return true}
-  if(act==='gchatBack'){closeGroupChat();S.view='clubhouse';render();return true}
+  if(act==='gchatBack'){closeGroupChat();SOC.ginfo=false;S.view='groups';render();return true}
+  if(act==='grecap'){SOC.grecap=!SOC.grecap;render();return true}
+  if(act==='ginfo'){SOC.ginfo=!SOC.ginfo;SOC.gmanage=false;SOC.gconfirm=null;render();return true}
+  if(act==='grpNewFromList'){SOC.pop='new';render();setTimeout(()=>{const i=document.getElementById('grp_name');if(i)i.focus()},50);return true}
   if(act==='gmSend'){const gid=SOC.gchat;const t=(SOC.gmdraft||'').trim();if(!gid||!t)return true;SOC.gmdraft='';const at=nowIso();
     SOC.gmsgs=[...(SOC.gmsgs||[]),{from:me,text:t,at,id:'tmp'}];render();const box=document.getElementById('gmsgs');if(box)box.scrollTop=box.scrollHeight;document.getElementById('gm_draft')?.focus();
     try{await db.collection('groups/'+gid+'/msgs').doc(uid('m')).set({from:me,text:t.slice(0,1000),at});const x=await freshGroup(gid);if(x)await db.doc('groups/'+gid).set({...x,last:{from:me,text:t.slice(0,120),at}});ls('gread_'+gid,at)}catch(e){toast(writeErr(e))}return true}
@@ -4016,7 +3985,6 @@ async function socialAct(act,a){
   if(act==='pickMention'){SOC.draft=SOC.draft.replace(/@([a-z0-9_]*)$/i,'@'+a.dataset.name+' ');render();document.getElementById('ch_draft')?.focus();return true}
   if(act==='postStatus'){const t=SOC.draft.trim();if(!t&&!SOC.dimg)return true;SOC.posting=true;render();try{SOC.compOpen=false;let ph={};if(SOC.dimg)ph=await uploadMedia(SOC.dimg.file);await createPost({type:'status',text:t,...ph});SOC.draft='';if(SOC.dimg)URL.revokeObjectURL(SOC.dimg.preview);SOC.dimg=null;SOC.feed='following'}catch(e){toast(e&&e.message?e.message:writeErr(e))}SOC.posting=false;render();return true}
   if(act==='storySound'){const v=document.querySelector('.storyview video');if(v){v.muted=!v.muted;a.textContent=v.muted?'🔇':'🔊';if(!v.muted)v.play().catch(()=>{})}return true}
-  if(act==='fmediaRemove'){const F=SOC.fdraft;if(F.media)URL.revokeObjectURL(F.media.preview);F.media=null;render();return true}
   if(act==='dimgRemove'){if(SOC.dimg)URL.revokeObjectURL(SOC.dimg.preview);SOC.dimg=null;render();return true}
   if(act==='storyOpen'){const by=activeStories();const circle=storyCircle();const order=[me,...Object.keys(by).filter(u=>u!==me&&circle.has(u))];S.story={uid:a.dataset.uid,i:0,order};render();return true}
   if(act==='storyClose'){clearTimeout(S.storyTimer);S.story=null;render();return true}
@@ -4032,9 +4000,6 @@ function socialInput(f,el){
   if(f==='pa.date'){S.paDate=v;return true}
   if(f==='post.file'){const file=el.files&&el.files[0];if(!file)return true;if(SOC.dimg)URL.revokeObjectURL(SOC.dimg.preview);SOC.dimg={file,video:String(file.type).startsWith('video/'),preview:URL.createObjectURL(file)};el.value='';render();return true}
   if(f==='story.file'){const file=el.files&&el.files[0];if(!file)return true;el.value='';toast(String(file.type).startsWith('video/')?'Uploading your video story…':'Posting your story…');uploadMedia(file).then(ph=>createPost({type:'story',text:'',...ph,expiresAt:new Date(Date.now()+864e5).toISOString()})).then(()=>toast('Story posted. It disappears in 24 hours.')).catch(e=>toast(e&&e.message?e.message:writeErr(e)));return true}
-  if(f==='fo.title'){SOC.fdraft.title=v;const b=document.querySelector('[data-act="fpost"]');if(b)b.disabled=!v.trim();return true}
-  if(f==='fo.body'){SOC.fdraft.body=v;return true}
-  if(f==='fo.file'){const file=el.files&&el.files[0];if(!file)return true;const F=SOC.fdraft;if(F.media)URL.revokeObjectURL(F.media.preview);F.media={file,video:String(file.type).startsWith('video/'),preview:URL.createObjectURL(file)};el.value='';render();return true}
   if(f==='ff.q'){S.ffQ=v;render();return true}
   if(f==='sb.caption'){SOC.sbCaption=v;return true}
   if(f==='m.draft'){SOC.mdraft=v;return true}
@@ -4045,7 +4010,7 @@ function socialInput(f,el){
   return false;
 }
 
-const SOCIAL_ACTS=new Set(['gchatOpen','gchatBack','gmSend','grpManage','grpRemove','grpLeave','grpDelete','grpCancel','invMenu','spClose','grpNew','grpPick','grpInvite','grpCreate','grpSend','grpAccept','grpDecline','revealClose','revealShare','dimgRemove','storySound','fmediaRemove','chSearch','compOpen','compClose','storyOpen','storyClose','storyNext','storyPrev','chmode','fcat','fsort','fcompose','fpickcat','fopen','fback','fpost','fvote','shareBadge','closeShareBadge','postBadge','openFull','closeCard','openUid','openUser','clubFeed','feed','follow','unfollow','friendReq','acceptReq','declineReq','message','teeWith','openThread','leaveThread','sendMsg','teeOpen','teeCancel','sendTee','teeIn','like','toggleC','sendC','pickMention','postStatus']);
+const SOCIAL_ACTS=new Set(['grecap','ginfo','grpNewFromList','gchatOpen','gchatBack','gmSend','grpManage','grpRemove','grpLeave','grpDelete','grpCancel','invMenu','spClose','grpNew','grpPick','grpInvite','grpCreate','grpSend','grpAccept','grpDecline','revealClose','revealShare','dimgRemove','storySound','chSearch','compOpen','compClose','storyOpen','storyClose','storyNext','storyPrev','shareBadge','closeShareBadge','postBadge','openFull','closeCard','openUid','openUser','clubFeed','feed','follow','unfollow','friendReq','acceptReq','declineReq','message','teeWith','openThread','leaveThread','sendMsg','teeOpen','teeCancel','sendTee','teeIn','like','toggleC','sendC','pickMention','postStatus']);
 
 // ---------- Club directory ----------
 // Verified clubs come from the OpenGolf course database (bundled as courses.json beside the page).
