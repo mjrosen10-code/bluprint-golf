@@ -407,10 +407,13 @@ async function queryRoute(req, env, user) {
   return json(r.body, r.status);
 }
 async function runQuery(env, user, q) {
-  const segs = parsePath(q.collection, false);
+  // Club activity: posts from every golfer, matched by course (a collection-group read; posts are shared with members)
+  const group = q.collection === 'posts/*/items';
+  const segs = group ? ['posts', '*', 'items'] : parsePath(q.collection, false);
   if (!segs) return { status: 400, body: { error: 'bad_path' } };
   if (!canReadPath(segs, user.id) || !(await groupGate(env, segs, user.id))) return { status: 403, body: { error: 'not_granted', code: 'not_granted' } };
-  const where = ['parent=?'], args = [segs.join('/')];
+  const where = group ? ["parent LIKE 'posts/%/items'"] : ['parent=?'], args = group ? [] : [segs.join('/')];
+  if (group && !(q.where || []).length) return { status: 400, body: { error: 'bad_query' } };  // never dump every post
   // private collections: only rows this person may see
   if (segs[0] === 'friendreqs') { where.push("(json_extract(data,'$.from')=? OR json_extract(data,'$.to')=?)"); args.push(user.id, user.id); }
   if (segs[0] === 'dms' && segs.length === 1) { where.push("EXISTS (SELECT 1 FROM json_each(data,'$.members') WHERE value=?)"); args.push(user.id); }
