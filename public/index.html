@@ -650,6 +650,17 @@ body.livemode .strip button.o b{color:#FF8F7A}
 
 /* Onboarding, checklist, invites, leaderboard, collapsibles */
 nav.bar[hidden]{display:none!important}
+/* Nav: compact by default, shrinks to an icon pill while scrolling down, returns on scroll up / near top */
+nav.bar{transition:max-width .32s var(--ease),padding .32s var(--ease),border-radius .32s var(--ease),transform .32s var(--ease)}
+nav.bar button{min-height:46px;padding:5px 2px;font-size:.6rem;letter-spacing:.06em;gap:2px}
+nav.bar button svg{width:21px;height:21px}
+nav.bar .nl{display:block;max-height:12px;overflow:hidden;transition:opacity .2s,max-height .3s var(--ease)}
+nav.bar.mini{max-width:300px;padding:3px;border-radius:999px}
+nav.bar.mini button{min-height:40px;justify-content:center}
+nav.bar.mini .nl{opacity:0;max-height:0}
+nav.bar.mini button:not(.log-btn)::before{top:5px}
+nav.bar.mini .log-btn span.plus{height:24px;width:34px}
+
 .onb{display:flex;flex-direction:column;gap:16px;max-width:560px;margin:0 auto;width:100%}
 .onb h2{font-size:1.9rem!important}
 .onb-dots{display:flex;gap:6px}.onb-dots i{flex:1;height:4px;border-radius:2px;background:var(--line-2)}.onb-dots i.on{background:var(--volt)}
@@ -1325,11 +1336,11 @@ mark.hl{all:unset;display:inline!important;color:var(--volt);font-weight:800}
 <div id="sheet"></div>
 <button class="fab" id="fab" data-act="askCaddie" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H8l-4 4z"/></svg>Ask caddie</button>
 <nav class="bar" id="nav">
-  <button data-act="nav" data-view="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Stats</button>
-  <button data-act="nav" data-view="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="6"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/></svg>My coach</button>
-  <button data-act="nav" data-view="log" class="log-btn"><span class="plus">+</span>Play now</button>
-  <button data-act="nav" data-view="clubhouse" class="ch-btn"><span class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span class="nbadge" id="chBadge" hidden>0</span></span>Clubhouse</button>
-  <button data-act="nav" data-view="groups" class="gr-btn"><span class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.6 6-5.6s6 2.3 6 5.6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.6 14.6c.5-.1.9-.2 1.4-.2 2.6 0 4.5 1.8 4.5 4.6"/></svg><span class="nbadge" id="grBadge" hidden>0</span></span>Groups</button>
+  <button data-act="nav" data-view="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="nl">Stats</span></button>
+  <button data-act="nav" data-view="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="6"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/></svg><span class="nl">Coach</span></button>
+  <button data-act="nav" data-view="log" class="log-btn"><span class="plus">+</span><span class="nl">Play now</span></button>
+  <button data-act="nav" data-view="clubhouse" class="ch-btn"><span class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span class="nbadge" id="chBadge" hidden>0</span></span><span class="nl">Clubhouse</span></button>
+  <button data-act="nav" data-view="groups" class="gr-btn"><span class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.6 6-5.6s6 2.3 6 5.6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.6 14.6c.5-.1.9-.2 1.4-.2 2.6 0 4.5 1.8 4.5 4.6"/></svg><span class="nbadge" id="grBadge" hidden>0</span></span><span class="nl">Groups</span></button>
 </nav>
 
 <script>
@@ -1667,6 +1678,11 @@ document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='ob_bag')S.onb
 const RM=(()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){return false}})();
 // Count headline numbers up from zero when a screen opens
 function countUp(root){if(RM)return;root.querySelectorAll('.hero-num>span,.hero-meta b,.tile .val,.lvl .ring,.hcpick .num').forEach(n=>{if(n.children.length)return;const txt=n.textContent.trim();const m=txt.match(/^([+-]?)(\d+)(?:\.(\d+))?$/);if(!m)return;const sign=m[1],dec=(m[3]||'').length,end=parseFloat(m[2]+(m[3]?'.'+m[3]:''));if(!end)return;const t0=performance.now(),dur=650;const step=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);n.textContent=sign+(end*e).toFixed(dec);if(k<1)requestAnimationFrame(step);else n.textContent=txt};requestAnimationFrame(step)})}
+// Nav collapses to an icon pill while reading down a page; any scroll up, or reaching the top, brings labels back.
+(()=>{let lastY=0,acc=0;const nav=()=>document.getElementById('nav');
+  addEventListener('scroll',()=>{const y=scrollY,n=nav();if(!n)return;const d=y-lastY;lastY=y;
+    if(y<40||innerHeight+y>=document.documentElement.scrollHeight-8){n.classList.remove('mini');acc=0;return}
+    acc=(Math.sign(d)===Math.sign(acc)?acc:0)+d;if(acc>24)n.classList.add('mini');else if(acc<-16)n.classList.remove('mini')},{passive:true})})();
 document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.closest('#nav button,.btn.primary,.hcpick button');if(b){try{navigator.vibrate&&navigator.vibrate(6)}catch(_){}}},{passive:true});
 function ls(k,v){try{if(v===undefined){const x=localStorage.getItem(k);return x?JSON.parse(x):null} if(v===null)localStorage.removeItem(k); else localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
 
@@ -3730,7 +3746,6 @@ const low=lowW;
       return [['Friends',fr],['Group',gm||'—'],['Active',act.size],['Rounds',rWk],['Posts',posts],['Likes',likes],['Comments',cmts],['Groups',myGroups().length]]})();
   return `<section class="chtop"><div class="cht-row"><div><h2 class="cht-title">The Clubhouse</h2><span class="small muted">Post your round, see what your group and friends are up to</span></div>
     <div class="row" style="gap:8px;flex-wrap:nowrap"><button class="icbtn" data-act="invMenu" aria-label="Invite friends to your group" title="Invite friends to your group">${IC.addUser}</button></div></div>
-    <div class="chstrip" role="list">${chStats.map(([l,v])=>`<div role="listitem"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
 </section>
   ${true?`
   <div class="feedbar"><div class="modes feedpills" role="tablist">${[['group','My groups'],['friends','My friends'],['club','Club']].map(x=>`<button role="tab" aria-selected="${SOC.feed===x[0]}" data-act="feed" data-feed="${x[0]}">${x[1]}</button>`).join('')}</div></div>
@@ -4245,11 +4260,11 @@ function clubPicker(key,label,placeholder){
   const st=S.cp[key]||(S.cp[key]={q:'',open:false,adding:false,city:'',state:''});
   const res=st.open?clubSearch(st.q,7):[];
   return `<div class="cpick"><label class="f">${esc(label)}<input class="t" id="cp_${key}" data-field="cp" data-key="${key}" value="${esc(st.q)}" placeholder="${esc(placeholder||'Search courses')}" autocomplete="off"></label>
-  ${st.open&&norm(st.q).length<2?(()=>{const fr=frequentClubs(5);return fr.length?`<div class="results"><span class="eyebrow" style="display:block;padding:10px 0 4px">Your courses</span>${fr.map(({c,n})=>`<button class="list-row" data-act="cpPick" data-key="${key}" data-id="${esc(c.id)}"><span>${clubName(c)}<br><span class="small muted">${esc(clubPlace(c)||'')}${clubPlace(c)&&n?' · ':''}${n?n+' round'+(n===1?'':'s'):'Your club'}</span></span><span class="cp-go">›</span></button>`).join('')}<p class="small muted" style="padding:6px 0">Or type to search every course.</p></div>`:''})():''}
+  ${st.open&&norm(st.q).length<2?(()=>{const fr=frequentClubs(5);return fr.length?`<div class="results"><span class="eyebrow" style="display:block;padding:10px 0 4px">Your courses</span>${fr.map(({c,n})=>`<button class="list-row" data-act="cpPick" data-key="${key}" data-id="${esc(c.id)}"><span>${clubName(c)}<br><span class="small muted">${esc(clubPlace(c)||'')}${clubPlace(c)&&n?' · ':''}${n?n+' round'+(n===1?'':'s'):'Your club'}</span></span><span class="cp-go">›</span></button>`).join('')}<p class="small muted" style="padding:6px 0">Or type to search every course. <button class="plain link small" data-act="cpClose" style="float:right">Close</button></p></div>`:''})():''}
   ${st.open&&norm(st.q).length>=2?`<div class="results">${res.map(c=>`<button class="list-row" data-act="cpPick" data-key="${key}" data-id="${esc(c.id)}"><span>${clubName(c)}<br><span class="small muted">${esc(clubPlace(c)||'Self-entered club')}</span></span><span class="small muted">${c.verified?'Verified':'Added by a golfer'}</span></button>`).join('')}
     ${st.adding?`<div class="addclub"><span class="eyebrow">Add "${esc(st.q)}"</span><div class="grid2"><label class="f">City<input class="t" id="cpc_${key}" data-field="cpc" data-key="${key}" value="${esc(st.city)}"></label><label class="f">State<input class="t" id="cps_${key}" data-field="cps" data-key="${key}" value="${esc(st.state)}" maxlength="3"></label></div><button class="btn small primary" data-act="cpAddSave" data-key="${key}">Add club</button><span class="small muted">Self-entered clubs don't get a check.</span></div>`
       :`<button class="list-row" data-act="cpAdd" data-key="${key}"><span><b>+ Add "${esc(st.q)}"</b><br><span class="small muted">Not listed? Add it as a self-entered club.</span></span></button>`}
-    <p class="small muted" style="padding:6px 0">Verified course data © OpenStreetMap contributors (ODbL), via OpenGolfAPI.</p></div>`:''}</div>`;
+    <p class="small muted" style="padding:6px 0"><button class="plain link small" data-act="cpClose" style="float:right">Close</button>Verified course data © OpenStreetMap contributors (ODbL), via OpenGolfAPI.</p></div>`:''}</div>`;
 }
 function onClubPicked(key,c){
   const st=S.cp[key]||(S.cp[key]={q:'',open:false,adding:false,city:'',state:''});st.open=false;st.adding=false;st.q=key==='search'?'':c.name;
@@ -4357,6 +4372,7 @@ document.addEventListener('click',async e=>{
   if(act==='ffPick'){const x=myClubs().find(y=>y.id===a.dataset.id);if(x)S.ffClub={id:x.id,name:x.name,verified:!!x.verified};render();return}
   if(act==='ffSim'){S.ffSimilar=!S.ffSimilar;render();return}
   if(act==='ffAll'){S.ffClub=null;render();return}
+  if(act==='cpClose'){closePickers();document.activeElement&&document.activeElement.blur&&document.activeElement.blur();return}
   if(act==='cpPick'){const c=clubById(a.dataset.id)||(frequentClubs(10).find(x=>x.c.id===a.dataset.id)||{}).c;if(c)onClubPicked(a.dataset.key,c);return}
   if(act==='cpAdd'){const st=S.cp[a.dataset.key];st.adding=true;render();return}
   if(act==='cpAddSave'){const k=a.dataset.key,st=S.cp[k];try{const c=await addUserClub(st.q,st.city,st.state);st.city='';st.state='';onClubPicked(k,c);toast('Club added')}catch(e){toast(e&&e.msg?e.msg:writeErr(e))}return}
@@ -4453,6 +4469,10 @@ document.addEventListener('click',async e=>{
   if(act==='clearExamples'){const ex=S.rounds.filter(r=>r.example);for(const r of ex){try{await delRound(r.id)}catch(err){}}toast('Sample rounds removed');return}
   if(act==='copyGame'){const t=S.gameText||'';try{await navigator.clipboard.writeText(t);toast('Copied')}catch(err){const ta=document.getElementById('gameTxt');ta&&ta.select();toast('Select and copy the text below')}return}
 });
+// tap outside an open course list (or press Escape) to close it
+function closePickers(){let n=0;for(const k in S.cp){if(S.cp[k]&&S.cp[k].open){S.cp[k].open=false;S.cp[k].adding=false;n++}}if(n)render();return n}
+document.addEventListener('pointerdown',e=>{const t=e.target;if(t&&t.closest&&t.closest('.cpick'))return;closePickers()},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePickers()});
 document.addEventListener('focusin',e=>{const el=e.target;if(!el||!el.dataset||el.dataset.field!=='cp')return;const st=S.cp[el.dataset.key];if(st&&!st.open&&norm(st.q).length<2&&frequentClubs(1).length){st.open=true;render()}});
 document.addEventListener('input',e=>{
   const el=e.target,f=el.dataset&&el.dataset.field;if(!f)return;const v=el.value;
