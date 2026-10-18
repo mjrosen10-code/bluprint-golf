@@ -329,6 +329,12 @@ async function writeRule(env, segs, uid, existing, data) {
         if (!data) return mine ? null : 'not_granted';
         return data.from === uid && mine && typeof data.text === 'string' && data.text.length <= 1000 ? null : 'not_granted';
       }
+      // invite links: any member can mint a key; the key lives under the group, so only members can read it
+      if (n === 4 && segs[2] === 'keys') {
+        if (!(await isGroupMember(env, segs[1], uid))) return 'not_granted';
+        if (!data) return mine ? null : 'not_granted';
+        return !existing && /^[A-Za-z0-9]{16,40}$/.test(segs[3]) && data.by === uid ? null : 'not_granted';
+      }
       if (n !== 2) return 'not_granted';
       if (!old) return data && data.owner === uid && Array.isArray(data.members) && same(data.members, [uid]) ? null : 'not_granted';
       if (old.owner === uid) return !data || (data.owner === uid && Array.isArray(data.members) && data.members.includes(uid)) ? null : 'not_granted';
@@ -340,6 +346,11 @@ async function writeRule(env, segs, uid, existing, data) {
       const added = [...now].filter(x => !was.has(x)), removed = [...was].filter(x => !now.has(x));
       if (!added.length && removed.length === 1 && removed[0] === uid) return null;           // leaving
       if (!removed.length && added.length === 1 && added[0] === uid) {                         // joining needs an invite
+        if (typeof data.via === 'string' && /^[A-Za-z0-9]{16,40}$/.test(data.via)) {             // ...or a member's invite link
+          const k = await env.DB.prepare('SELECT 1 FROM docs WHERE path=?').bind(`groups/${segs[1]}/keys/${data.via}`).first();
+          delete data.via;
+          return k ? null : 'not_granted';
+        }
         const inv = await env.DB.prepare('SELECT data FROM docs WHERE path=?').bind(`friendreqs/g~${segs[1]}~${uid}`).first();
         const d = inv ? JSON.parse(inv.data) : null;
         return d && d.to === uid && d.gid === segs[1] ? null : 'not_granted';
