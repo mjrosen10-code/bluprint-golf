@@ -650,6 +650,10 @@ body.livemode .strip button.o b{color:#FF8F7A}
 
 /* Onboarding, checklist, invites, leaderboard, collapsibles */
 nav.bar[hidden]{display:none!important}
+.pop.inst{display:flex;flex-direction:column;gap:16px}.pop.inst>.btn{width:100%}.inst .inst-head{display:flex;gap:14px;align-items:center}.inst .inst-head img{border-radius:14px;border:1px solid rgba(255,255,255,.1)}.inst h3{margin:2px 0 0;font-size:1.2rem}
+.inst-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}.inst-steps li{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}
+.inst-n{flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;background:rgba(47,208,115,.14);color:var(--volt);font-weight:700;font-size:.85rem}
+
 /* Nav: compact by default, shrinks to an icon pill while scrolling down, returns on scroll up / near top */
 nav.bar{transition:max-width .32s var(--ease),padding .32s var(--ease),border-radius .32s var(--ease),transform .32s var(--ease)}
 nav.bar button{min-height:46px;padding:5px 2px;font-size:.6rem;letter-spacing:.06em;gap:2px}
@@ -1684,8 +1688,31 @@ function countUp(root){if(RM)return;root.querySelectorAll('.hero-num>span,.hero-
   addEventListener('scroll',()=>{const y=scrollY,n=nav();if(!n)return;const d=y-lastY;lastY=y;
     if(y<40||innerHeight+y>=document.documentElement.scrollHeight-8){n.classList.remove('mini');acc=0;return}
     acc=(Math.sign(d)===Math.sign(acc)?acc:0)+d;if(acc>24)n.classList.add('mini');else if(acc<-16)n.classList.remove('mini')},{passive:true})})();
-document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.closest('#nav button,.btn.primary,.hcpick button');if(b){try{navigator.vibrate&&navigator.vibrate(6)}catch(_){}}},{passive:true});
+document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.closest('#nav button,.btn.primary,.hcpick button');if(b){haptic('tap')}},{passive:true});
 function ls(k,v){try{if(v===undefined){const x=localStorage.getItem(k);return x?JSON.parse(x):null} if(v===null)localStorage.removeItem(k); else localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+
+// Haptics: Android via vibrate; iOS 18+ Safari via the native switch-control tick (no API exists on iOS otherwise). Silent where unsupported.
+const HAPTIC=(()=>{let lab=null;const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const tick=()=>{try{if(!lab){lab=document.createElement('label');lab.setAttribute('aria-hidden','true');lab.style.cssText='position:fixed;left:-99px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none';const i=document.createElement('input');i.type='checkbox';i.setAttribute('switch','');i.tabIndex=-1;lab.append(i);document.body.append(lab)}lab.click()}catch(_){}};
+  const pat={tap:6,light:10,success:[12,60,18],win:[14,70,14,70,28]};
+  return k=>{try{if(ios){tick();if(k==='success'||k==='win')setTimeout(tick,110);if(k==='win')setTimeout(tick,230);return}navigator.vibrate&&navigator.vibrate(pat[k]||8)}catch(_){}}})();
+function haptic(k){HAPTIC(k||'tap')}
+// Home Screen install: iOS has no prompt API, so we show the two-tap Share steps; Android/Chrome gets the native prompt when offered.
+let BP_INSTALL_EVT=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();BP_INSTALL_EVT=e});addEventListener('appinstalled',()=>{ls('bp_inst',{done:1});S.install=null;try{render()}catch(_){}});
+function isStandalone(){try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(_){return false}}
+function installOk(){const st=ls('bp_inst')||{};return !isStandalone()&&!st.done&&matchMedia('(pointer:coarse)').matches}
+function maybeInstall(why){if(!installOk()||S.install)return;const st=ls('bp_inst')||{};if(st[why])return;st[why]=today();ls('bp_inst',st);S.install=why}
+function installSheet(){const ios=/iP(hone|ad|od)/.test(navigator.userAgent);const why=S.install;
+  const share=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>`;
+  const plus=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>`;
+  const steps=ios?`<ol class="inst-steps"><li><span class="inst-n">1</span><span>Tap ${share} <b>Share</b> in Safari's toolbar</span></li><li><span class="inst-n">2</span><span>Scroll and tap ${plus} <b>Add to Home Screen</b></span></li><li><span class="inst-n">3</span><span>Tap <b>Add</b>. BluPrint opens full screen from your home screen.</span></li></ol>`
+    :BP_INSTALL_EVT?'':`<ol class="inst-steps"><li><span class="inst-n">1</span><span>Open your browser menu <b>⋮</b></span></li><li><span class="inst-n">2</span><span>Tap <b>Install app</b> or <b>Add to Home screen</b></span></li></ol>`;
+  return `<div class="pop-wrap" role="dialog" aria-label="Add BluPrint to your home screen"><div class="pop-back" data-act="instClose"></div><div class="pop inst"><div class="pop-grab"></div><button class="pop-x" data-act="instClose" aria-label="Close">✕</button>
+    <div class="inst-head"><img src="/brand/apple-touch-icon.png" alt="" width="60" height="60"><div><span class="eyebrow">${why==='round'?'Two rounds in':'One more step'}</span><h3>Put BluPrint on your home screen</h3></div></div>
+    <p class="muted" style="margin:0">${why==='round'?'You\'re building a real baseline. Keep it one tap away for your next tee time.':'Open it like an app: full screen, one tap from the first tee, no browser bars.'}</p>
+    ${steps}
+    ${BP_INSTALL_EVT&&!ios?`<button class="btn primary" data-act="instGo">Add to home screen</button>`:''}
+    <button class="${BP_INSTALL_EVT&&!ios?'plain link small':'btn primary'}" style="${BP_INSTALL_EVT&&!ios?'align-self:center':''}" data-act="instClose">${ios?'Got it':'Maybe later'}</button></div></div>`}
 
 // ---------- Storage ----------
 // Each player's data lives in their own private space: data/users/<their id>/profile (+ rounds, courses).
@@ -1881,7 +1908,7 @@ function render(){S._popHtml="";
   if(!same){requestAnimationFrame(()=>enhanceDates(el));const _st=el.querySelector('.strip'),_sl=_st?_st.scrollLeft:0;(S._lv===v&&el.firstChild?morph(el,html):(el.innerHTML=html));if(_st){const n=el.querySelector('.strip');if(n)n.scrollLeft=_sl}if(v==='home')requestAnimationFrame(()=>dcarSync(true))}
   el.querySelectorAll(FSEL).forEach(i=>{const x=S._fc[i.id];if(!x||i.dataset.field||i.type==='file')return;if('c' in x)i.checked=x.c;else i.value=x.v});
   if(S._lv!==v){S._lv=v;el.classList.remove('enter');void el.offsetWidth;[...el.children].forEach((ch,i)=>ch.style.setProperty('--i',Math.min(i,8)));el.classList.add('enter');clearTimeout(S._et);S._et=setTimeout(()=>el.classList.remove('enter'),1100);countUp(el)}
-  const sh=document.getElementById('sheet');if(sh){const nh=S.reveal?revealView():S._popHtml&&(S.view==='profile'||S.view==='progress'||S.view==='home')?S._popHtml:typeof SOC!=='undefined'&&SOC.pop&&(S.view==='clubhouse'||S.view==='player'||S.view==='groups'||S.view==='gchat')?socialPop():S.showFriends&&typeof SOC!=='undefined'?`<div class="sheet-back" data-act="hideFriends"></div><section class="sheet" role="dialog" aria-label="Friends"><div class="sheet-grab"></div>${friendsSection()}<button class="btn ghost" data-act="hideFriends">Close</button></section>`:S.cardImg?scorecardSheet():S.inviteText?inviteSheet():(S.shareBadge&&typeof SOC!=='undefined')?shareBadgeSheet():(S.cchat&&S.cchat.mode==='course'&&S.view==='live')?courseCaddieSheet():(S.cardUid&&typeof SOC!=='undefined'?playerCard(S.cardUid):'');
+  const sh=document.getElementById('sheet');if(sh){const nh=S.reveal?revealView():S.install?installSheet():S._popHtml&&(S.view==='profile'||S.view==='progress'||S.view==='home')?S._popHtml:typeof SOC!=='undefined'&&SOC.pop&&(S.view==='clubhouse'||S.view==='player'||S.view==='groups'||S.view==='gchat')?socialPop():S.showFriends&&typeof SOC!=='undefined'?`<div class="sheet-back" data-act="hideFriends"></div><section class="sheet" role="dialog" aria-label="Friends"><div class="sheet-grab"></div>${friendsSection()}<button class="btn ghost" data-act="hideFriends">Close</button></section>`:S.cardImg?scorecardSheet():S.inviteText?inviteSheet():(S.shareBadge&&typeof SOC!=='undefined')?shareBadgeSheet():(S.cchat&&S.cchat.mode==='course'&&S.view==='live')?courseCaddieSheet():(S.cardUid&&typeof SOC!=='undefined'?playerCard(S.cardUid):'');
     // Re-rendering an open sheet (typing in its search box, live updates) must not replay its slide-up animation or reset its scroll
     const had=sh.innerHTML.trim()!=='';if(nh!==S._sheetHtml){const scr=[...sh.querySelectorAll('.mlist,.addlist,.pop,.sheet')].map(e=>e.scrollTop);sh.classList.toggle('still',had&&!!nh&&!S.reveal);(had&&nh&&!S.reveal?morph(sh,nh):(sh.innerHTML=nh));S._sheetHtml=nh;[...sh.querySelectorAll('.mlist,.addlist,.pop,.sheet')].forEach((e,k)=>{if(scr[k])e.scrollTop=scr[k]})}}
   const fab=document.getElementById('fab');if(fab)fab.hidden=!(S.view==='live'&&S.draft)||!!(S.cchat&&S.cchat.mode==='course');
@@ -2329,6 +2356,8 @@ function afterSave(r,before){
    else if(S.newBadges.length)S.reveal={kind:'badges',badges:S.newBadges.slice(0,3)}}
   if(socialOk()){const list=[r,...S.rounds.filter(x=>x.id!==r.id)];syncPlayer(list).catch(()=>{});
     if(S.profile.shareRounds!==false)S.sharePrompt=r.id;}
+  haptic(S.reveal?'win':'success');
+  if(S.rounds.filter(x=>x.id!==r.id).length+1>=2)maybeInstall('round');
   S.report=r.id;S.reportRound=r;S.view='report';render();window.scrollTo(0,0);
 }
 function badgeSnapshot(extra){
@@ -3976,6 +4005,7 @@ async function onbSaveRounds(){onbSnap();const R=onbRounds();const num=x=>x===''
   if(socialOk())syncPlayer().catch(()=>{});S.view='profile';render();window.scrollTo(0,0)}
 function needsOnboard(){return !!(S.profile.username&&!S.profile.onboarded&&!S.rounds.length&&!S.readOnly&&S.view!=='photo'&&S.view!=='text'&&S.view!=='setup'&&S.view!=='live'&&S.view!=='report')}
 function viewOnboard(c){
+  maybeInstall('onb');
   const step=S.onb||4;const m=cmem();const ob=S.onbSel||(S.onbSel={str:[...(m.strengths||[])],weak:[...(m.weaknesses||[])],miss:(m.tendencies||[]).find(t=>t.startsWith('Usual miss'))||''});
   const dots=`<div class="onb-dots">${[1,2,3,4].map(i=>`<i class="${i<=step?'on':''}"></i>`).join('')}</div>`;
   const nav=(next,label)=>`<div class="row" style="margin-top:4px">${step>1?`<button class="btn" data-act="onbBack">Back</button>`:''}<button class="btn primary" style="flex:1" data-act="onbNext">${label||'Continue'}</button></div><button class="plain link small" style="align-self:center" data-act="onbSkip">${step<4?'Skip this step':'Skip for now'}</button>`;
@@ -4373,6 +4403,8 @@ document.addEventListener('click',async e=>{
   if(act==='ffPick'){const x=myClubs().find(y=>y.id===a.dataset.id);if(x)S.ffClub={id:x.id,name:x.name,verified:!!x.verified};render();return}
   if(act==='ffSim'){S.ffSimilar=!S.ffSimilar;render();return}
   if(act==='ffAll'){S.ffClub=null;render();return}
+  if(act==='instClose'){S.install=null;render();return}
+  if(act==='instGo'){const ev=BP_INSTALL_EVT;BP_INSTALL_EVT=null;S.install=null;render();if(ev){try{ev.prompt();const ch=await ev.userChoice;if(ch&&ch.outcome==='accepted'){ls('bp_inst',{done:1});haptic('success')}}catch(_){}}return}
   if(act==='cpClose'){closePickers();document.activeElement&&document.activeElement.blur&&document.activeElement.blur();return}
   if(act==='cpPick'){const c=clubById(a.dataset.id)||(frequentClubs(10).find(x=>x.c.id===a.dataset.id)||{}).c;if(c)onClubPicked(a.dataset.key,c);return}
   if(act==='cpAdd'){const st=S.cp[a.dataset.key];st.adding=true;render();return}
@@ -4381,7 +4413,7 @@ document.addEventListener('click',async e=>{
   if(act==='rmClub'){const list=myClubs().filter(c=>c.id!==a.dataset.id);try{await putProfile({clubs:list})}catch(e){toast(writeErr(e));return}syncPlayer().catch(()=>{});render();return}
   if(act==='addMyClub'){const c=currentClub();if(c)onClubPicked('myclub',c);return}
   if(SOCIAL_ACTS.has(act)){await socialAct(act,a);return}
-  if(act==='nav'){S.view=a.dataset.view;S.profileEdit=false;S.confirmDel=null;if(S.view==='setup'||S.view==='text')S.setup=newSetup();if(S.view==='photo'){S.parsed=null}render();window.scrollTo(0,0);return}
+  if(act==='nav'){if(a.closest('#nav')&&S.view===a.dataset.view&&!S.reveal){if(scrollY>0){haptic('light');window.scrollTo({top:0,behavior:'smooth'})}return}S.view=a.dataset.view;S.profileEdit=false;S.confirmDel=null;if(S.view==='setup'||S.view==='text')S.setup=newSetup();if(S.view==='photo'){S.parsed=null}render();window.scrollTo(0,0);return}
   if(act==='drill'&&S.view==='home'&&document.querySelector('.dcar')){S.drill=a.dataset.drill;S._lastHtml=null;dcarSync(false);return}
   if(act==='drill'||act==='drillgo'){S.drill=a.dataset.drill;S.view='home';render();if(act==='drillgo')document.getElementById('drill')?.scrollIntoView({behavior:'smooth'});return}
   if(act==='coach'){askCoach();return}
@@ -4466,7 +4498,7 @@ document.addEventListener('click',async e=>{
   if(act==='toggleGoal'){S.goalEdit=!S.goalEdit;render();if(S.goalEdit)setTimeout(()=>{const sh=document.getElementById('sheet');if(sh)enhanceDates(sh)},0);return}
   if(act==='goalQuick'){const i=document.getElementById('gl_index');if(i)i.value=a.dataset.v;document.querySelectorAll('.gp-quick .pill').forEach(b=>b.classList.toggle('good',b===a));return}
   if(act==='saveGoal'){const t=document.getElementById('gl_index').value.trim(),by=document.getElementById('gl_by').value;const n=parseHc(t);if(t===''||isNaN(n)){toast('Enter a target index.');return}const c=ctx();const cur=c.index!=null?c.index:c.est!=null?c.est:c.estQ;
-    try{await putProfile({goal:{index:n,by,start:cur,set:today()}})}catch(err){toast(writeErr(err));return}S.goalEdit=false;toast('Goal set');render();if(socialOk()){syncPlayer().catch(()=>{});createPost({type:'goal',text:`set a goal: ${n} index${by?' by '+by:''}. Hold me to it.`}).catch(()=>{})}return}
+    try{await putProfile({goal:{index:n,by,start:cur,set:today()}})}catch(err){toast(writeErr(err));return}S.goalEdit=false;haptic('success');toast('Goal set');render();if(socialOk()){syncPlayer().catch(()=>{});createPost({type:'goal',text:`set a goal: ${n} index${by?' by '+by:''}. Hold me to it.`}).catch(()=>{})}return}
   if(act==='clearExamples'){const ex=S.rounds.filter(r=>r.example);for(const r of ex){try{await delRound(r.id)}catch(err){}}toast('Sample rounds removed');return}
   if(act==='copyGame'){const t=S.gameText||'';try{await navigator.clipboard.writeText(t);toast('Copied')}catch(err){const ta=document.getElementById('gameTxt');ta&&ta.select();toast('Select and copy the text below')}return}
 });
