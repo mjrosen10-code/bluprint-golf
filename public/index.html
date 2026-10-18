@@ -62,6 +62,8 @@ p{margin:0}
 @media (prefers-reduced-motion:no-preference){.ambient .g1{animation:drift1 38s ease-in-out infinite alternate}.ambient .g2{animation:drift2 46s ease-in-out infinite alternate}.ambient .g3{animation:drift1 54s ease-in-out infinite alternate-reverse}
  @keyframes drift1{to{transform:translate3d(6vmax,4vmax,0) scale(1.06)}}@keyframes drift2{to{transform:translate3d(-5vmax,6vmax,0) scale(.94)}}}
 .app{position:relative;z-index:1}
+/* Home-screen app: content starts below the status bar, so the sticky header never slides under it; no rubber-band that can strand the page offset */
+.app{padding-top:env(safe-area-inset-top,0px)}html,body{overscroll-behavior-y:none}html{height:100%;-webkit-text-size-adjust:100%}
 nav.bar{z-index:6}
 /* Header */
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:rgba(13,15,15,.86);box-shadow:0 0 0 100vmax rgba(13,15,15,.86);clip-path:inset(0 -100vmax);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);color:var(--ivory);border-bottom:1px solid var(--line);
@@ -603,7 +605,7 @@ body.livemode .fab{display:none!important}
 /* Scorecard fits one screen: everything scales with viewport height */
 body.livemode main{padding-top:8px;gap:0}
 body.livemode .app{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
-.lc{min-height:calc(100dvh - 98px - 92px - env(safe-area-inset-bottom,0px));justify-content:space-between;gap:clamp(6px,1.3vh,16px)}
+.lc{min-height:calc(100dvh - 98px - 92px - env(safe-area-inset-bottom,0px) - env(safe-area-inset-top,0px));justify-content:space-between;gap:clamp(6px,1.3vh,16px)}
 .lc-sec{gap:clamp(4px,.8vh,8px)}
 .lc-hn{font-size:clamp(1.7rem,4.4vh,2.6rem)}
 .lc-meta{font-size:clamp(.72rem,1.6vh,.85rem)}.lc-meta>b{font-size:clamp(1.25rem,3vh,1.7rem)}
@@ -650,12 +652,24 @@ body.livemode .strip button.o b{color:#FF8F7A}
 
 /* Onboarding, checklist, invites, leaderboard, collapsibles */
 nav.bar[hidden]{display:none!important}
+.ptools{display:flex;justify-content:flex-end;gap:8px;margin:-8px -8px -10px 0;position:relative;z-index:2}.ptools .ptool{width:36px;height:36px}
+.ptile .idc-who{padding-left:5px!important}.ptile .idcard{overflow:visible}
+.ptool{position:relative;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-2);background:rgba(255,255,255,.03);color:var(--ivory);display:grid;place-items:center;padding:0}.ptool svg{width:20px;height:20px}
+.ptool-n{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--volt);color:#06110B;font-size:.66rem;font-weight:800;display:grid;place-items:center;line-height:1}
+
+.played{display:flex;gap:14px;overflow-x:auto;padding:8px 2px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.played::-webkit-scrollbar{display:none}
+.pl-item{flex:0 0 auto;width:72px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}.pl-item>span.small{max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.72rem}
+.pl-add{border:1px solid rgba(47,208,115,.45);background:rgba(47,208,115,.1);color:var(--volt);border-radius:999px;font-size:.7rem;font-weight:700;padding:3px 10px}
+.pl-sc{font-size:.68rem;color:var(--sage);margin-top:-3px}.pl-st{font-size:.68rem;color:var(--sage)}.pl-st.good{color:var(--volt)}
+.cl-board>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:4px 0}.cl-board>summary::-webkit-details-marker{display:none}.cl-board[open] .cc-chev{transform:rotate(90deg)}
+
 .cc-fold{display:block!important;padding:0!important}.cc-fold>summary{list-style:none;display:grid;grid-template-columns:36px 1fr 18px;gap:12px;align-items:center;padding:12px 0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .cc-fold>summary::-webkit-details-marker{display:none}.cc-fold .cc-lab{margin:0}.cc-fold .cc-ic{margin:0}
 .cc-chev{color:var(--sage);font-size:1.2rem;line-height:1;transition:transform .2s var(--ease);justify-self:end}.cc-fold[open] .cc-chev{transform:rotate(90deg)}
 .cc-fold>.cc-txt{margin:0 0 14px 48px}
 .cc-row.cc-next .cc-ic{color:var(--caution);background:rgba(232,193,90,.12)}.cc-next .cc-lab{color:var(--caution)}
 
+.gback{flex:0 0 40px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-2);background:rgba(255,255,255,.03);color:var(--ivory);display:grid;place-items:center;padding:0}
 .gadd{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.ghead{flex:1}
 .glink{display:flex;flex-direction:column;gap:6px;margin-top:6px;padding-top:14px;border-top:1px solid var(--line)}
 
@@ -1839,11 +1853,18 @@ function trackNav(blocked){
   // leaving a conversation stops its fast refresh
   if(cur.view!=='gchat'&&typeof SOC!=='undefined'&&SOC.gmUnsub)closeGroupChat();
   if(cur.view!=='thread'&&typeof SOC!=='undefined'&&SOC.msgUnsub){SOC.msgUnsub();SOC.msgUnsub=null}
-  if(!blocked&&NAV.last&&!NAV.back&&locKey(NAV.last)!==locKey(cur)){NAV.stack.push(NAV.last);if(NAV.stack.length>30)NAV.stack.shift()}
+  if(!blocked&&NAV.last&&!NAV.back&&locKey(NAV.last)!==locKey(cur)){NAV.stack.push(NAV.last);if(NAV.stack.length>30)NAV.stack.shift();try{history.pushState({bpn:NAV.stack.length},'')}catch(_){}} // lets the phone's own back gesture/button step back
   if(!blocked&&['home','progress','log','profile','clubhouse','groups'].includes(cur.view))NAV.stack=[]; // bottom-nav tabs are top level: no back arrow
   NAV.back=false;if(!blocked)NAV.last=cur;
   const b=document.getElementById('backBtn');if(b)b.hidden=blocked||!NAV.stack.length;
 }
+// Back, three ways: the arrow, the phone's back gesture/button (history), and a swipe in from the left edge (home-screen app has no browser gesture).
+function navBack(){if(!NAV.stack.length&&S.view!=='gchat')return false;if(history.state&&history.state.bpn){history.back();return true}goBack();return true}
+addEventListener('popstate',()=>{if(NAV.stack.length||S.view==='gchat'){goBack();haptic('light')}});
+(()=>{let sx=0,sy=0,on=false,dx=0;const v=()=>document.getElementById('view');
+  addEventListener('touchstart',e=>{const t=e.touches[0];on=t.clientX<=24&&(NAV.stack.length>0||S.view==='gchat')&&!document.querySelector('#sheet .pop-wrap,#sheet .sheet');if(on){sx=t.clientX;sy=t.clientY;dx=0}},{passive:true});
+  addEventListener('touchmove',e=>{if(!on)return;const t=e.touches[0];dx=t.clientX-sx;if(Math.abs(t.clientY-sy)>60&&dx<40){on=false;const el=v();if(el)el.style.transform='';return}const el=v();if(el&&dx>0){el.style.transition='none';el.style.transform=`translateX(${Math.min(dx*.45,140)}px)`}},{passive:true});
+  addEventListener('touchend',()=>{if(!on)return;on=false;const el=v();if(el){el.style.transition='transform .22s var(--ease)';el.style.transform=''}if(dx>80){haptic('light');navBack()}},{passive:true})})();
 function goBack(){
   if(S.view==='thread'&&SOC.thread){try{markRead(threadId(me,SOC.thread))}catch(e){}if(SOC.msgUnsub){SOC.msgUnsub();SOC.msgUnsub=null}}
   const fromChat=S.view==='gchat';if(fromChat){closeGroupChat();SOC.ginfo=false}
@@ -2823,7 +2844,7 @@ function viewProgress(c){
 `;
 }
 // Courses played: summary + gamified progress toward Road Warrior tiers
-function courseSummary(rs){const m=new Map();for(const r of rs){if(r.example||!r.course)continue;const k=norm(r.course);const a=agg([r]);const e=m.get(k)||{name:r.course,n:0,last:'',best:null,holes:0};e.n++;if(String(r.date)>e.last)e.last=String(r.date);if(a.holes===18&&a.score&&(e.best==null||a.score<e.best))e.best=a.score;m.set(k,e)}
+function courseSummary(rs){const m=new Map();for(const r of rs){if(r.example||!r.course)continue;const k=norm(r.course);const a=agg([r]);const e=m.get(k)||{name:r.course,n:0,last:'',best:null,holes:0,clubId:''};e.n++;if(r.clubId&&!e.clubId)e.clubId=r.clubId;if(String(r.date)>e.last)e.last=String(r.date);if(a.holes===18&&a.score&&(e.best==null||a.score<e.best))e.best=a.score;m.set(k,e)}
   return [...m.values()].sort((a,b)=>b.last.localeCompare(a.last))}
 function coursesPlayed(c){
   const cs=courseSummary(c.rs);const B=BADGES.find(b=>b.id==='road');const n=cs.length;const ti=B.tiers.filter(t=>n>=t).length;const next=B.tiers[ti];
@@ -2865,14 +2886,14 @@ function viewProfile(c){
       <button data-act="setHcPref" data-v="self" aria-pressed="${useSelf}" ${sOK?'':''}><span class="lbl">Self-reported</span><span class="num">${sOK?hcTxt(c.self,1):'—'}</span><span class="small muted">${S.hcEdit?'':`<span class="link" data-act="hcEdit">${sOK?'Edit':'Add yours'}</span>`}</span></button></div>
     ${S.hcEdit?`<div class="row" style="width:100%;flex-wrap:nowrap"><input class="t" inputmode="decimal" id="pf_index" data-field="pf.index" value="${S.profile.index!=null&&S.profile.index!==''?esc(hcTxt(S.profile.index,1)):''}" placeholder="e.g. 18.1 from GHIN" style="flex:1"><button class="btn primary" data-act="saveIndex">Save</button></div>`:''}
     <p class="small muted" style="max-width:34ch">Verified uses World Handicap System math on rounds you log hole by hole. It isn't an official GHIN index.</p>`;
-  return `<section class="card ptile">
+  const tools=socialOk()&&!S.profileEdit?(()=>{const nn=notifUnread(),un=unreadCount();const b=(v,ic,n,l)=>`<button class="ptool" data-act="nav" data-view="${v}" aria-label="${l}${n?`, ${n} new`:''}">${ic}${n?`<span class="ptool-n">${n>9?'9+':n}</span>`:''}</button>`;
+    return `<div class="ptools">${b('notifs',IC.bell,nn,'Notifications')}${b('inbox',IC.mail,un,'Messages')}</div>`})():'';
+  return `<section class="card ptile">${tools}
     <div class="pcenter">${S.profile.username&&S.profileEdit?`<label for="pf_photo" class="avedit" title="${S.profile.avatar?'Change photo':'Add profile photo'}">${av(96)}<span class="cam">${S.profile.avatar?'Edit':'+ Photo'}</span></label><input type="file" id="pf_photo" data-field="pf.photo" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0">`:S.profileEdit?av(96):''}
       ${S.profileEdit?`<h2 class="pname">${S.profile.username?'@'+esc(S.profile.username):'My profile'}</h2>`:''}
       ${S.profileEdit?'':idCard(c.pb.builds,{locked:c.pb.locked,early:c.pb.early,head:`<div class="idc-head"><div class="idc-who">${av(56)}<div><h2 class="pname">${S.profile.username?'@'+esc(S.profile.username):'My profile'}</h2>${[S.profile.first,S.profile.last].filter(Boolean).length?`<span class="small muted">${esc([S.profile.first,S.profile.last].filter(Boolean).join(' '))}</span>`:''}</div></div><div class="idc-chips">${idHc(c.index!=null?c.index:c.estQ,c.verified,true,c.index==null&&c.estQ!=null)}${idStatus(ST.i,lvl,true)}</div></div>`})}${(S._popHtml=S.pexp?`<div class="pop-wrap" role="dialog" aria-label="${S.pexp==='st'?'Golfer status':'Handicap'}"><div class="pop-back" data-act="pexp" data-k="${S.pexp}"></div><div class="pop"><div class="pop-grab"></div><button class="pop-x" data-act="pexp" data-k="${S.pexp}" aria-label="Close">✕</button>${S.pexp==='st'?stPanel:`<div class="pop-hc"><span class="eyebrow">Handicap to show</span>${hcPick}</div>`}</div></div>`:'','')}
       ${S.profileEdit?hcPick:''}<div class="pmeta"><span class="mono">${c.rs.length}</span><span class="muted">rounds</span>${home?`<i></i><span>${esc(home.name)}${S.profile.state?', '+esc(S.profile.state):''}</span>`:''}</div>
       ${socialOk()&&!S.profileEdit?(()=>{initSocial();const n=friendIds().filter(u=>SOC.players[u]).length;const pend=pendingIn().length;return `<div class="frow"><button class="plain frcount" data-act="showFriends"><b>${n}</b> friend${n===1?'':'s'}${pend?` · <span style="color:var(--volt)">${pend} request${pend===1?'':'s'}</span>`:''}</button><button class="btn small" data-act="nav" data-view="findfriends">Find friends</button><button class="btn small ghost" data-act="invite">Invite</button></div>`})():''}
-      ${socialOk()&&!S.profileEdit?(()=>{const nn=notifUnread();return `<button class="msgentry" data-act="nav" data-view="notifs"><span class="me-ic">${IC.bell}</span><span class="me-t"><b>Notifications</b><span class="small ${nn?'':'muted'}">${nn?`${nn} new`:'Requests, invites, mentions'}</span></span>${nn?'<span class="dot-un" aria-label="New"></span>':''}<span class="ar-chev">›</span></button>`})():''}
-      ${socialOk()&&!S.profileEdit?(()=>{const un=unreadCount();return `<button class="msgentry" data-act="nav" data-view="inbox"><span class="me-ic">${IC.mail}</span><span class="me-t"><b>Messages</b><span class="small ${un?'':'muted'}">${un?`${un} unread conversation${un===1?'':'s'}`:'Direct messages with other golfers'}</span></span>${un?'<span class="dot-un" aria-label="Unread"></span>':''}<span class="ar-chev">›</span></button>`})():''}
       ${S.profile.username&&S.profileEdit?`<div class="row" style="justify-content:center;gap:6px"><button class="btn small ghost" data-act="renameStart">Change username</button>${S.profile.avatar?`<button class="btn small ghost" data-act="rmPhoto">Remove photo</button>`:''}</div>
       ${S.renaming?`<div class="row" style="width:100%"><input class="t" id="rn_name" data-field="rn.name" value="${esc(S.renameVal??S.profile.username)}" maxlength="20" autocapitalize="off" style="flex:1"><button class="btn primary" data-act="renameSave">Save</button></div>${S.renameErr?`<div class="notice">${esc(S.renameErr)}</div>`:''}`:''}`:''}
       ${S.profileEdit?'':`<div class="pact">${S.profile.username?`<button class="btn" data-act="profEdit">Edit profile</button>`:''}<button class="btn primary" data-act="talkCaddie">My caddie</button></div>`}</div>
@@ -3331,7 +3352,7 @@ function initSocial(){
   db.collection('friendreqs').where('to','==',me).onSnapshot(s=>{SOC.reqsIn=s.docs.map(d=>({...d.data(),id:d.id}));ensurePostSubs();softRender()},()=>{});
   db.collection('friendreqs').where('from','==',me).onSnapshot(s=>{SOC.reqsOut=s.docs.map(d=>({...d.data(),id:d.id}));ensurePostSubs();softRender()},()=>{});
   db.collection('dms').where('members','array-contains',me).onSnapshot(s=>{SOC.threads=s.docs.map(d=>({...d.data(),id:d.id}));softRender()},()=>{});
-  db.doc('players/'+me).get().then(d=>{if(!d.exists)syncPlayer().catch(()=>{})}).catch(()=>{});
+  db.doc('players/'+me).get().then(d=>{const x=d.exists&&d.data();if(!x||!x.updated||Date.now()-Date.parse(x.updated)>6*3600e3||(x.courses||[]).some(c=>!('clubId' in c))){let k=0;const go=()=>{if(S.ready)syncPlayer().catch(()=>{});else if(k++<40)setTimeout(go,500)};go()}}).catch(()=>{}); // keep your public card fresh (course history powers the Club filter)
   watchGroups();
   setTimeout(tryJoinLink,400);
 }
@@ -3370,7 +3391,8 @@ function openGroupChat(gid){S.cardUid=null;SOC.group=gid;SOC.gchat=gid;SOC.gmsgs
 function closeGroupChat(){if(SOC.gmUnsub){SOC.gmUnsub();SOC.gmUnsub=null}SOC.gchat=null}
 function viewGroupChat(c){const gid=SOC.gchat;const g=myGroups().find(x=>x.id===gid);if(!g){S.view='groups';return viewGroups(c)}
   const x=SOC.gdocs[gid]||{};const mem=groupMembers(gid);const own=groupOwner(gid)===me;let prev='';
-  return `<div class="row between" style="flex-wrap:nowrap;gap:12px">
+  return `<div class="row between" style="flex-wrap:nowrap;gap:10px">
+    <button class="gback" data-act="back" aria-label="Back to groups"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
     <button class="plain row ghead" data-act="ginfo" aria-expanded="${!!SOC.ginfo}" style="gap:10px;flex-wrap:nowrap;min-width:0;text-align:left">${groupAvatar(gid,36)}<span style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.name||g.name)}</b><span class="small muted" style="white-space:nowrap">${mem.length} golfer${mem.length===1?'':'s'} · ${SOC.ginfo?'hide info':'group info'} ›</span></span></button><button class="btn small primary gadd" data-act="grpInvite" aria-label="Add people to ${esc(x.name||g.name)}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.6 6-5.6 1.4 0 2.6.4 3.6 1"/><path d="M18 13v7M14.5 16.5h7"/></svg>Add</button></div>
   ${SOC.ginfo?groupInfo(gid):''}
   ${SOC.ginfo&&SOC.grecap?recapView():''}
@@ -3418,7 +3440,7 @@ async function syncPlayer(rounds){
   if(!socialOk())return;
   const rs=rounds||S.rounds; const self=S.profile.index!=null&&S.profile.index!==''?Number(S.profile.index):null;
   const v=verifiedIndex(rs);const verified=v.index!=null&&!(S.profile.hcPref==='self'&&self!=null);
-  await db.doc('players/'+me).set(clean({groups:myGroups().map(g=>({id:g.id,name:g.name})),username:S.profile.username,uname:myName(),index:verified?v.index:self,verified,self,vindex:v.index,est:v.index,goal:S.profile.goal||null,clubs:(S.profile.clubs||[]).map(asClub).filter(Boolean).map(c=>({id:c.id,name:c.name,verified:!!c.verified})),clubIds:(S.profile.clubs||[]).map(asClub).filter(Boolean).map(c=>c.id),first:S.profile.first||'',last:S.profile.last||'',about:S.profile.about||'',avatar:S.profile.avatar||'',years:S.profile.years||'',ride:S.profile.ride||'',teetime:S.profile.teetime||'',favclub:S.profile.favclub||'',bag:S.profile.bag||{},state:S.profile.state||'',builds:(()=>{const hc=verified?v.index:(self!=null?self:18);return playerBuilds(rs,hc,v.diffs).builds})(),badges:badgeState(rs,{index:verified?v.index:self,diffs:v.diffs,goal:S.profile.goal}).list.map(x=>({id:x.b.id,name:x.b.name,tier:x.t.tier})).filter(x=>x.tier>0),status:badgeState(rs,{index:verified?v.index:self,diffs:v.diffs,goal:S.profile.goal}).status.i,identity:(()=>{const hc=verified?v.index:(self!=null?self:18);return buildIdentity(playerBuilds(rs,hc,v.diffs).builds).name})(),rounds:rs.length,courses:courseSummary(rs).slice(0,8).map(x=>({name:x.name,n:x.n,last:x.last})),joined:S.profile.joined||today(),updated:nowIso()}));
+  await db.doc('players/'+me).set(clean({groups:myGroups().map(g=>({id:g.id,name:g.name})),username:S.profile.username,uname:myName(),index:verified?v.index:self,verified,self,vindex:v.index,est:v.index,goal:S.profile.goal||null,clubs:(S.profile.clubs||[]).map(asClub).filter(Boolean).map(c=>({id:c.id,name:c.name,verified:!!c.verified})),clubIds:(S.profile.clubs||[]).map(asClub).filter(Boolean).map(c=>c.id),first:S.profile.first||'',last:S.profile.last||'',about:S.profile.about||'',avatar:S.profile.avatar||'',years:S.profile.years||'',ride:S.profile.ride||'',teetime:S.profile.teetime||'',favclub:S.profile.favclub||'',bag:S.profile.bag||{},state:S.profile.state||'',builds:(()=>{const hc=verified?v.index:(self!=null?self:18);return playerBuilds(rs,hc,v.diffs).builds})(),badges:badgeState(rs,{index:verified?v.index:self,diffs:v.diffs,goal:S.profile.goal}).list.map(x=>({id:x.b.id,name:x.b.name,tier:x.t.tier})).filter(x=>x.tier>0),status:badgeState(rs,{index:verified?v.index:self,diffs:v.diffs,goal:S.profile.goal}).status.i,identity:(()=>{const hc=verified?v.index:(self!=null?self:18);return buildIdentity(playerBuilds(rs,hc,v.diffs).builds).name})(),rounds:rs.length,courses:courseSummary(rs).slice(0,12).map(x=>({name:x.name,n:x.n,last:x.last,best:x.best,clubId:x.clubId||''})),joined:S.profile.joined||today(),updated:nowIso()}));
 }
 async function createPost(p){
   if(!socialOk())return;
@@ -3817,15 +3839,16 @@ const low=lowW;
   ${SOC.feed==='club'?'':SOC.compOpen||SOC.draft||SOC.dimg?`  <section class="composer tile"><div class="row" style="gap:12px;flex-wrap:nowrap;align-items:flex-start">${avatar(me,40)}<textarea class="t" id="ch_draft" data-field="ch.draft" maxlength="280" placeholder="What happened on the course? Tag friends with @" style="min-height:70px">${esc(SOC.draft)}</textarea></div>
     ${sugg.length?`<div class="row" style="gap:6px">${sugg.map(p=>`<button class="pill neutral" data-act="pickMention" data-name="${esc(p.username)}">@${esc(p.username)}</button>`).join('')}</div>`:''}
     ${draftMedia(SOC.dimg,'dimgRemove')}<div class="row between"><div class="row" style="gap:6px">${assetsFn?`<label class="btn small ghost" for="post_file">📷 ${IS_WEB?'Photo':'Photo / video'}</label><input type="file" id="post_file" data-field="post.file" accept="${MEDIA_ACCEPT}" style="position:absolute;width:1px;height:1px;opacity:0">`:''}<span class="small muted">${SOC.draft.length}/280</span></div><div class="row" style="gap:6px"><button class="btn small ghost" data-act="compClose">Cancel</button><button class="btn primary" data-act="postStatus" ${(!SOC.draft.trim()&&!SOC.dimg)||SOC.posting?'disabled':''}>${SOC.posting?'Posting…':'Post'}</button></div></div></section>`:`<button class="fstart compbar" data-act="compOpen">${avatar(me,36)}<span>What happened on the course?</span><span class="cb-ic" aria-hidden="true">📷</span></button>`}
-  <section class="feed">${posts.length?posts.map(postCard).join(''):!SOC.playersLoaded?[1,2,3].map(()=>`<div class="post skelpost"><div class="post-head"><span class="sk-av"></span><div class="skel" style="flex:1;margin-top:4px"><i style="width:40%"></i><i></i><i style="width:70%"></i></div></div></div>`).join(''):`<div class="card"><p class="muted">${SOC.feed==='friends'?'Nothing from your friends yet. Tap the add-people button up top to find friends, or post your first status.':SOC.feed==='group'?'No posts from your group yet.':SOC.feed==='club'?(SOC.club?'No activity at this club yet.':'Pick a club to see who is playing there. Add your clubs in your profile.'):SOC.feed==='mentions'?'No one has tagged you yet.':'No posts yet. Be the first.'}</p></div>`}</section>`:''}`;
+  <section class="feed">${posts.length?posts.map(postCard).join(''):!SOC.playersLoaded?[1,2,3].map(()=>`<div class="post skelpost"><div class="post-head"><span class="sk-av"></span><div class="skel" style="flex:1;margin-top:4px"><i style="width:40%"></i><i></i><i style="width:70%"></i></div></div></div>`).join(''):`<div class="card"><p class="muted">${SOC.feed==='friends'?'Nothing from your friends yet. Tap the add-people button up top to find friends, or post your first status.':SOC.feed==='group'?'No posts from your group yet.':SOC.feed==='club'?(SOC.club?'No rounds shared to the feed here yet.':'Pick a club to see who is playing there. Add your clubs in your profile.'):SOC.feed==='mentions'?'No one has tagged you yet.':'No posts yet. Be the first.'}</p></div>`}</section>`:''}`;
 }
 function clubHeader(){
   const co=currentClub();const mine=myClubs();
   return `<section class="card">${mine.length?`<div class="row" style="gap:6px">${mine.map(c=>`<button class="pill ${c.id===SOC.club?'good':'neutral'}" data-act="clubFeed" data-club="${esc(c.id)}" data-name="${esc(c.name)}">${esc(c.name)}${c.verified?' ✓':''}</button>`).join('')}</div>`:''}
     ${clubPicker('search','Find a club','Search any course')}
-    ${co?`<div class="row between"><div><h3 style="font-size:1.4rem">${clubName(co)}</h3><span class="small muted">${esc(clubPlace(co)||(co.verified?'':'Self-entered club'))} · ${clubMembers(co.id).length} BluPrint Golf member${clubMembers(co.id).length===1?'':'s'}</span></div>${mine.some(c=>c.id===co.id)?'<span class="pill good">Your club</span>':`<button class="btn small" data-act="addMyClub" data-id="${esc(co.id)}">Add to my clubs</button>`}</div>
-      ${clubBoard(co)}
-      ${clubMembers(co.id).length?`<div class="row" style="gap:8px">${clubMembers(co.id).slice(0,12).map(p=>`<button class="plain row" style="gap:6px" data-act="openUid" data-uid="${esc(p.uid)}">${avatar(p.uid,28)}<span class="small">@${esc(p.username)}</span></button>`).join('')}</div>`:''}`:`<p class="small muted">Pick one of your clubs or search for any course.</p>`}</section>`;
+    ${co?(()=>{const pl=clubPlayed(co);const others=pl.filter(x=>x.uid!==me);
+      return `<div class="row between" style="flex-wrap:nowrap;gap:10px"><div style="min-width:0"><h3 style="font-size:1.3rem">${clubName(co)}</h3><span class="small muted">${esc(clubPlace(co)||(co.verified?'':'Self-entered club'))}${pl.length?` · ${pl.length} golfer${pl.length===1?' has':'s have'} played here`:''}</span>${mine.some(c=>c.id===co.id)?'':`<button class="plain link small" data-act="addMyClub" data-id="${esc(co.id)}" style="display:block;margin-top:4px">+ Add to my clubs</button>`}</div></div>
+      ${others.length?`<div><span class="eyebrow">Played here</span><div class="played">${others.slice(0,15).map(x=>{const st=friendState(x.uid);return `<div class="pl-item"><button class="plain" data-act="openUid" data-uid="${esc(x.uid)}" aria-label="@${esc(x.username)}">${avatar(x.uid,44)}</button><span class="small">@${esc(x.username)}</span>${x.best?`<span class="pl-sc mono">Best ${x.best}</span>`:''}${st==='friends'?'<span class="pl-st good">Friends</span>':st==='sent'?'<span class="pl-st">Requested</span>':st==='incoming'?`<button class="pl-add" data-act="acceptReq" data-uid="${esc(x.uid)}">Accept</button>`:`<button class="pl-add" data-act="friendReq" data-uid="${esc(x.uid)}">+ Add</button>`}</div>`}).join('')}</div></div>`:''}
+      <details class="cl-board"><summary><span class="eyebrow">Monthly leaderboard</span><span class="cc-chev" aria-hidden="true">›</span></summary>${clubBoard(co)}</details>`})():`<p class="small muted">Pick one of your clubs or search for any course.</p>`}</section>`;
 }
 function viewPlayer(c){
   const u=S.playerUid,p=SOC.players[u];
@@ -4115,9 +4138,17 @@ function inviteCard(where,clubName){
 function inviteSheet(){return S.inviteText?`<div class="sheet-back" data-act="closeInvite"></div><section class="sheet" role="dialog" aria-label="Invite friends"><div class="sheet-grab"></div><span class="eyebrow">Invite friends</span><p class="small muted">Copy this and send it to your crew. They'll need to be added to the app from the Share menu during the beta.</p><textarea class="t" readonly style="min-height:110px">${esc(S.inviteText)}</textarea><button class="btn" data-act="closeInvite">Done</button></section>`:''}
 // Club leaderboard: best shared 18 this month, by flight
 const FLIGHTS=[['Championship',-99,4.9],['A flight',5,9.9],['B flight',10,14.9],['C flight',15,19.9],['D flight',20,99]];
+function clubPostsAll(co){const fam=clubFamily(co.id,co.name);const m=new Map();const add=p=>{if(p&&p.type!=='forum'&&p.type!=='story'&&inFamily(fam,p.clubId,p.course))m.set(p.key||(p.uid+'~'+p.id),p)};
+  for(const u in SOC.posts)SOC.posts[u].forEach(add);for(const t in (SOC.clubPosts||{}))SOC.clubPosts[t].forEach(add);return [...m.values()]}
+// Who has posted a round at this club (the filter's whole point: find people who play where you play)
+function clubPlayed(co){const by={};const fam=clubFamily(co.id,co.name);const take=(uid,username,date,score)=>{const x=by[uid]||(by[uid]={uid,username,last:'',best:null});const d=String(date||'');if(d>x.last)x.last=d;if(score&&(x.best==null||score<x.best))x.best=score};
+  for(const p of clubPostsAll(co)){if(p.uid)take(p.uid,p.username||pname(p.uid),p.date||p.createdAt,p.holes===18?p.score:null)}
+  // golfers' public cards list the courses they've played (with their best 18), so it works even for rounds they didn't post
+  for(const pl of Object.values(SOC.players))for(const c of (pl.courses||[]))if(inFamily(fam,c.clubId,c.name))take(pl.uid,pl.username,c.last,c.best)
+  return Object.values(by).sort((a,b)=>(a.uid===me)-(b.uid===me)||b.last.localeCompare(a.last))}
 function clubBoard(co){
   const mk=today().slice(0,7);const fam=clubFamily(co.id,co.name);const best={};
-  for(const u in SOC.posts)for(const p of SOC.posts[u]){if(!(p.type==='round'||p.type==='milestone')||p.holes!==18||!p.score)continue;if(String(p.date||'').slice(0,7)!==mk)continue;if(!inFamily(fam,p.clubId,p.course))continue;if(!best[p.uid]||p.score<best[p.uid].score)best[p.uid]=p}
+  for(const p of clubPostsAll(co)){if(!(p.type==='round'||p.type==='milestone')||p.holes!==18||!p.score)continue;if(String(p.date||'').slice(0,7)!==mk)continue;if(!best[p.uid]||p.score<best[p.uid].score)best[p.uid]=p}
   const rows=Object.values(best).map(p=>{const pl=SOC.players[p.uid]||{};const ix=pl.index!=null?pl.index:pl.est;const f=ix==null?null:FLIGHTS.find(x=>ix>=x[1]&&ix<=x[2]);return {p,ix,f:f?f[0]:'Unflighted'}});
   const month=new Date().toLocaleString('en-US',{month:'long'});
   if(!rows.length)return `<div class="board"><div class="row between"><span class="eyebrow">${month} leaderboard</span><span class="small muted">by flight</span></div><p class="small muted">No rounds shared here this month. Post one and take the top spot.</p></div>`;
@@ -4431,7 +4462,7 @@ function courseCaddieSheet(){
 // ---------- Events ----------
 document.addEventListener('click',async e=>{
   const a=e.target.closest('[data-act]');if(!a||a.disabled)return;const act=a.dataset.act;
-  if(act==='back'){goBack();return}
+  if(act==='back'){if(!navBack())goBack();return}
   if(act==='talkCaddie'){openCaddie('memory');return}
   if(act==='askCaddie'){openCaddie('course');setTimeout(()=>document.getElementById('cc_draft')?.focus(),50);return}
   if(act==='closeCaddie'){S.cchat=null;render();return}
