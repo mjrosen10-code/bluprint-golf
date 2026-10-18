@@ -424,6 +424,10 @@ async function runQuery(env, user, q) {
       const list = (Array.isArray(v) ? v : []).slice(0, 30);
       if (!list.length) return { status: 200, body: { docs: [] } };
       where.push(`${col} IN (${list.map(() => '?').join(',')})`); args.push(...list.map(sqlVal));
+    } else if (op === 'search') {  // type-ahead: contains, ignoring case, spaces and underscores
+      const t = String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 30);
+      if (t.length < 2) return { status: 200, body: { docs: [] } };
+      where.push(`REPLACE(REPLACE(LOWER(${col}),'_',''),' ','') LIKE ?`); args.push('%' + t + '%');
     } else if (op === 'array-contains') {
       where.push(`EXISTS (SELECT 1 FROM json_each(data,'$.${f}') WHERE value=?)`); args.push(sqlVal(v));
     } else if (['==', '!=', '<', '<=', '>', '>='].includes(op)) {
