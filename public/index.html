@@ -15,9 +15,12 @@
 <body>
 <title>BluPrint Golf</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png"><link rel="icon" type="image/png" sizes="48x48" href="/brand/favicon-48.png"><link rel="apple-touch-icon" href="/brand/apple-touch-icon.png"><link rel="manifest" href="/manifest.webmanifest">
+<link rel="preload" href="/fonts/Orbitron-Bold.woff" as="font" type="font/woff" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
 <style>
+@font-face{font-family:'BPWord';src:url('/fonts/Orbitron-Bold.woff') format('woff');font-weight:400 900;font-style:normal;font-display:swap}
 /* Layout: dark, editorial sports-tech shell. Pine canvas, hairline separators instead of boxes, one hero stat per screen, floating nav. Volt only for strong performance and primary actions. */
 :root{
   --canvas:#0D0F0F; --pine:#0B1410; --forest:#14472C; --emerald:#1B6B3F; --raise:rgba(26,29,29,.92); --raise-solid:#1A1D1D; --raise-2:#232727; --graphite:#151818; --volt:#2FD073; --ivory:#F4F5F3; --sage:#A7AFAC;
@@ -63,8 +66,12 @@ nav.bar{z-index:6}
 /* Header */
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:rgba(13,15,15,.86);box-shadow:0 0 0 100vmax rgba(13,15,15,.86);clip-path:inset(0 -100vmax);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);color:var(--ivory);border-bottom:1px solid var(--line);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;display:flex;align-items:center;gap:12px;justify-content:space-between}
-header.top h1{font-size:1.05rem!important;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
-header.top h1 span{color:var(--volt)}
+header.top h1{font-family:'BPWord',var(--display),sans-serif;font-size:.95rem!important;font-weight:700;letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:0;white-space:nowrap}
+/* mark = 2.6x the capital height (caps are .72em in this font), so BLUPRINTGOLF sits centred on it, flag tip to base */
+header.top h1 .bp-mark{height:1.87em;width:auto;flex:0 0 auto;margin-right:.56em}
+header.top h1 .bp-word{transform:translateY(-.025em)}
+@media (max-width:400px){header.top h1{font-size:.78rem!important;letter-spacing:.1em}}
+header.top h1 .bp-word{color:var(--ivory);line-height:1;display:inline-block}header.top h1 .bp-word>span{color:var(--volt)}
 .chip-hc{font-family:var(--mono);font-size:.85rem;color:var(--ivory);border:1px solid var(--line-2);border-radius:999px;padding:5px 12px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;max-width:60vw;overflow:hidden;text-overflow:ellipsis}
 .backbtn{border:1px solid var(--line-2);background:transparent;color:var(--ivory);border-radius:999px;width:36px;height:36px;display:grid;place-items:center;margin-left:-4px}
 .backbtn svg{width:20px;height:20px}
@@ -1158,6 +1165,8 @@ input.t:focus,select.t:focus,textarea.t:focus{border-color:rgba(47,208,115,.6);b
 .gmem{display:inline-flex;align-items:center;gap:2px}.gm-x{border:1px solid var(--line-2);background:transparent;color:var(--loss);width:26px;height:26px;border-radius:50%;font-size:.75rem;display:grid;place-items:center;cursor:pointer}
 
 .dot-un{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--loss);margin-left:6px;vertical-align:middle;flex:0 0 auto}.gchat-btn{display:flex;align-items:center;justify-content:center;gap:2px;overflow:hidden;white-space:nowrap}.gmsgs{max-height:min(60vh,520px);overflow-y:auto}
+
+.wel-mark{display:block;width:76px;height:76px;margin:0 0 10px -6px}
 </style>
 
 <div class="ambient" aria-hidden="true"><i class="glow g1"></i><i class="glow g2"></i><i class="glow g3"></i><div class="topo"></div><div class="topo2"></div><svg class="golfart bp" viewBox="740 170 420 1160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -1257,7 +1266,7 @@ input.t:focus,select.t:focus,textarea.t:focus{border-color:rgba(47,208,115,.6);b
  </g></svg><div class="bpgrid"></div><div class="grain"></div></div>
 <div class="app">
   <header class="top">
-    <div class="row" style="gap:6px;flex-wrap:nowrap"><button class="backbtn" id="backBtn" data-act="back" aria-label="Back" hidden><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1>BluPrint<span>Golf</span></h1></div>
+    <div class="row" style="gap:6px;flex-wrap:nowrap"><button class="backbtn" id="backBtn" data-act="back" aria-label="Back" hidden><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1 class="bp-lock"><img class="bp-mark" src="/brand/mark-tight-64.png" alt="" width="28" height="28"><span class="bp-word">BluPrint<span>Golf</span></span></h1></div>
     <button class="chip-hc" id="hcChip" data-act="nav" data-view="profile" aria-label="My profile">Index —</button>
   </header>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -2782,13 +2791,31 @@ function gameOut(){
 
 // ---------- Share cards ----------
 function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+// ----- Brand lockup for share images: the flag-B mark + BLUPRINTGOLF in Michroma -----
+function brandAssets(){if(!brandAssets.p)brandAssets.p=Promise.all([document.fonts.load('700 40px "BPWord"').catch(()=>{}),new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src='/brand/mark-tight-256.png'})]).then(a=>a[1]);return brandAssets.p}
+// Lockup rules (y = wordmark baseline):
+//  - wordmark alone: BLUPRINTGOLF is centred on the mark, flag tip to bottom of the B
+//  - with a tagline: the mark runs from the top of BLUPRINTGOLF to the baseline of the tagline
+async function drawWordmark(x,px,y,size,opts){opts=opts||{};const mark=await brandAssets();
+  x.save();x.textBaseline='alphabetic';x.textAlign='left';x.font=`700 ${size}px "BPWord", "Sora", sans-serif`;
+  const tr=Math.round(size*.3);const capH=x.measureText('B').actualBoundingBoxAscent||size*.72;
+  const tg=opts.tagline;let top,bot,tyb=0,tfont='';
+  if(tg){tfont=tg.font||`500 ${tg.size}px "JetBrains Mono", monospace`;x.font=tfont;const th=x.measureText('B').actualBoundingBoxAscent||tg.size*.72;tyb=y+(tg.gap||Math.round(size*.45))+th;top=y-capH;bot=tyb;x.font=`700 ${size}px "BPWord", "Sora", sans-serif`}
+  else{const mh=capH*(opts.markScale||2.6);top=y-capH/2-mh/2;bot=top+mh}
+  const mh=bot-top,mw=mark?mh*mark.width/mark.height:0,gap=mark&&opts.mark!==false?Math.round(mh*.3):0;
+  if(mark&&opts.mark!==false)x.drawImage(mark,px,top,mw,mh);
+  const tx=px+(opts.mark!==false?mw:0)+gap;
+  const put=(t,cx,cy,col,trk)=>{x.fillStyle=col;let w=0;for(const ch of t){x.fillText(ch,cx+w,cy);w+=x.measureText(ch).width+trk}return w-trk};
+  const w1=put('BLUPRINT',tx,y,opts.ivory||'#F4F1EA',tr);const w2=put('GOLF',tx+w1+tr,y,opts.green||'#2FD073',tr);
+  if(tg){x.font=tfont;put(tg.text,tx+1,tyb,tg.color||'rgba(207,232,218,.55)',tg.track!=null?tg.track:Math.round(tg.size*.5))}
+  x.restore();return {tx,right:tx+w1+tr+w2,top,bottom:bot}}
 async function drawCard(lines){
   await document.fonts.ready.catch(()=>{});
   const W=1080,H=1350,cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');
   x.fillStyle='#0D0F0F';x.fillRect(0,0,W,H);{const g=x.createRadialGradient(200,160,0,200,160,900);g.addColorStop(0,'rgba(31,90,68,.55)');g.addColorStop(1,'rgba(31,90,68,0)');x.fillStyle=g;x.fillRect(0,0,W,H)}
   x.fillStyle='#D8F06D';x.fillRect(0,0,W,14);
   x.strokeStyle='rgba(245,242,233,.08)';x.lineWidth=2;for(let i=0;i<6;i++){x.beginPath();x.moveTo(80,840+i*170);x.lineTo(W-80,840+i*170);x.stroke()}
-  x.fillStyle='#F5F2E9';x.font='700 54px "Sora", sans-serif';x.fillText('BLUPRINT GOLF',80,120);
+  await drawWordmark(x,80,120,36,{ivory:'#F5F2E9'});
   x.fillStyle='#D8F06D';x.font='600 40px "Sora", sans-serif';x.fillText(lines.eyebrow.toUpperCase(),80,185);
   x.fillStyle='#F5F2E9';x.font='700 96px "Sora", sans-serif';wrap(x,lines.title,80,300,W-160,96);
   x.font='400 280px "JetBrains Mono", monospace';x.fillText(String(lines.big),70,690);
@@ -2809,7 +2836,7 @@ async function drawScorecard(r){
   const G='#2FD073',IV='#F4F5F3',SG='#9AA29F',RED='#FF8F7A';
   x.fillStyle='#0D0F0F';x.fillRect(0,0,W,H);{const g=x.createRadialGradient(180,120,0,180,120,800);g.addColorStop(0,'rgba(30,120,70,.35)');g.addColorStop(1,'rgba(30,120,70,0)');x.fillStyle=g;x.fillRect(0,0,W,H)}
   x.fillStyle=G;x.fillRect(0,0,W,10);
-  x.fillStyle=IV;x.font='700 34px "Sora", sans-serif';x.fillText('BLUPRINT',P,84);const bw=x.measureText('BLUPRINT').width;x.fillStyle=G;x.fillText('GOLF',P+bw,84);
+  await drawWordmark(x,P,84,26,{ivory:IV,green:G});
   x.fillStyle=SG;x.font='600 26px "Inter", sans-serif';x.textAlign='right';x.fillText(`${longDate(r.date)}${r.tees?' · '+r.tees+' tees':''}${r.rating?` · ${r.rating}/${r.slope}`:''}`,W-P,84);x.textAlign='left';
   x.fillStyle=IV;x.font='700 64px "Sora", sans-serif';wrap(x,r.course||'Round',P,180,W-2*P-300,68);
   x.font='600 220px "Barlow Condensed", "JetBrains Mono", sans-serif';x.textAlign='right';x.fillText(String(a.score),W-P,330);
@@ -2945,10 +2972,7 @@ async function drawBluprintCard(d){
   x.font='500 18px "JetBrains Mono", monospace';x.fillStyle=ln(.6);sp('N',968,980,0,'center');
   x.font='500 17px "JetBrains Mono", monospace';x.fillStyle=ln(.42);sp('PLATE 01 · MASTER PLAN',M,1052,4);
   // header
-  x.textBaseline='alphabetic';x.font='700 38px "Sora", sans-serif';x.fillStyle=IV;sp('BLUPRINT',M,132,7);
-  const bw='letterSpacing' in x?(x.letterSpacing='7px',x.measureText('BLUPRINT').width):x.measureText('BLUPRINT').width+7*8;if('letterSpacing' in x)x.letterSpacing='0px';
-  x.fillStyle=G;sp('GOLF',M+bw,132,7);
-  x.font='500 17px "JetBrains Mono", monospace';x.fillStyle=ln(.55);sp('BUILD BETTER GOLF',M+2,166,9);
+  x.textBaseline='alphabetic';await drawWordmark(x,M,122,32,{ivory:IV,green:G,tagline:{text:'BUILD BETTER GOLF',size:16,gap:18,color:ln(.55),track:8}});
   x.font='500 19px "JetBrains Mono", monospace';x.fillStyle=ln(.75);sp(d.label||'MY BLUPRINT',W-M,110,6,'right');
   x.fillStyle=ln(.45);sp(d.date||'',W-M,140,6,'right');
   x.strokeStyle=ln(.18);x.beginPath();x.moveTo(M,196.5);x.lineTo(W-M,196.5);x.stroke();
@@ -3731,7 +3755,7 @@ function viewWelcome(){
     coach:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19h16"/><path d="M6 15l4-4 3 3 5-6"/><path d="M15 8h3v3"/></svg>',
     club:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 21V4"/><path d="M7 4l10 3.5L7 11"/><ellipse cx="12" cy="20" rx="8" ry="1.6"/></svg>'};
   return `<section class="wel">
-    <div class="wel-hero"><h1>What's your <span>BluPrint?</span></h1>
+    <div class="wel-hero"><img class="wel-mark" src="/brand/mark-128.png" alt="" width="76" height="76"><h1>What's your <span>BluPrint?</span></h1>
       <p>Log three rounds. We compare every stat to golfers at your handicap and draw up the game you actually play: what you do best, where strokes leak, and a plan to fix it.</p></div>
     <div class="wel-sheet" aria-label="Sample BluPrint">
       <div class="ws-top"><span>SAMPLE · SHEET 1/1</span><span>MY BLUPRINT</span></div>
