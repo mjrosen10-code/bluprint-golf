@@ -11,6 +11,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://bluprintgolf.com/">
 <script src="/bp-runtime.js"></script>
+<script src="/games.js"></script>
 </head>
 <body>
 <title>BluPrint Golf</title>
@@ -652,6 +653,30 @@ body.livemode .strip button.o b{color:#FF8F7A}
 
 /* Onboarding, checklist, invites, leaderboard, collapsibles */
 nav.bar[hidden]{display:none!important}
+.grouptile .tc-art{opacity:.95}
+.gs{gap:12px}.gs-list{display:flex;flex-direction:column;gap:2px}.gs-p{display:grid;grid-template-columns:36px minmax(0,1fr) 74px auto auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}.gs-p:last-child{border-bottom:0}
+.gs-mid{min-width:0;display:flex;flex-direction:column}.gs-mid b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gs-ix{display:flex;flex-direction:column;gap:2px;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--sage)}.gs-ix .t{padding:8px 10px;text-align:center;font-family:var(--mono)}
+.gs-tee{padding:8px 6px;max-width:92px;font-size:.8rem}.gs-x{width:30px;height:30px;border-radius:50%;border:1px solid var(--line-2);background:none;color:var(--sage);font-size:1.1rem;line-height:1;padding:0}
+.gs-add{display:flex;flex-direction:column;gap:8px}.gs-fr{display:flex;gap:6px;flex-wrap:wrap}
+.gs-teams{display:grid;grid-template-columns:1fr 1fr;gap:10px}.gs-team{display:flex;flex-direction:column;gap:6px;align-items:flex-start;padding:10px;border:1px dashed var(--line-2);border-radius:14px}
+.gg{border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:10px}.gg.on{border-color:rgba(47,208,115,.3);background:rgba(47,208,115,.03)}
+.gg-head{display:flex;gap:12px;align-items:center;background:none;border:0;color:inherit;text-align:left;padding:0;width:100%}.gg-chk{flex:0 0 22px;height:22px;border-radius:7px;border:1.5px solid var(--line-2);display:grid;place-items:center;color:#06110B;font-weight:800;font-size:.8rem}.gg.on .gg-chk{background:var(--volt);border-color:var(--volt)}
+.gg-t{display:flex;flex-direction:column;min-width:0}.gg-opts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.seg.sm button{padding:6px 12px;font-size:.8rem}
+.gg-stake{display:flex;align-items:center;gap:6px}.gg-stake .t{width:64px;padding:7px 8px;text-align:center;font-family:var(--mono)}.gg-how summary{cursor:pointer;color:var(--sage)}.gg-how p{margin:6px 0 0}
+.gs-st{border-collapse:collapse;width:100%;font-size:.85rem}.gs-st th,.gs-st td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}.gs-st th:first-child,.gs-st td:first-child{text-align:left}.gs-st th{font-weight:600;color:var(--sage);font-size:.72rem}.gs-st th i{display:block;font-style:normal;color:var(--volt);font-family:var(--mono)}
+.lc.grp{justify-content:flex-start!important;min-height:0!important;gap:18px!important}
+.gl{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02)}
+.gl-status{display:flex;gap:6px;flex-wrap:wrap}.gl-g{font-size:.74rem;padding:4px 9px;border-radius:999px;background:rgba(47,208,115,.08);border:1px solid rgba(47,208,115,.2)}.gl-g i{font-style:normal;color:var(--sage);margin-right:5px}
+.gl-list{display:flex;flex-direction:column}.gl-p{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}.gl-p:last-child{border-bottom:0}
+.gl-n{display:flex;align-items:center;gap:7px;min-width:0}.gl-n b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gl-tm{font-style:normal;font-size:.62rem;font-weight:800;padding:1px 6px;border-radius:6px;background:rgba(255,255,255,.08)}.gl-tm.tA{color:var(--volt)}
+.gl-dot{color:var(--volt);font-size:.7rem;letter-spacing:1px}.gl-step{display:flex;align-items:center;gap:6px}.gl-step button{width:38px;height:38px;border-radius:12px;border:1px solid var(--line-2);background:rgba(255,255,255,.03);color:var(--ivory);font-size:1.2rem;padding:0}.gl-step b{width:30px;text-align:center;font-family:var(--mono);font-size:1.15rem}.gl-step b.muted{color:var(--sage)}
+.gl-key{margin:0;font-size:.7rem}
+.grp-res .gr-g{padding:10px 0;border-bottom:1px solid var(--line)}.gr-h{margin:2px 0;font-weight:700;font-size:1.02rem}
+.gr-rows{display:flex;flex-direction:column;gap:4px;margin-top:6px}.gr-rows>div{display:flex;justify-content:space-between;gap:10px;font-size:.92rem}.gr-rows>div b{text-align:right}.gr-rows>div.press{font-size:.8rem;color:var(--sage)}.gr-rows>div.press b{font-weight:600}
+.gr-pay,.gr-inv{display:flex;flex-direction:column;gap:8px;padding-top:12px}.gr-pr{display:flex;gap:8px;align-items:baseline}.gr-amt{margin-left:auto;color:var(--volt);font-weight:700}
+.gr-ir{display:flex;justify-content:space-between;align-items:center;gap:10px}.gr-ir>span{display:flex;flex-direction:column}
+@media (max-width:420px){.gs-p{grid-template-columns:32px minmax(0,1fr) 64px auto}.gs-tee{grid-column:2/4;max-width:none}.gs-p .gs-x{grid-row:1;grid-column:4}}
+
 .ptools{display:flex;justify-content:flex-end;gap:8px;margin:-8px -8px -10px 0;position:relative;z-index:2}.ptools .ptool{width:36px;height:36px}
 .ptile .idc-who{padding-left:5px!important}.ptile .idcard{overflow:visible}
 .ptool{position:relative;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-2);background:rgba(255,255,255,.03);color:var(--ivory);display:grid;place-items:center;padding:0}.ptool svg{width:20px;height:20px}
@@ -1561,7 +1586,7 @@ const BADGES=[
  {id:'scramble',name:'Scrambler',desc:'Par saves after missing the green, one round',tiers:[3,5,7,9,11],metric:rs=>maxPerRound(rs,r=>agg([r]).ud)},
  {id:'lag',name:'Lag King',desc:'Rounds with zero three-putts',tiers:[1,5,15,40,100],metric:rs=>rs.filter(r=>{const hs=playedHoles(r);return hs.length>=9&&hs.every(h=>h.putts!=null)&&!hs.some(h=>h.putts>=3)}).length},
  {id:'oneputt',name:'Flat Stick',desc:'One-putts in one round, per 18',tiers:[5,7,9,11,13],metric:rs=>maxPer18Round(rs,r=>{const a=agg([r]);return a.puttHoles?r18(r,a.op,a.puttHoles):0})},
- {id:'clean_sheet',name:'No Penalty',desc:'Live-scored rounds with zero penalty strokes',tiers:[1,5,15,40,100],metric:rs=>rs.filter(r=>r.source==='app'&&playedHoles(r).length>=9&&!playedHoles(r).some(h=>h.pen>0)).length},
+ {id:'clean_sheet',name:'No Penalty',desc:'Live-scored rounds with zero penalty strokes',tiers:[1,5,15,40,100],metric:rs=>rs.filter(r=>r.source==='app'&&playedHoles(r).length>=9&&playedHoles(r).every(h=>h.pen!=null)&&!playedHoles(r).some(h=>h.pen>0)).length},
  {id:'played',name:'Played to It',desc:'Rounds at or better than your index',tiers:[1,5,15,40,100],needsIndex:true},
  {id:'goal',name:'Goal Getter',desc:'Strokes dropped off your index since setting a goal',tiers:[1,2,4,6,10]},
  {id:'bounce',name:'Bounce Back',desc:'Par or better right after a bogey or worse (career)',tiers:[5,25,75,200,500],metric:rs=>{let n=0;for(const r of rs){const hs=playedHoles(r);for(let i=1;i<hs.length;i++){if(hs[i-1].score-hs[i-1].par>=1&&hs[i].score<=hs[i].par)n++}}return n}},
@@ -1862,7 +1887,7 @@ function trackNav(blocked){
 function navBack(){if(!NAV.stack.length&&S.view!=='gchat')return false;if(history.state&&history.state.bpn){history.back();return true}goBack();return true}
 addEventListener('popstate',()=>{if(NAV.stack.length||S.view==='gchat'){goBack();haptic('light')}});
 (()=>{let sx=0,sy=0,on=false,dx=0;const v=()=>document.getElementById('view');
-  addEventListener('touchstart',e=>{const t=e.touches[0];on=t.clientX<=24&&(NAV.stack.length>0||S.view==='gchat')&&!document.querySelector('#sheet .pop-wrap,#sheet .sheet');if(on){sx=t.clientX;sy=t.clientY;dx=0}},{passive:true});
+  addEventListener('touchstart',e=>{const t=e.touches[0];on=t.clientX<=24&&S.view!=='live'&&(NAV.stack.length>0||S.view==='gchat')&&!document.querySelector('#sheet .pop-wrap,#sheet .sheet');if(on){sx=t.clientX;sy=t.clientY;dx=0}},{passive:true});
   addEventListener('touchmove',e=>{if(!on)return;const t=e.touches[0];dx=t.clientX-sx;if(Math.abs(t.clientY-sy)>60&&dx<40){on=false;const el=v();if(el)el.style.transform='';return}const el=v();if(el&&dx>0){el.style.transition='none';el.style.transform=`translateX(${Math.min(dx*.45,140)}px)`}},{passive:true});
   addEventListener('touchend',()=>{if(!on)return;on=false;const el=v();if(el){el.style.transition='transform .22s var(--ease)';el.style.transform=''}if(dx>80){haptic('light');navBack()}},{passive:true})})();
 function goBack(){
@@ -2214,7 +2239,19 @@ function viewLog(c){
   </button>
   ${dr?`<button class="playtile resume" data-act="resume"><span class="pt-ic">${ic.flag}</span><span class="pt-txt"><span class="kicker">Round in progress</span><b>${esc(dr.course||'Round')}</b><span class="small muted">Pick up on hole ${dr.cur+(dr.start||1)}</span></span><span class="pt-go">${ic.arrow}</span></button>
     <button class="btn small ghost danger" data-act="discardDraft" style="align-self:flex-start">Discard this round</button>`:''}
-  ${(()=>{const rc=dr?[]:recentCourses();return rc.length?`<section class="sect panel"><div class="sect-head" style="align-items:center"><h3>Play again</h3><label class="pa-date"><span class="small muted">Date</span><input class="t" type="date" max="${today()}" id="pa_date" data-field="pa.date" value="${esc(S.paDate||today())}"></label></div><div class="again">${rc.map(({sc,last})=>`<button class="again-tile" data-act="playAgain" data-id="${esc(sc.id)}"><b>${esc(sc.name)}</b><span class="small muted">${sc.tees?esc(sc.tees)+' tees':'Tees not set'}${sc.rating?` · ${sc.rating}/${sc.slope}`:''} · ${sc.pars.length} holes</span><span class="ag-go">Start scoring ${ic.arrow}</span></button>`).join('')}</div></section>`:''})()}
+  ${grpPending().map(g=>`<div class="card invite"><div><b>@${esc(g.ownerName||'A friend')} scored your round</b><span class="small muted">${esc(g.course||'')} · ${esc(longDate?longDate(g.date):g.date)}. Add it to your stats and handicap.</span></div><button class="btn small primary" data-act="grClaim" data-id="${esc(g.id)}">Add to my rounds</button></div>`).join('')}
+  ${dr?'':`<button class="teecard grouptile" data-act="groupStart" aria-label="Match with your group">
+    <svg class="tc-art" viewBox="0 0 220 260" aria-hidden="true"><defs><radialGradient id="tcg2" cx="70%" cy="26%" r="62%"><stop offset="0" stop-color="#2FD073" stop-opacity=".2"/><stop offset="1" stop-color="#2FD073" stop-opacity="0"/></radialGradient></defs><rect width="220" height="260" fill="url(#tcg2)"/>
+      <g fill="none" stroke="#2FD073" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="128" cy="70" rx="58" ry="36" fill="#2FD073" fill-opacity=".08" stroke-opacity=".45" stroke-width="1.2"/><path d="M132 70V30" stroke-opacity=".9" stroke-width="2"/><path d="M132 31l18 7-18 7" fill="#2FD073" fill-opacity=".9" stroke="none"/><circle cx="132" cy="70" r="2.5" fill="#F4F5F3" stroke="none"/>
+        <path d="M40 250C52 200 78 150 112 104" stroke-opacity=".35" stroke-width="1.2" stroke-dasharray="2 6"/><path d="M90 250C92 200 104 150 120 108" stroke-opacity=".35" stroke-width="1.2" stroke-dasharray="2 6"/><path d="M150 250C146 200 140 150 134 110" stroke-opacity=".35" stroke-width="1.2" stroke-dasharray="2 6"/><path d="M205 240C190 196 170 150 148 106" stroke-opacity=".35" stroke-width="1.2" stroke-dasharray="2 6"/>
+        <circle cx="112" cy="104" r="3" fill="#F4F5F3" fill-opacity=".85" stroke="none"/><circle cx="121" cy="108" r="3" fill="#F4F5F3" fill-opacity=".65" stroke="none"/><circle cx="135" cy="110" r="3" fill="#2FD073" stroke="none"/><circle cx="148" cy="106" r="3" fill="#F4F5F3" fill-opacity=".5" stroke="none"/>
+        <path d="M24 150c22-10 40-6 54 4M150 160c18 8 28 26 32 46" stroke-opacity=".12" stroke-width="1"/></g></svg>
+    <span class="kicker tc-kick" style="color:var(--volt)">2 to 8 golfers · one scorecard</span>
+    <b class="tc-title">Match with your group</b>
+    <span class="tc-sub">Skins, Nassau, best ball, match play and more. You keep score for everyone; we apply the handicap strokes hole by hole and settle who owes what.</span>
+    <span class="tc-foot"><span class="tc-feats"><span>Net or gross</span><span>Teams</span><span>Settle up</span></span><span class="tc-go" aria-hidden="true">${ic.arrow}</span></span>
+  </button>`}
   <section class="sect panel"><div class="sect-head"><h3>Other ways to log</h3><span class="small muted">For rounds you've finished</span></div>
   <div class="addlist">
     <button class="addrow" data-act="nav" data-view="photo" ${sampleFn?'':'disabled'}><span class="pt-ic">${ic.cam}</span><span class="pt-txt"><b>Snap your scorecard</b><span class="small muted">Upload a photo. We read your scores, ./. marks and putts.</span></span><span class="ar-chev">›</span></button>
@@ -2286,7 +2323,8 @@ function viewSetup(c){
   const s=S.setup||(S.setup=newSetup());const st=s.start||1;
   const holes=Array.from({length:s.n},(_,i)=>i);const d=s.detail;
   const totY=holes.reduce((t,i)=>t+(Number(s.yds[i])||0),0);
-  return `<section class="playhead"><span class="kicker">Start a round</span><h2>Pick your course</h2><p class="muted">Choose your course and tees. We'll load the scorecard, then you track score, fairways, greens and putts as you go.</p></section>
+  const G=s.group;
+  return `<section class="playhead"><span class="kicker">${G?'Match with your group':'Start a round'}</span><h2>${G?'Set up the match':'Pick your course'}</h2><p class="muted">${G?'Pick the course, add your group, choose teams and games. You keep score for everyone; we handle the strokes and who owes what.':'Choose your course and tees. We\'ll load the scorecard, then you track score, fairways, greens and putts as you go.'}</p></section>
   <section class="card">
     <div>${clubPicker('setup','Course','Search courses, e.g. Harbor Club')}${s.clubId?`<span class="small muted">Selected: ${clubName(clubById(s.clubId)||{name:s.course,verified:s.clubVerified})}</span>`:''}</div>
     ${s.detailState==='loading'?`<p class="small muted">Loading the scorecard…</p>`:''}
@@ -2299,13 +2337,14 @@ function viewSetup(c){
     <div><span class="eyebrow">Holes</span><div class="seg" style="margin-top:6px"><button aria-pressed="${s.n===18}" data-act="setN" data-n="18">18 holes</button><button aria-pressed="${s.n===9&&s.nine!=='back'}" data-act="setN" data-n="9" data-nine="front">Front 9</button>${!s.full||s.full.pars.length>=18?`<button aria-pressed="${s.n===9&&s.nine==='back'}" data-act="setN" data-n="9" data-nine="back">Back 9</button>`:''}</div></div>
     ${d&&s.teeIdx!=null?`<p class="small muted">Rating and slope filled in from the course's ${esc(s.tees)} tees.${s.ratingEst?' For 9 holes we use half the 18-hole rating, which is close to the official 9-hole rating.':''}</p>`:`<p class="small muted">Rating and slope are on the scorecard or the tee sign. They power your verified handicap.</p>`}
   </section>
+  ${G?grpSetupHtml(s):''}
   <section class="card"><div class="row between"><span class="eyebrow">Scorecard</span><span class="small muted">Par ${holes.reduce((t,i)=>t+Number(s.pars[i]),0)}${totY?` · ${totY.toLocaleString()} yds`:''}</span></div>
     <div class="scroll-x"><table class="sc"><tr><th>Hole</th>${holes.map(i=>`<th>${i+st}</th>`).join('')}</tr>
     ${totY?`<tr><td class="lab">Yards</td>${holes.map(i=>`<td class="small">${esc(s.yds[i])}</td>`).join('')}</tr>`:''}
     <tr><td class="lab">Par</td>${holes.map(i=>`<td><select aria-label="Par hole ${i+st}" id="par${i}" data-field="par" data-i="${i}" style="border:0;background:none;font-weight:700">${[3,4,5,6].map(p=>`<option ${Number(s.pars[i])===p?'selected':''}>${p}</option>`).join('')}</select></td>`).join('')}</tr>
     <tr><td class="lab">Index</td>${holes.map(i=>`<td><input aria-label="Stroke index hole ${i+st}" id="si${i}" data-field="si" data-i="${i}" inputmode="numeric" value="${esc(s.si[i])}" style="width:30px;border:0;background:none;text-align:center"></td>`).join('')}</tr></table></div>
     <p class="small muted">${s.full?'Filled in from the course scorecard. You can still edit any hole.':'Stroke index (the handicap row) is optional. It sharpens handicap math and game strokes.'}</p></section>
-  <button class="btn primary block" data-act="startRound">Start scoring</button>`;
+  ${G?(()=>{const pr=grpProblems(s);return `${pr.length?`<p class="small" style="color:var(--caution);margin:0">${esc(pr[0])}</p>`:''}<button class="btn primary block" data-act="startGroup" ${pr.length?'aria-disabled="true"':''}>Start group round</button>`})():`<button class="btn primary block" data-act="startRound">Start scoring</button>`}`;
 }
 async function startRound(){
   const s=S.setup; const n=s.n;
@@ -2328,10 +2367,12 @@ function viewLive(c){
   const names={'-3':'Albatross','-2':'Eagle','-1':'Birdie','0':'Par','1':'Bogey','2':'Double','3':'Triple'};
   const opts=[];for(let v=Math.max(1,P-2);v<=P+4;v++)opts.push(v);if(h.score>P+4)opts.push(h.score);
   const last=d.cur>=d.holes.length-1;const hn=d.cur+(d.start||1);
-  return `<section class="lc">
+  return `<section class="lc${d.group?' grp':''}">
     <div class="lc-head"><div><span class="eyebrow">${esc(d.course)}</span><div class="lc-hn">Hole ${hn}</div></div>
       <div class="lc-meta"><b>Par ${P}</b><span>${h.yds?h.yds+' yds':''}${h.yds&&h.si?' · ':''}${h.si?'Hcp '+h.si:''}</span><span class="lc-tot">${touched.length?`Thru ${touched.length}: <b>${tot}</b> ${parTxt(tr,0)}`:'First hole'}</span></div></div>
 
+    ${d.group?grpLiveHtml(d)+`<div class="lc-card"><div class="row between" style="align-items:baseline"><span class="lc-lbl">Your card</span><span class="small muted">Swipe for next hole · tap to edit</span></div><div class="strip">${d.holes.map((x,i)=>{const r=x.score-x.par;const cls=!x.touched?'':r<0?'u':r===0?'e':'o';return `<button class="${cls}" aria-current="${i===d.cur}" data-act="jump" data-i="${i}" aria-label="Hole ${i+(d.start||1)}${x.touched?', '+x.score:''}">${i+(d.start||1)}<b>${x.touched?x.score:'–'}</b></button>`}).join('')}</div></div>
+  </section>`:`
     <div class="lc-sec"><span class="lc-lbl">Score</span>
       <div class="lc-scores">${opts.map(v=>{const r=v-P;return `<button class="lc-sc ${r<0?'under':r>=2?'over':''}" aria-pressed="${h.score===v}" data-act="hv" data-k="score" data-v="${v}"><b>${v}</b><span>${names[r]||('+'+r)}</span></button>`}).join('')}<button class="lc-sc more" data-act="hs" data-k="score" data-d="1" aria-label="Higher score"><b>+</b><span>More</span></button></div></div>
 
@@ -2350,18 +2391,153 @@ function viewLive(c){
     </div>
     <div class="lc-card"><div class="row between" style="align-items:baseline"><span class="lc-lbl">Your card</span><span class="small muted">Swipe for next hole · tap to edit</span></div>
       <div class="strip">${d.holes.map((x,i)=>{const r=x.score-x.par;const cls=!x.touched?'':r<0?'u':r===0?'e':'o';return `<button class="${cls}" aria-current="${i===d.cur}" data-act="jump" data-i="${i}" aria-label="Hole ${i+(d.start||1)}${x.touched?', '+x.score:''}">${i+(d.start||1)}<b>${x.touched?x.score:'–'}</b></button>`}).join('')}<div class="strip-tot" aria-label="Total"><span>Tot</span><b>${touched.length?tot:'–'}</b><i>${touched.length?(tr===0?'E':(tr>0?'+':'')+tr):''}</i></div></div></div>
-  </section>
+  </section>`}
   <div class="livebar"><button class="btn" data-act="mv" data-d="-1" ${d.cur===0?'disabled':''} aria-label="Previous hole">◀</button>${sampleFn?`<button class="btn lb-cad" data-act="askCaddie" aria-label="Ask caddie"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H8l-4 4z"/></svg></button>`:''}
     ${last?`<button class="btn primary" data-act="finish">Finish round</button>`:`<button class="btn primary lb-next" data-act="mv" data-d="1"><span class="lbn-main">Next · Hole ${hn+1}</span><span class="lbn-sub"><span class="lbn-swipe" aria-hidden="true">‹‹</span> tap or swipe</span></button>`}</div>`;
 }
 function saveDraft(){ls('rl_draft',S.draft)}
+// ===================== Group rounds: one scorer, everyone's games =====================
+// Handicap and game math live in /games.js (BPG), which has its own tests.
+function grpNew(){const c=ctx();const ix=c.index!=null?c.index:c.estQ;return {players:[{pid:'p0',uid:me||null,name:S.profile.username?'@'+S.profile.username:'You',index:ix!=null?String(Math.round(ix*10)/10):'',teeIdx:null,team:'A',me:true}],layout:'ind',games:[{type:'skins',net:true,stake:'',carry:true}],guest:''}}
+function grpTee(s,p){const d=s.detail;const t=d&&p.teeIdx!=null&&d.t[p.teeIdx];const n=s.n;
+  if(t)return {name:t[0],rating:n===9&&(!s.full||s.full.pars.length>=18)?Math.round(t[2]/2*10)/10:t[2],slope:t[3]};
+  return {name:s.tees||'',rating:Number(s.rating)||null,slope:Number(s.slope)||null}}
+function grpPar(s){let t=0;for(let i=0;i<s.n;i++)t+=Number(s.pars[i])||0;return t}
+function grpIndex(v){if(v===''||v==null)return null;const n=parseHc(String(v));return isNaN(n)?null:n}
+function grpCH(s,p){const t=grpTee(s,p);const ix=grpIndex(p.index);return ix==null?null:BPG.courseHandicap(ix,t.slope,t.rating,grpPar(s),s.n)}
+function grpHoles(s){return Array.from({length:s.n},(_,i)=>({par:Number(s.pars[i]),si:Number(s.si[i])||null}))}
+function grpEngineRound(players,holes,layout,scores){return {holes,layout,players:players.map(p=>({id:p.pid,name:p.name,ch:p.ch,team:p.team})),scores}}
+function grpLayouts(n){return Object.keys(BPG.TEAM_LAYOUTS).filter(k=>k==='ind'||(k==='1v1'&&n===2)||((k==='2v2'||k==='3v1')&&n===4))}
+function grpGamesFor(layout,n){return Object.entries(BPG.CATALOG).filter(([k,c])=>(c.teams.includes(layout)||c.teams.includes('ind'))&&n>=c.min&&n<=c.max)}
+function grpAssignTeams(g){const ps=g.players;if(g.layout==='2v2')ps.forEach((p,i)=>p.team=i<2?'A':'B');else if(g.layout==='3v1')ps.forEach((p,i)=>p.team=i===0?'A':'B');else if(g.layout==='1v1')ps.forEach((p,i)=>p.team=i===0?'A':'B');else ps.forEach(p=>p.team='A')}
+function grpFixGames(g){const ok=new Set(grpGamesFor(g.layout,g.players.length).map(x=>x[0]));g.games=g.games.filter(x=>ok.has(x.type));if(!g.games.length){const first=g.layout==='2v2'?'fourball':g.layout==='1v1'?'match':g.layout==='3v1'?'lone':'skins';if(ok.has(first))g.games.push({type:first,net:true,stake:'',carry:true,press:true})}}
+const STROKE_DOT=n=>n>0?'●'.repeat(Math.min(n,3)):n<0?'+'.repeat(Math.min(-n,3)):'';
+function grpProblems(s){const g=s.group,out=[];const ps=g.players;
+  if(ps.length<2)out.push('Add at least one more player.');
+  const net=g.games.some(x=>x.net);
+  if(!g.games.length)out.push('Pick at least one game.');
+  if(net&&!BPG.hasSI(grpHoles(s)))out.push('Net games need the stroke index (the Hcp row) for every hole on the scorecard below.');
+  if(net){const miss=ps.filter(p=>grpIndex(p.index)==null).map(p=>p.name);if(miss.length)out.push(`Enter a handicap index for ${miss.join(', ')}, or play the games gross.`);
+    const t=grpTee(s,ps[0]);if(!t.rating||!t.slope)out.push('Net games need the course rating and slope.')}
+  if(g.layout==='2v2'&&(ps.filter(p=>p.team==='A').length!==2))out.push('2 v 2 needs two players on each team.');
+  if(g.layout==='3v1'&&(ps.filter(p=>p.team==='A').length!==1))out.push('3 v 1 needs one player on their own.');
+  if(g.games.some(x=>x.type==='nassau')&&s.n!==18)out.push('Nassau needs 18 holes.');
+  return out}
+function grpSetupHtml(s){const g=s.group;const d=s.detail;const ps=g.players;const n=ps.length;
+  const holes=grpHoles(s);const siOK=BPG.hasSI(holes);
+  ps.forEach(p=>p.ch=grpCH(s,p));
+  const fr=(typeof SOC!=='undefined'&&socialOk())?friendIds().filter(u=>!ps.some(p=>p.uid===u)&&SOC.players[u]):[];
+  const lay=grpLayouts(n);if(!lay.includes(g.layout)){g.layout='ind';grpAssignTeams(g)}grpFixGames(g);
+  const teamed=g.layout!=='ind';
+  const playersCard=`<section class="card gs"><div class="row between"><span class="eyebrow">Players · ${n}</span><span class="small muted">You keep score for everyone</span></div>
+    <div class="gs-list">${ps.map(p=>`<div class="gs-p">
+      <span class="gs-av">${p.uid?avatar(p.uid,36):`<span class="av" style="width:36px;height:36px;background:var(--raise-2);font-size:.9rem">${esc((p.name||'?').replace('@','').slice(0,1).toUpperCase())}</span>`}</span>
+      <div class="gs-mid"><b>${esc(p.me?'You':p.name)}</b><span class="small muted">${p.ch!=null?`Course hcp ${BPG.rnd(p.ch)<0?'+'+(-p.ch):p.ch}`:'No handicap yet'}${d&&d.t.length>1?'':''}</span></div>
+      <label class="gs-ix"><span>Index</span><input class="t" inputmode="decimal" id="gpi_${p.pid}" data-field="gp.index" data-p="${p.pid}" value="${esc(p.index)}" placeholder="—"></label>
+      ${d&&d.t.length>1?`<select class="t gs-tee" aria-label="Tees for ${esc(p.name)}" id="gpt_${p.pid}" data-field="gp.tee" data-p="${p.pid}"><option value="">${esc(s.tees||'Same tees')}</option>${d.t.map((t,i)=>`<option value="${i}" ${p.teeIdx===i?'selected':''}>${esc(t[0])}</option>`).join('')}</select>`:''}
+      ${p.me?'':`<button class="gs-x" data-act="gRemove" data-p="${p.pid}" aria-label="Remove ${esc(p.name)}">×</button>`}
+    </div>`).join('')}</div>
+    ${n<8?`<div class="gs-add">${fr.length?`<div class="gs-fr">${fr.slice(0,12).map(u=>`<button class="pill neutral" data-act="gAddFriend" data-uid="${esc(u)}">+ @${esc(pname(u))}</button>`).join('')}</div>`:''}
+      <div class="row" style="gap:6px;flex-wrap:nowrap"><input class="t" id="gp_guest" data-field="gp.guest" value="${esc(g.guest||'')}" placeholder="Add a guest by name" maxlength="24" style="flex:1"><button class="btn small" data-act="gAddGuest">Add</button></div></div>`:''}
+    <p class="small muted" style="margin:0">Handicaps come from each golfer's BluPrint index. Edit any of them before you start. They're BluPrint numbers, not official GHIN indexes.</p></section>`;
+  const teamsCard=`<section class="card gs"><span class="eyebrow">Teams</span><div class="seg">${lay.map(k=>`<button aria-pressed="${g.layout===k}" data-act="gLayout" data-v="${k}">${BPG.TEAM_LAYOUTS[k]}</button>`).join('')}</div>
+    ${teamed?`<div class="gs-teams">${['A','B'].map(t=>`<div class="gs-team"><span class="kicker">Team ${t}</span>${ps.filter(p=>p.team===t).map(p=>`<button class="pill ${t==='A'?'good':'neutral'}" data-act="gTeam" data-p="${p.pid}">${esc(p.me?'You':p.name)} ⇄</button>`).join('')||'<span class="small muted">Tap a player to move them here</span>'}</div>`).join('')}</div><p class="small muted" style="margin:0">Tap a player to switch teams.</p>`:''}</section>`;
+  const opts=grpGamesFor(g.layout,n);
+  const gamesCard=`<section class="card gs"><div class="row between"><span class="eyebrow">Games</span><span class="small muted">Play as many as you like</span></div>
+    ${opts.map(([k,c])=>{const on=g.games.find(x=>x.type===k);const al=on?BPG.gameAllowance(on,g.layout):null;
+      return `<div class="gg ${on?'on':''}"><button class="gg-head" data-act="gGame" data-v="${k}" aria-pressed="${!!on}"><span class="gg-chk">${on?'✓':''}</span><span class="gg-t"><b>${c.name}${c.house?' <span class="pill neutral" style="font-size:.6rem">House rule</span>':''}</b><span class="small muted">${c.short}</span></span></button>
+      ${on?`<div class="gg-opts"><div class="seg sm"><button aria-pressed="${on.net}" data-act="gNet" data-v="${k}" data-net="1">Net</button><button aria-pressed="${!on.net}" data-act="gNet" data-v="${k}" data-net="0">Gross</button></div>
+        <label class="gg-stake"><span>$</span><input class="t" inputmode="decimal" id="gst_${k}" data-field="gg.stake" data-v="${k}" value="${esc(on.stake)}" placeholder="0"><span class="small muted">${k==='skins'?'per skin':k==='nassau'?'per bet':k==='stroke'||k==='stableford'?'from each player':'per player'}</span></label>
+        ${k==='skins'?`<button class="pill ${on.carry!==false?'good':'neutral'}" data-act="gOpt" data-v="${k}" data-k="carry">${on.carry!==false?'✓ ':''}Carryovers</button>`:''}
+        ${k==='nassau'?`<button class="pill ${on.press!==false?'good':'neutral'}" data-act="gOpt" data-v="${k}" data-k="press">${on.press!==false?'✓ ':''}Auto-press at 2 down</button>`:''}</div>
+        <details class="gg-how"><summary class="small">How it works · ${on.net?`${Math.round(al*100)}% handicap`:'no strokes'}</summary><p class="small">${esc(c.how)}</p><p class="small muted">${esc(c.note)}</p></details>`:''}</div>`}).join('')}</section>`;
+  const netGames=g.games.filter(x=>x.net);
+  const R=grpEngineRound(ps,holes,g.layout,{});
+  const strokesCard=netGames.length?`<section class="card gs"><span class="eyebrow">Strokes</span>${!siOK?`<p class="small" style="color:var(--caution);margin:0">Add the stroke index (Hcp row) on the scorecard below to see who gets strokes where.</p>`:''}
+    <div class="scroll-x"><table class="gs-st"><tr><th></th>${netGames.map(x=>`<th>${BPG.CATALOG[x.type].name}<i>${Math.round(BPG.gameAllowance(x,g.layout)*100)}%</i></th>`).join('')}</tr>
+    ${ps.map(p=>`<tr><td><b>${esc(p.me?'You':p.name)}</b></td>${netGames.map(x=>{const h=p.ch==null?null:BPG.gameHandicaps(x,R);const v=h?h.receive[p.pid]:null;return `<td class="mono">${v==null?'—':v===0?'0':v>0?v:'+'+(-v)}</td>`}).join('')}</tr>`).join('')}</table></div>
+    <p class="small muted" style="margin:0">Strokes each player gets in each game. They land on the hardest holes first (stroke index 1, 2, 3…). A + means a plus player giving strokes back.</p></section>`:'';
+  return playersCard+teamsCard+gamesCard+strokesCard;
+}
+function grpSetupAct(act,a){const s=S.setup;const g=s&&s.group;if(!g)return false;
+  if(act==='gRemove'){g.players=g.players.filter(p=>p.pid!==a.dataset.p);grpAssignTeams(g);render();return true}
+  if(act==='gAddFriend'){const u=a.dataset.uid;const pl=SOC.players[u]||{};const ix=pl.index!=null?pl.index:pl.est;g.players.push({pid:'p'+Date.now().toString(36),uid:u,name:'@'+(pl.username||pname(u)),index:ix!=null?String(Math.round(ix*10)/10):'',teeIdx:null,team:'B'});grpAssignTeams(g);render();return true}
+  if(act==='gAddGuest'){const nm=(g.guest||'').trim().slice(0,24);if(!nm){toast('Type a name first.');return true}g.players.push({pid:'p'+Date.now().toString(36),uid:null,name:nm,index:'',teeIdx:null,team:'B',guest:true});g.guest='';grpAssignTeams(g);render();setTimeout(()=>{const i=document.getElementById('gpi_'+g.players[g.players.length-1].pid);if(i)i.focus()},50);return true}
+  if(act==='gLayout'){g.layout=a.dataset.v;grpAssignTeams(g);grpFixGames(g);const def={'1v1':'match','2v2':'fourball','3v1':'lone'}[g.layout];if(def&&!g.games.some(x=>BPG.CATALOG[x.type].teams.includes(g.layout)))g.games.unshift({type:def,net:true,stake:'',carry:true,press:true});render();return true}
+  if(act==='gTeam'){const p=g.players.find(x=>x.pid===a.dataset.p);if(p)p.team=p.team==='A'?'B':'A';render();return true}
+  if(act==='gGame'){const k=a.dataset.v;const i=g.games.findIndex(x=>x.type===k);if(i>=0)g.games.splice(i,1);else g.games.push({type:k,net:true,stake:'',carry:true,press:true});render();return true}
+  if(act==='gNet'){const x=g.games.find(y=>y.type===a.dataset.v);if(x)x.net=a.dataset.net==='1';render();return true}
+  if(act==='gOpt'){const x=g.games.find(y=>y.type===a.dataset.v);if(x)x[a.dataset.k]=x[a.dataset.k]===false;render();return true}
+  if(act==='startGroup'){const pr=grpProblems(s);if(pr.length){toast(pr[0]);return true}
+    s.group.players.forEach(p=>{p.ch=grpCH(s,p);const t=grpTee(s,p);p.tee=t.name;p.rating=t.rating;p.slope=t.slope});
+    const G={id:uid('g'),layout:g.layout,players:g.players.map(p=>({pid:p.pid,uid:p.uid||null,name:p.me?(S.profile.username?'@'+S.profile.username:'You'):p.name,me:!!p.me,index:grpIndex(p.index),ch:p.ch,team:p.team,tee:p.tee,rating:p.rating,slope:p.slope})),
+      games:g.games.map(x=>({type:x.type,net:!!x.net,stake:Number(x.stake)||0,carry:x.carry!==false,press:x.press!==false})),scores:{}};
+    startRound().then(()=>{const d=S.draft;if(!d)return;d.holes.forEach(h=>{h.putts=null;h.fw=h.par===3?'na':null;h.gir=null;h.pen=null});d.scoreOnly=true;G.players.forEach(p=>{if(!p.me)G.scores[p.pid]=Array(d.holes.length).fill(null)});d.group=G;saveDraft();render()});return true}
+  return false}
+function grpField(f,el,v){const g=S.setup&&S.setup.group;if(!g)return false;
+  if(f==='gp.index'){const p=g.players.find(x=>x.pid===el.dataset.p);if(p){p.index=v;render()}return true}
+  if(f==='gp.tee'){const p=g.players.find(x=>x.pid===el.dataset.p);if(p){p.teeIdx=v===''?null:Number(v);render()}return true}
+  if(f==='gp.guest'){g.guest=v;return true}
+  if(f==='gg.stake'){const x=g.games.find(y=>y.type===el.dataset.v);if(x)x.stake=v;return true}
+  return false}
+// ----- live -----
+function grpScores(d){const G=d.group;const sc={};for(const p of G.players)sc[p.pid]=p.me?d.holes.map(h=>h.touched?h.score:null):(G.scores[p.pid]||[]).slice();return sc}
+function grpResults(d){const G=d.group;const holes=d.holes.map(h=>({par:h.par,si:h.si}));const R=grpEngineRound(G.players,holes,G.layout,grpScores(d));return G.games.map(x=>BPG.scoreGame(x,R))}
+function grpFillHole(d,i){const G=d&&d.group;if(!G)return;for(const p of G.players)if(!p.me){const a=G.scores[p.pid];if(a&&a[i]==null)a[i]=d.holes[i].par}}
+function grpLiveHtml(d){const G=d.group;const i=d.cur;const h=d.holes[i];const holes=d.holes.map(x=>({par:x.par,si:x.si}));
+  const R=grpEngineRound(G.players,holes,G.layout,{});const primary=G.games.find(x=>x.net);const st=primary?BPG.gameStrokes(primary,R):null;
+  let res=[];try{res=grpResults(d)}catch(e){}
+  const row=p=>{const n=st?st[p.pid][i]:0;const v=p.me?h.score:(G.scores[p.pid][i]);const shown=v==null?h.par:v;
+    return `<div class="gl-p ${p.me?'me':''}"><div class="gl-n"><b>${esc(p.me?'You':p.name)}</b>${G.layout!=='ind'?`<i class="gl-tm t${p.team}">${p.team}</i>`:''}${n?`<span class="gl-dot" title="${n>0?'Gets '+n+' stroke'+(n>1?'s':'')+' here':'Gives '+(-n)+' back here'}">${STROKE_DOT(n)}</span>`:''}</div>
+      <div class="gl-step"><button data-act="gsc" data-p="${p.pid}" data-d="-1" aria-label="${esc(p.me?'Your score':p.name)} one fewer">−</button><b class="${(p.me?!h.touched:v==null)?'muted':''}">${shown}</b><button data-act="gsc" data-p="${p.pid}" data-d="1" aria-label="${esc(p.me?'Your score':p.name)} one more">+</button></div></div>`};
+  return `<div class="gl"><div class="gl-status">${res.map(r=>`<span class="gl-g"><i>${esc(r.name)}</i>${esc(r.headline||'')}</span>`).join('')}</div>
+    <div class="gl-list">${G.players.map(row).join('')}</div>
+    ${primary?`<p class="small muted gl-key">● = a handicap stroke on this hole (${esc(BPG.CATALOG[primary.type].name)})</p>`:''}</div>`}
+// ----- results -----
+function grpMoney(v){const a=Math.abs(v);return '$'+(a%1?a.toFixed(2):a)}
+function grpResultHtml(r){const G=r.group;if(!G)return '';const holes=r.holes.map(h=>({par:h.par,si:h.si}));
+  const R=grpEngineRound(G.players,holes,G.layout,G.scores);const res=G.games.map(x=>BPG.scoreGame(x,R));const set=BPG.settle(res,R.players);const nm=id=>{const p=G.players.find(x=>x.pid===id);return p?(p.me?'You':p.name):'?'};
+  const anyStake=G.games.some(x=>x.stake);const own=r.groundOwner===undefined||r.groundOwner===me;
+  return `<section class="sect panel grp-res"><div class="sect-head"><h3>Group results</h3><span class="small muted">${G.players.length} players · ${esc(BPG.TEAM_LAYOUTS[G.layout])}</span></div>
+    ${res.map(x=>`<div class="gr-g"><div class="row between"><b>${esc(x.name)}</b><span class="small muted">${x.net?'Net':'Gross'}${x.stake?' · '+grpMoney(x.stake):''}</span></div>${x.type==='nassau'&&x.rows?`<div class="gr-rows">${x.rows.map(b=>`<div class="${b.press?'press':''}"><span>${esc(b.label)}</span><b>${esc(b.result)}</b></div>`).join('')}</div>`:`<p class="gr-h">${esc(x.headline||'')}</p>`}${x.type==='nassau'?'':x.lines&&x.lines.length>1?`<p class="small muted" style="margin:0">${x.lines.map(esc).join(' · ')}</p>`:''}</div>`).join('')}
+    ${anyStake?`<div class="gr-pay"><span class="eyebrow">Settle up</span>${set.payments.length?set.payments.map(p=>`<div class="gr-pr"><b>${esc(nm(p.from))}</b><span class="muted">${nm(p.from)==='You'?'pay':'pays'}</span><b>${esc(nm(p.to))}</b><span class="mono gr-amt">${grpMoney(p.amount)}</span></div>`).join(''):'<p class="small muted" style="margin:0">All square. Nobody owes anybody.</p>'}</div>`:''}
+    ${own&&r.groundKey?`<div class="gr-inv"><span class="eyebrow">Send everyone their round</span>${G.players.filter(p=>!p.me).map(p=>`<div class="gr-ir"><span><b>${esc(p.name)}</b><span class="small muted">${p.uid?'In their BluPrint inbox to add':'Not on BluPrint yet'}</span></span>${p.uid?'<span class="pill good">Sent</span>':`<button class="btn small primary" data-act="grInvite" data-p="${esc(p.pid)}">Invite</button>`}</div>`).join('')}<p class="small muted" style="margin:0">When a guest joins from their link, their round is waiting and you're friends automatically.</p></div>`:''}
+  </section>`}
+// Save the group round so the other players can add it to their own rounds (guests claim it from their invite link)
+async function grpPublish(r){const G=r.group;if(!G||!socialOk()||!db)return;
+  const key=[...crypto.getRandomValues(new Uint8Array(18))].map(b=>'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b%56]).join('');
+  const members=[me,...G.players.filter(p=>p.uid&&p.uid!==me).map(p=>p.uid)];const slots={};G.players.forEach(p=>{if(!p.me)slots[p.pid]=p.uid||null});
+  const doc={owner:me,ownerName:S.profile.username||'',members,key,slots,course:r.course,clubId:r.clubId||'',date:r.date,start:r.start||1,holes:r.holes.map(h=>({par:h.par,si:h.si||null})),group:{layout:G.layout,games:G.games,players:G.players.map(p=>({pid:p.pid,uid:p.uid||null,name:p.name,ch:p.ch,team:p.team,tee:p.tee||'',rating:p.rating||null,slope:p.slope||null})),scores:G.scores,scorerPid:(G.players.find(p=>p.me)||{}).pid},createdAt:nowIso()};
+  doc.group.scores={...G.scores,[doc.group.scorerPid]:r.holes.map(h=>h.score)};
+  await db.doc('grounds/'+r.id).set(doc);r.groundKey=key;
+  try{await putRound({...r,groundKey:key})}catch(e){}}
+function grpInviteLink(r,pid){return APP_URL+'/?gr='+r.id+'.'+r.groundKey+'.'+pid+'&by='+encodeURIComponent(S.profile.username||'')+'&gc='+encodeURIComponent(r.course||'')}
+// A group round someone else scored, turned into my own round (scores only; no putts or fairways)
+function grpRoundFrom(gid,g,pid){const P=(g.group.players||[]).find(p=>p.pid===pid)||{};const sc=(g.group.scores||{})[pid]||[];
+  return {id:'g'+gid.replace(/[^\w]/g,'').slice(0,30),course:g.course,clubId:g.clubId||'',tees:P.tee||'',date:g.date,rating:P.rating||null,slope:P.slope||null,start:g.start||1,source:'group',scoredBy:g.ownerName||'',created:nowIso(),
+    holes:g.holes.map((h,i)=>({par:h.par,si:h.si,yds:null,score:Number(sc[i])||0,putts:null,fw:h.par>3?null:'na',gir:null,pen:null}))}}
+async function grpClaim(gid){try{const d=await db.doc('grounds/'+gid).get();if(!d.exists){toast('That round is no longer available.');return}const g=d.data();const pid=Object.entries(g.slots||{}).find(([,u])=>u===me);if(!pid){toast('That round is not yours to add.');return}
+    const r=grpRoundFrom(gid,g,pid[0]);if(S.rounds.some(x=>x.id===r.id)){toast('Already in your rounds.');return}await putRound(r);haptic('success');toast('Round added to your stats');SOC.groundsSeen=(SOC.groundsSeen||[]).concat(gid);if(socialOk())syncPlayer().catch(()=>{});render()}catch(e){toast(writeErr(e))}}
+function grpPending(){if(typeof SOC==='undefined')return [];return (SOC.grounds||[]).filter(g=>g.owner!==me&&Object.values(g.slots||{}).includes(me)&&!S.rounds.some(r=>r.id==='g'+g.id.replace(/[^\w]/g,'').slice(0,30)))}
+function grpWatch(){if(!db||!me||SOC.groundsSub)return;SOC.groundsSub=db.collection('grounds').where('members','array-contains',me).onSnapshot(s=>{SOC.grounds=s.docs.map(x=>({...x.data(),id:x.id}));softRender()},()=>{})}
+// Guest arriving from an invite link: remember through sign-up, then claim the spot, become friends and get the round
+(()=>{try{const u=new URL(location.href);const j=u.searchParams.get('gr');if(j&&/^[\w-]{1,64}\.[A-Za-z0-9]{16,40}\.[\w-]{1,24}$/.test(j)){const [g,k,p]=j.split('.');ls('bp_ground',{g,k,p,by:(u.searchParams.get('by')||'').slice(0,20),course:(u.searchParams.get('gc')||'').slice(0,60)});['gr','by','gc'].forEach(x=>u.searchParams.delete(x));history.replaceState(null,'',u.pathname+(u.search||'')+u.hash)}}catch(_){}})();
+let grClaiming=false;async function grpTryLink(){const j=ls('bp_ground');if(!j||grClaiming||!socialOk())return;grClaiming=true;
+  try{const ref=db.doc('grounds/'+j.g);await ref.update({via:j.k,join:j.p}).catch(e=>{if(!(e&&/not_granted/.test(String(e.code||e.message))))throw e});
+    const d=await ref.get();if(!d.exists)throw new Error('gone');const g=d.data();
+    if(g.owner&&g.owner!==me){await db.doc('friendreqs/'+g.owner+'~'+me).set({from:g.owner,to:me,status:'accepted',ground:j.g,at:nowIso(),decided:nowIso()}).catch(()=>{});
+      if(!SOC.follows.has(g.owner))db.collection('follows/'+me+'/items').doc(g.owner).set({at:nowIso()}).catch(()=>{})}
+    const pid=Object.entries(g.slots||{}).find(([,u])=>u===me);if(pid){const r=grpRoundFrom(j.g,g,pid[0]);if(!S.rounds.some(x=>x.id===r.id))await putRound(r)}
+    ls('bp_ground',null);haptic('success');toast(`Your round with @${g.ownerName||j.by||'your group'} is in your stats`)}
+  catch(e){ls('bp_ground',null);toast('That round link didn\'t work. Ask for a new one.')}finally{grClaiming=false}}
+
 // Rounds finished with no signal wait here and sync later
 function queuePending(r){const q=(ls('rl_pending')||[]).filter(x=>x.id!==r.id);q.push(r);ls('rl_pending',q);if(!S.rounds.some(x=>x.id===r.id))S.rounds=[r,...S.rounds]}
 function withPending(list){const q=ls('rl_pending')||[];const ids=new Set(list.map(x=>x.id));return [...q.filter(x=>!ids.has(x.id)),...list]}
 async function flushPending(){const q=ls('rl_pending')||[];if(!q.length||!base)return;const left=[];for(const r of q){try{await putRound(r)}catch(e){left.push(r)}}ls('rl_pending',left);if(q.length&&!left.length){toast('Offline round synced');if(socialOk())syncPlayer().catch(()=>{})}}
 window.addEventListener('online',()=>{flushPending().catch(()=>{})});setInterval(()=>{if((ls('rl_pending')||[]).length)flushPending().catch(()=>{})},60000);
 // Swipe between holes on the scorecard: the card follows your finger, then slides to the next hole
-function goHole(to){const d=S.draft;if(!d)return;to=clamp(to,0,d.holes.length-1);if(to===d.cur)return;const dir=to>d.cur?1:-1;d.holes[d.cur].touched=true;d.cur=to;saveDraft();render();
+function goHole(to){const d=S.draft;if(!d)return;to=clamp(to,0,d.holes.length-1);if(to===d.cur)return;const dir=to>d.cur?1:-1;d.holes[d.cur].touched=true;grpFillHole(d,d.cur);d.cur=to;saveDraft();render();
   const lc=document.querySelector('.lc');if(lc&&!RM){lc.classList.remove('in-l','in-r');void lc.offsetWidth;lc.classList.add(dir>0?'in-r':'in-l')}}
 (()=>{let x0=null,y0=null,drag=false,lc=null;
  document.addEventListener('touchstart',e=>{if(S.view!=='live'||!S.draft)return;if(e.target.closest('.strip'))return;const t=e.touches[0];x0=t.clientX;y0=t.clientY;drag=false;lc=document.querySelector('.lc')},{passive:true});
@@ -2373,14 +2549,16 @@ function goHole(to){const d=S.draft;if(!d)return;to=clamp(to,0,d.holes.length-1)
    if(Math.abs(dx)>70&&can){el.style.transition='transform .16s ease-in,opacity .16s ease-in';el.style.transform=`translateX(${dx<0?-110:110}%)`;el.style.opacity='0';setTimeout(()=>goHole(d.cur+(dx<0?1:-1)),150)}
    else{el.style.transition='transform .22s cubic-bezier(.2,.8,.2,1),opacity .22s';el.style.transform='';el.style.opacity=''}},{passive:true})})();
 async function finishRound(){
-  const d=S.draft; d.holes[d.cur].touched=true;
+  const d=S.draft; d.holes[d.cur].touched=true;grpFillHole(d,d.cur);
   const before=badgeSnapshot();
   const r={id:d.id,clubId:d.clubId||'',clubVerified:!!d.clubVerified,course:d.course,tees:d.tees,date:d.date,rating:d.rating,slope:d.slope,source:'app',created:new Date().toISOString(),
-    start:d.start||1,holes:d.holes.map(h=>({par:h.par,si:h.si,yds:h.yds||null,score:h.score,putts:h.putts,fw:h.par>3?(h.fw&&h.fw!=='na'?h.fw:'miss'):'na',gir:holeGir(h)??false,pen:h.pen||0}))}; // untagged tee shot = missed fairway; untagged green with no putts = missed
+    start:d.start||1,holes:d.holes.map(h=>({par:h.par,si:h.si,yds:h.yds||null,score:h.score,putts:h.putts,fw:d.scoreOnly?(h.par>3?null:'na'):h.par>3?(h.fw&&h.fw!=='na'?h.fw:'miss'):'na',gir:d.scoreOnly?null:holeGir(h)??false,pen:d.scoreOnly?null:h.pen||0}))}; // untagged tee shot = missed fairway; untagged green with no putts = missed
   let offline=false;
+  if(d.group){r.group={...d.group,scores:{...d.group.scores,[(d.group.players.find(p=>p.me)||{}).pid]:r.holes.map(h=>h.score)}}}
   try{await Promise.race([putRound(r),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))])}
   catch(e){offline=true;queuePending(r)}
   S.draft=null;ls('rl_draft',null);afterSave(r,before);
+  if(r.group&&!offline)grpPublish(r).then(()=>{if(S.reportRound&&S.reportRound.id===r.id)S.reportRound.groundKey=r.groundKey;render()}).catch(()=>{});
   if(offline)toast('Saved on this phone. It will sync when you have signal.');
 }
 function afterSave(r,before){
@@ -2562,13 +2740,14 @@ async function saveText(){
 function viewReport(c){
   const r=S.rounds.find(x=>x.id===S.report)||S.reportRound; if(!r){S.view='home';return viewHome(c)}
   const a=agg([r]),p=per18(a),hs=playedHoles(r),tp=a.score-a.par;
+  const stats=hs.some(h=>h.putts!=null||h.gir!=null||(h.fw&&h.fw!=='na')); // group rounds keep score only
   const nb=S.newBadges||[];
   const mark=h=>{const d=h.score-h.par;const cls=d<=-2?'e':d===-1?'b':d===1?'bo':d>=2?'d':'';return `<span class="mk ${cls}">${h.score}</span>`};
   const nine=(from,to)=>{const seg=hs.slice(from,to);if(!seg.length)return '';return `<div class="scroll-x"><table class="sc"><tr><th>Hole</th>${seg.map((_,i)=>`<th>${from+i+(r.start||1)}</th>`).join('')}<th>${(r.start||1)>1||from>=9?'In':'Out'}</th></tr>
     <tr><td class="lab">Par</td>${seg.map(h=>`<td>${h.par}</td>`).join('')}<td><b>${seg.reduce((s,h)=>s+h.par,0)}</b></td></tr>
     <tr><td class="lab">Score</td>${seg.map(h=>`<td>${mark(h)}</td>`).join('')}<td><b>${seg.reduce((s,h)=>s+h.score,0)}</b></td></tr>
-    <tr><td class="lab">FW/GIR</td>${seg.map(h=>`<td class="small">${h.par===3?' ':(h.fw==='hit'?'.':' ')}/${holeGir(h)?'.':' '}</td>`).join('')}<td></td></tr>
-    <tr><td class="lab">Putts</td>${seg.map(h=>`<td>${h.putts??''}</td>`).join('')}<td><b>${seg.reduce((s,h)=>s+(h.putts||0),0)||''}</b></td></tr></table></div>`};
+    ${stats?`<tr><td class="lab">FW/GIR</td>${seg.map(h=>`<td class="small">${h.par===3?' ':(h.fw==='hit'?'.':' ')}/${holeGir(h)?'.':' '}</td>`).join('')}<td></td></tr>`:''}
+    ${stats?`<tr><td class="lab">Putts</td>${seg.map(h=>`<td>${h.putts??''}</td>`).join('')}<td><b>${seg.reduce((s,h)=>s+(h.putts||0),0)||''}</b></td></tr>`:''}</table></div>`};
   const confirm=S.confirmDel===r.id;
   // Recap highlights
   const names={'-3':'Albatross','-2':'Eagle','-1':'Birdie','0':'Par','1':'Bogey','2':'Double','3':'Triple'};
@@ -2586,7 +2765,7 @@ function viewReport(c){
   if(streak>=3)hi.push(['Best stretch',`${streak} holes`,'in a row at par or better','good']);
   if(worstH&&worstH.d>=2)hi.push(['Toughest hole',`Hole ${hn(worstH.i)}`,`${names[worstH.d]||('+'+worstH.d)} ${worstH.h.score} on a par ${worstH.h.par}`,'bad']);
   if(lev)hi.push(['Where strokes went',lev.area,`About ${fmt(lev.gap,1)} strokes vs your level. ${lev.detail}`,'bad']);
-  return `<section class="recap">
+  return `${r.group?grpResultHtml(r):''}<section class="recap">
     <span class="kicker">${esc(longDate(r.date))} · ${esc(r.source==='photo'?'Scorecard photo':r.source==='text'?'Quick entry':'Live scorecard')}${r.estimated?' · Estimated':''}${r.example?' · Sample':''}${r.tees?' · '+esc(r.tees):''}</span>
     <h2>${esc(r.course)}</h2>
     <div class="recap-score"><span class="rs-num">${a.score}</span><span class="rs-par ${tp<0?'u':tp===0?'e':''}">${parTxt(tp,0)}</span><span class="small muted">${a.holes} holes</span></div>
@@ -2595,10 +2774,10 @@ function viewReport(c){
     ${nb.map(b=>`<div class="unlock-row">${achCard({id:b.id,name:b.name,desc:b.desc,tier:b.tier})}${socialOk()?`<button class="btn small primary" data-act="shareBadge" data-id="${esc(b.id)}" data-tier="${b.tier}">Share to Clubhouse</button>`:''}</div>`).join('')}</section>`:''}
   ${hi.length?`<section class="hilites">${hi.slice(0,4).map(([k,v,d,tone])=>`<div class="hl ${tone}"><span class="lbl">${k}</span><b>${esc(v)}</b><span class="small muted">${esc(d)}</span></div>`).join('')}</section>`:''}
   <section class="card">
-    <div class="grid3">${[['Putts',a.puttHoles?a.putts:'—'],['Greens',a.girHoles?`${a.gir}/${a.girHoles}`:'—'],['Fairways',a.firOpp?`${a.fir}/${a.firOpp}`:'—'],['3-putts',a.tpHoles?a.tp:'—'],['Doubles+',hs.length?a.dbl:'—'],['Birdies',hs.length?a.bird+a.eag:'—']].map(t=>`<div class="tile"><span class="lbl">${t[0]}</span><span class="val">${t[1]}</span></div>`).join('')}</div>
+    <div class="grid3">${(stats?[['Putts',a.puttHoles?a.putts:'—'],['Greens',a.girHoles?`${a.gir}/${a.girHoles}`:'—'],['Fairways',a.firOpp?`${a.fir}/${a.firOpp}`:'—'],['3-putts',a.tpHoles?a.tp:'—']]:[['Pars',hs.length?a.pars:'—']]).concat([['Doubles+',hs.length?a.dbl:'—'],['Birdies',hs.length?a.bird+a.eag:'—']]).map(t=>`<div class="tile"><span class="lbl">${t[0]}</span><span class="val">${t[1]}</span></div>`).join('')}</div>
     ${S.sharePrompt===r.id&&socialOk()?`<div class="shareask"><div><b>Share this round to The Clubhouse?</b><span class="small muted">Your crew sees the score${nb.length?' and what you unlocked':''}.</span></div><div class="row"><button class="btn primary small" data-act="shareRoundPost">Share</button><button class="btn small ghost" data-act="skipShare">Not this one</button></div></div>`:''}
     ${hs.length?nine(0,9)+nine(9,18):''}
-    ${hs.length?`<p class="small muted" style="margin:0">FW/GIR: a dot before the slash is a fairway hit, a dot after it is a green in regulation. Circles are birdies, squares are bogeys, double squares are doubles or worse.</p>`:''}
+    ${hs.length&&stats?`<p class="small muted" style="margin:0">FW/GIR: a dot before the slash is a fairway hit, a dot after it is a green in regulation. Circles are birdies, squares are bogeys, double squares are doubles or worse.</p>`:''}
     <div class="row">${hs.length?`<button class="btn primary" data-act="cardImg">Share scorecard</button>`:''}<button class="btn" data-act="nav" data-view="home">See my stats</button></div>
   </section>
   <section class="card">${confirm?`<p><b>Delete this round?</b> This removes it from your stats and handicap.</p><div class="row"><button class="btn danger" data-act="delYes">Delete round</button><button class="btn" data-act="delNo">Keep it</button></div>`:`<button class="btn ghost danger" data-act="delAsk">Delete round</button>`}</section>`;
@@ -3355,6 +3534,7 @@ function initSocial(){
   db.doc('players/'+me).get().then(d=>{const x=d.exists&&d.data();if(!x||!x.updated||Date.now()-Date.parse(x.updated)>6*3600e3||(x.courses||[]).some(c=>!('clubId' in c))){let k=0;const go=()=>{if(S.ready)syncPlayer().catch(()=>{});else if(k++<40)setTimeout(go,500)};go()}}).catch(()=>{}); // keep your public card fresh (course history powers the Club filter)
   watchGroups();
   setTimeout(tryJoinLink,400);
+  grpWatch();setTimeout(grpTryLink,700);
 }
 // Shared group records: groups/<gid> {name, owner, members[]}. The owner manages members; anyone can leave.
 function watchGroups(){if(!db||!me)return;const ids=new Set(myGroups().map(g=>g.id));
@@ -4006,8 +4186,8 @@ function viewWelcome(){
   const ic={plan:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>',
     coach:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19h16"/><path d="M6 15l4-4 3 3 5-6"/><path d="M15 8h3v3"/></svg>',
     club:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 21V4"/><path d="M7 4l10 3.5L7 11"/><ellipse cx="12" cy="20" rx="8" ry="1.6"/></svg>'};
-  const jn=ls('bp_join');
-  return `<section class="wel">${jn?`<div class="card invite" style="margin-bottom:4px"><div><b>${jn.by?'@'+esc(jn.by)+' invited you':'You\'re invited'} to ${jn.name?esc(jn.name):'a group'}</b><span class="small muted">Create your account and you'll land straight in the group chat.</span></div></div>`:''}
+  const jn=ls('bp_join')||(()=>{const g=ls('bp_ground');return g?{by:g.by,name:null,round:g.course||'your round'}:null})();
+  return `<section class="wel">${jn?`<div class="card invite" style="margin-bottom:4px"><div><b>${jn.round?`${jn.by?'@'+esc(jn.by):'Your playing partner'} scored your round at ${esc(jn.round)}`:`${jn.by?'@'+esc(jn.by)+' invited you':'You\'re invited'} to ${jn.name?esc(jn.name):'a group'}`}</b><span class="small muted">${jn.round?'Create your account and it lands in your stats. You\'ll be friends automatically.':'Create your account and you\'ll land straight in the group chat.'}</span></div></div>`:''}
     <div class="wel-hero"><img class="wel-mark" src="/brand/mark-128.png" alt="" width="76" height="76"><h1>What's your <span>BluPrint?</span></h1>
       <p>Log three rounds. We compare every stat to golfers at your handicap and draw up the game you actually play: what you do best, where strokes leak, and a plan to fix it.</p></div>
     <div class="wel-sheet" aria-label="Sample BluPrint">
@@ -4463,6 +4643,13 @@ function courseCaddieSheet(){
 document.addEventListener('click',async e=>{
   const a=e.target.closest('[data-act]');if(!a||a.disabled)return;const act=a.dataset.act;
   if(act==='back'){if(!navBack())goBack();return}
+  if(grpSetupAct(act,a))return;
+  if(act==='groupStart'){S.setup=newSetup();S.setup.group=grpNew();S.view='setup';render();window.scrollTo(0,0);return}
+  if(act==='gsc'){const d=S.draft;if(!d||!d.group)return;const meP=d.group.players.find(p=>p.me);if(meP&&a.dataset.p===meP.pid){const h=d.holes[d.cur];h.score=clamp((h.touched?h.score:h.par)+Number(a.dataset.d),1,15);h.touched=true;saveDraft();render();return}const arr=d.group.scores[a.dataset.p];if(!arr)return;const cur=arr[d.cur]==null?d.holes[d.cur].par:arr[d.cur];arr[d.cur]=clamp(cur+Number(a.dataset.d),1,15);saveDraft();render();return}
+  if(act==='grInvite'){const r=S.rounds.find(x=>x.id===S.report)||S.reportRound;if(!r||!r.groundKey)return;const p=(r.group.players||[]).find(x=>x.pid===a.dataset.p);const url=grpInviteLink(r,a.dataset.p);const text=`${p?p.name+', y':'Y'}our round at ${r.course} is waiting on BluPrint Golf. Join and it's added to your stats:`;
+    try{if(navigator.share){await navigator.share({title:'Your round on BluPrint Golf',text,url});return}}catch(err){if(err&&err.name==='AbortError')return}
+    try{await navigator.clipboard.writeText(text+' '+url);toast('Invite link copied. Paste it in a text.');return}catch(err){}S.inviteText=text+' '+url;render();return}
+  if(act==='grClaim'){await grpClaim(a.dataset.id);return}
   if(act==='talkCaddie'){openCaddie('memory');return}
   if(act==='askCaddie'){openCaddie('course');setTimeout(()=>document.getElementById('cc_draft')?.focus(),50);return}
   if(act==='closeCaddie'){S.cchat=null;render();return}
@@ -4580,6 +4767,7 @@ document.addEventListener('focusin',e=>{const el=e.target;if(!el||!el.dataset||e
 document.addEventListener('input',e=>{
   const el=e.target,f=el.dataset&&el.dataset.field;if(!f)return;const v=el.value;
   if(socialInput(f,el))return;
+  if(grpField(f,el,v))return;
   if(f.startsWith('qe.')){S.qe=S.qe||{};S.qe[f.slice(3)]=v.replace(/[^0-9]/g,'');if(el.value!==S.qe[f.slice(3)])el.value=S.qe[f.slice(3)];const e2=qeErr(),b=document.querySelector('.qe-save'),m=document.getElementById('qe_msg');if(b)b.disabled=!!e2||!(S.setup&&(S.setup.course||'').trim());if(m)m.textContent=e2&&e2!=='score'?e2:'';return}
   if(f==='cc.draft'){if(S.cchat)S.cchat.draft=v;return}
   if(f==='cc.speak'){S.cspeak=el.checked;return}

@@ -229,7 +229,7 @@ async function deleteAccount(env, user) {
   await env.DB.batch([
     env.DB.prepare("DELETE FROM docs WHERE path LIKE ? OR path=? OR (path LIKE 'usernames/%' AND owner=?)").bind(`data/users/${uid}/%`, `players/${uid}`, uid),
     // social footprint: own posts, follows, comments, likes, groups they own, requests and conversations they are part of
-    env.DB.prepare("DELETE FROM docs WHERE path LIKE ? OR path LIKE ? OR (owner=? AND (path LIKE 'comments/%' OR path LIKE 'reactions/%' OR path LIKE 'groups/%' OR path LIKE 'friendreqs/%'))").bind(`posts/${uid}/%`, `follows/${uid}/%`, uid),
+    env.DB.prepare("DELETE FROM docs WHERE path LIKE ? OR path LIKE ? OR (owner=? AND (path LIKE 'comments/%' OR path LIKE 'reactions/%' OR path LIKE 'groups/%' OR path LIKE 'friendreqs/%' OR path LIKE 'grounds/%'))").bind(`posts/${uid}/%`, `follows/${uid}/%`, uid),
     env.DB.prepare("DELETE FROM docs WHERE path LIKE 'friendreqs/%' AND json_extract(data,'$.to')=?").bind(uid),
     env.DB.prepare("DELETE FROM docs WHERE path LIKE 'dms/%' AND (path LIKE ? OR path LIKE ?)").bind(`dms/${uid}~%`, `dms/%~${uid}%`),
     env.DB.prepare('DELETE FROM blobs WHERE owner=?').bind(uid),
@@ -259,6 +259,7 @@ function canReadPath(segs, uid) {
   if (segs[0] === 'data') return segs[1] === 'users' && segs[2] === uid;
   if (SHARED.includes(segs[0])) return true;
   if (segs[0] === 'friendreqs' && segs.length <= 2) return true;   // row-level check below
+  if (segs[0] === 'grounds' && segs.length <= 2) return true;      // group rounds: scorer and players only (row-level below)
   if (segs[0] === 'dms') return segs.length <= 2 || uidInThread(segs[1], uid); // thread ids are "<uidA>~<uidB>"
   return false;
 }
@@ -268,6 +269,7 @@ function canReadDoc(segs, uid, data) {
   if (!canReadPath(segs, uid)) return false;
   if (!data) return true;
   if (segs[0] === 'friendreqs') return data.from === uid || data.to === uid;
+  if (segs[0] === 'grounds') return data.owner === uid || (Array.isArray(data.members) && data.members.includes(uid));
   if (segs[0] === 'dms' && segs.length === 2) return Array.isArray(data.members) && data.members.includes(uid);
   return true;
 }
@@ -303,6 +305,11 @@ async function writeRule(env, segs, uid, existing, data) {
       return data && data.uid !== uid ? 'not_granted' : null;
     case 'friendreqs': {
       if (n !== 2) return 'not_granted';
+      if (!existing && data && data.to === uid && data.from !== uid && data.status === 'accepted' && typeof data.ground === 'string') {
+        const gr = await env.DB.prepare('SELECT data FROM docs WHERE path=?').bind('grounds/' + data.ground).first();
+        const g = gr ? JSON.parse(gr.data) : null;
+        return g && g.owner === data.from && (g.members || []).includes(uid) && segs[1] === `${data.from}~${uid}` ? null : 'not_granted';
+      }
       if (!existing) return data && data.from === uid && typeof data.to === 'string' && data.to !== uid ? null : 'not_granted';
       if (old.from !== uid && old.to !== uid) return 'not_granted';
       if (!data) return null;                                  // either side may withdraw or clear
@@ -356,6 +363,19 @@ async function writeRule(env, segs, uid, existing, data) {
         return d && d.to === uid && d.gid === segs[1] ? null : 'not_granted';
       }
       return 'not_granted';
+    }
+    case 'grounds': {  // grounds/<id>: a group round the scorer kept for everyone {owner, members[], key, slots{pid:uid}, ...}
+      if (n !== 2) return 'not_granted';
+      if (!old) return data && data.owner === uid && Array.isArray(data.members) && data.members.includes(uid) && typeof data.key === 'string' && data.key.length >= 16 ? null : 'not_granted';
+      if (old.owner === uid) return !data || (data.owner === uid && data.key === old.key) ? null : 'not_granted';
+      if (!data) return 'not_granted';
+      // a guest claiming their spot from the invite link: sent as an update {via:key, join:slot}; the server fills in the rest
+      const slot = data.join, os = old.slots || {};
+      if (data.via !== old.key || typeof slot !== 'string' || !(slot in os) || os[slot] != null || (old.members || []).includes(uid)) return 'not_granted';
+      for (const k of Object.keys(data)) if (!['via', 'join'].includes(k) && JSON.stringify(data[k]) !== JSON.stringify(old[k])) return 'not_granted';
+      data.members = [...(old.members || []), uid]; data.slots = { ...os, [slot]: uid };
+      delete data.via; delete data.join;
+      return null;
     }
     default: return 'not_granted';
   }
@@ -427,6 +447,7 @@ async function runQuery(env, user, q) {
   if (group && !(q.where || []).length) return { status: 400, body: { error: 'bad_query' } };  // never dump every post
   // private collections: only rows this person may see
   if (segs[0] === 'friendreqs') { where.push("(json_extract(data,'$.from')=? OR json_extract(data,'$.to')=?)"); args.push(user.id, user.id); }
+  if (segs[0] === 'grounds' && segs.length === 1) { where.push("(json_extract(data,'$.owner')=? OR EXISTS (SELECT 1 FROM json_each(data,'$.members') WHERE value=?))"); args.push(user.id, user.id); }
   if (segs[0] === 'dms' && segs.length === 1) { where.push("EXISTS (SELECT 1 FROM json_each(data,'$.members') WHERE value=?)"); args.push(user.id); }
   for (const [f, op, v] of (q.where || []).slice(0, 8)) {
     if (!FIELD.test(String(f))) return { status: 400, body: { error: 'bad_query' } };
