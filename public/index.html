@@ -1172,6 +1172,8 @@ input.t:focus,select.t:focus,textarea.t:focus{border-color:rgba(47,208,115,.6);b
 .ginfo{display:flex;flex-direction:column;gap:12px}.gmembers{display:flex;flex-direction:column;gap:8px}.ghead:hover b{text-decoration:underline}.glist .list-row{padding:12px 0}
 
 .chip-hc[aria-current="page"]{border-color:var(--volt);box-shadow:0 0 0 1px var(--volt) inset}
+
+.gstack{display:flex;align-items:center;gap:12px;border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:14px;padding:8px 12px;cursor:pointer;color:inherit;text-align:left}.gs-faces{display:flex}.gs-faces>*{margin-left:-8px;border:2px solid var(--panel,#1b1f1e);border-radius:50%}.gs-faces>*:first-child{margin-left:0}.gs-more{width:32px;height:32px;display:grid;place-items:center;background:var(--forest);font-size:.72rem;font-weight:700}.gs-txt{font-size:.85rem;font-weight:600}.mlist{display:flex;flex-direction:column;gap:10px;max-height:52vh;overflow-y:auto;padding-right:2px}
 </style>
 
 <div class="ambient" aria-hidden="true"><i class="glow g1"></i><i class="glow g2"></i><i class="glow g3"></i><div class="topo"></div><div class="topo2"></div><svg class="golfart bp" viewBox="740 170 420 1160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -1610,10 +1612,14 @@ function playerBuilds(rounds,hc,diffs,todayStr){
   {const dy=typeof S!=='undefined'&&S.profile&&S.profile.caddie&&S.profile.caddie.yardages?parseFloat(S.profile.caddie.yardages.Driver):NaN;const T=[[0,262],[5,242],[10,225],[15,223],[20,219],[25,212],[54,180]];const h=Math.max(0,Math.min(54,hc));let i=0;while(i<T.length-2&&h>T[i+1][0])i++;const bd=T[i][1]+(T[i+1][1]-T[i][1])*(h-T[i][0])/(T[i+1][0]-T[i][0]);x.bomb=isFinite(dy)&&dy>120?(dy-bd)/15:null}
   const all=BUILDS.map(B=>{const sc=B.test(y,b,x);return sc!=null&&isFinite(sc)?{id:B.id,code:B.code,name:B.name,desc:B.desc,score:Math.round(sc*100)/100}:null}).filter(Boolean);
   const out=all.filter(o=>o.score>=1).sort((a,b2)=>b2.score-a.score);const top=out.slice(0,3);
+  // nothing stands out yet: still draw the BluPrint from the golfer's three relatively strongest attributes
+  // filler specs (below the bar) come from how you play, not how often: activity specs only count when they genuinely qualify
+  const SKILL=new Set(['FF','IS','SW','PP','BP','BM','P5','P3','CS','BB','MT','BK','SC']);const rank=(a,b2)=>(SKILL.has(b2.code)-SKILL.has(a.code))||(b2.score-a.score);
+  if(!top.length&&all.length)top.push(...[...all].sort(rank).slice(0,1));
   // Always three specs: once a primary qualifies, fill the rest with the next-best attributes.
-  if(top.length)for(const o of all.filter(o=>!top.includes(o)).sort((a,b2)=>b2.score-a.score)){if(top.length>=3)break;top.push(o)}
+  if(top.length)for(const o of all.filter(o=>!top.includes(o)).sort(rank)){if(top.length>=3)break;top.push(o)}
   const near=all.filter(o=>!top.includes(o)&&o.score>=0.5).sort((a,b2)=>b2.score-a.score).slice(0,2).map(o=>({code:o.code,name:o.name,pct:Math.round(Math.min(0.99,o.score)*100)}));
-  return {locked:false,builds:top,near};
+  return {locked:false,builds:top,near,early:!out.length}; // early: nothing clears the bar yet, these are relative strengths
 }
 // ===== ENGINE END =====
 
@@ -1723,12 +1729,16 @@ function ctx(){
   const useSelf=S.profile.hcPref==='self'&&self!=null;
   const verified=ver.index!=null&&!useSelf;
   const index=verified?ver.index:self;
-  const hc=index!=null?index:18;
+  const y10=per18(agg(rs.slice(0,10)));
+  const estQ=index==null?estIndex(rs):null;
+  const hc=index!=null?index:(estQ!=null?estQ:18);
   const pb=playerBuilds(rs,hc,ver.diffs);
-  return {index,self,verified,ver,est:ver.index,hc,rs,diffs:ver.diffs,b:bench(hc),you:per18(agg(rs.slice(0,10))),pb};
+  return {index,self,verified,ver,est:ver.index,estQ,hc,rs,diffs:ver.diffs,b:bench(hc),you:y10,pb};
 }
 const VCHECK='<span class="vcheck" title="Verified from logged rounds" aria-label="Verified">✓</span>';
-function hcLabel(c){return c.index==null?'No index yet':(c.verified?'Verified':'Self-reported')}
+// Estimated index from scoring (inverse of bench(): typical score to par for an index). Never shown as official.
+function estIndex(rs){if(!rs||rs.length<3)return null;const y=per18(agg(rs.slice(0,10)));return y.toPar!=null?Math.round(clamp((y.toPar-1.2)/1.08,0,54)*10)/10:null}
+function hcLabel(c){return c.index==null?(c.estQ!=null?'Estimated':'No index yet'):(c.verified?'Verified':'Self-reported')}
 function slugId(s){return (s||'course').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'course'}
 
 // ---------- Navigation history (back arrow) ----------
@@ -1761,7 +1771,7 @@ function goBack(){
 function render(){S._popHtml="";
   const c=ctx();
   {const sti=myStatusI();let lv=0;try{lv=badgeState(S.rounds,{index:c.index!=null?c.index:c.est,diffs:c.diffs,goal:S.profile.goal}).lvl}catch(e){}
-  document.getElementById('hcChip').innerHTML=(S.profile.username?`<span class="hc-lv" style="--stc:${STC[sti]}" title="${esc(STATUS[sti][0])}">${lv}</span><span class="hc-u">@${esc(S.profile.username)}</span>`:'')+`<span class="hc-n">${c.index!=null?(c.verified?VCHECK+' ':'')+hcTxt(c.index,1):(S.profile.username?'—':'Set handicap')}</span>`}
+  document.getElementById('hcChip').innerHTML=(S.profile.username?`<span class="hc-lv" style="--stc:${STC[sti]}" title="${esc(STATUS[sti][0])}">${lv}</span><span class="hc-u">@${esc(S.profile.username)}</span>`:'')+`<span class="hc-n">${c.index!=null?(c.verified?VCHECK+' ':'')+hcTxt(c.index,1):c.estQ!=null?'~'+hcTxt(c.estQ,1):(S.profile.username?'—':'Set handicap')}</span>`}
   const root=document.querySelector('[data-view-root]')||null;
   const navKey={caddie:'profile',findfriends:'clubhouse',player:'clubhouse',inbox:'clubhouse',thread:'clubhouse',gchat:'groups',setup:'log',live:'log',photo:'log',text:'log',report:'home'}[S.view]||S.view;
   document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.view===navKey?'page':'false'));{const hc=document.getElementById('hcChip');if(hc)hc.setAttribute('aria-current',navKey==='profile'?'page':'false')}
@@ -1886,10 +1896,10 @@ const shortDate=d=>{const t=new Date(String(d)+'T12:00:00');return isNaN(t)?Stri
 const longDate=d=>{const t=new Date(String(d)+'T12:00:00');return isNaN(t)?String(d||''):t.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
 function viewHome(c){
   if(!S.ready) return `<p class="muted">Loading your rounds…</p>`;
-  const hcNum=c.index!=null?hcTxt(c.index,1):'<small class="hc-none">No index yet</small>';
+  const hcNum=c.index!=null?hcTxt(c.index,1):c.estQ!=null?'~'+hcTxt(c.estQ,1):'<small class="hc-none">No index yet</small>';
   const heroHead=`<div class="hero-left"><span class="kicker">Handicap index</span>
       <div class="hero-num">${c.verified?VCHECK:''}<span>${hcNum}</span></div>
-      <div class="hero-sub">${c.index==null?'<span class="pill neutral">Not set</span>':c.verified?`<span class="pill good">Verified</span><span class="small muted">from ${c.ver.count} score${c.ver.count===1?'':'s'}</span>`:`<span class="pill neutral">Self-reported</span><span class="small muted">${c.ver.needed?c.ver.needed+' more scored round'+(c.ver.needed===1?'':'s')+' to verify':''}</span>`}</div></div>`;
+      <div class="hero-sub">${c.index==null?(c.estQ!=null?'<span class="pill neutral">Estimated</span><span class="small muted">from your scores · score 3 rounds hole by hole for a verified index</span>':'<span class="pill neutral">Not set</span>'):c.verified?`<span class="pill good">Verified</span><span class="small muted">from ${c.ver.count} score${c.ver.count===1?'':'s'}</span>`:`<span class="pill neutral">Self-reported</span><span class="small muted">${c.ver.needed?c.ver.needed+' more scored round'+(c.ver.needed===1?'':'s')+' to verify':''}</span>`}</div></div>`;
   if(!c.rs.length) return `${storeNote()}<section class="welcome"><span class="kicker">Get started</span><h2>Log a round. See where your strokes go.</h2>
     <p class="muted">Keep score live, snap your scorecard, or use quick entry. BluPrint Golf benchmarks every stat against golfers at your handicap, and three rounds reveals your BluPrint.</p>
     <div class="row"><button class="btn primary" data-act="nav" data-view="log">Log your first round</button>${c.index==null?`<button class="btn" data-act="nav" data-view="progress">Set your handicap</button>`:''}</div></section>
@@ -2594,7 +2604,7 @@ function monthTargets(c,aim){
 }
 function viewProgress(c){
   const g=S.profile.goal||{};
-  const cur=c.index!=null?c.index:c.est;
+  const cur=c.index!=null?c.index:c.est!=null?c.est:c.estQ;
   const has=g.index!=null&&cur!=null;
   let hero='',plan='',rings='';
   const month=monthReview(c);
@@ -2643,7 +2653,7 @@ function viewProgress(c){
   return `${has?hero:`<section class="welcome"><span class="kicker">My coach</span><h2>Set a handicap goal. Get a plan to reach it.</h2><p class="muted">BluPrint Golf compares your stats to golfers at your target handicap and builds your action plan from the biggest gaps.</p>${cur==null?`<div class="notice">Add a self-reported index on your profile, or log 3 rounds first.</div>`:''}<div class="grid2">${goalForm}</div><button class="btn primary" data-act="saveGoal">Set my goal</button></section>`}
   ${has&&!c.rs.length?`<div class="notice">Log a few rounds to unlock your action plan.</div>`:''}
   ${rings}
-  ${has&&c.rs.length?monthTargets(c,(()=>{const cur=c.index!=null?c.index:c.est;const g=S.profile.goal||{};const t=Number(g.index);return cur!=null&&cur<=t?Math.max(0,Math.floor(cur)-2):t})()):''}
+  ${has&&c.rs.length?monthTargets(c,(()=>{const cur=c.index!=null?c.index:c.est!=null?c.est:c.estQ;const g=S.profile.goal||{};const t=Number(g.index);return cur!=null&&cur<=t?Math.max(0,Math.floor(cur)-2):t})()):''}
   ${plan}
 `;
 }
@@ -2693,7 +2703,7 @@ function viewProfile(c){
   return `<section class="card ptile">
     <div class="pcenter">${S.profile.username&&S.profileEdit?`<label for="pf_photo" class="avedit" title="${S.profile.avatar?'Change photo':'Add profile photo'}">${av(96)}<span class="cam">${S.profile.avatar?'Edit':'+ Photo'}</span></label><input type="file" id="pf_photo" data-field="pf.photo" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0">`:S.profileEdit?av(96):''}
       ${S.profileEdit?`<h2 class="pname">${S.profile.username?'@'+esc(S.profile.username):'My profile'}</h2>`:''}
-      ${S.profileEdit?'':idCard(c.pb.builds,{locked:c.pb.locked,head:`<div class="idc-head"><div class="idc-who">${av(56)}<div><h2 class="pname">${S.profile.username?'@'+esc(S.profile.username):'My profile'}</h2>${[S.profile.first,S.profile.last].filter(Boolean).length?`<span class="small muted">${esc([S.profile.first,S.profile.last].filter(Boolean).join(' '))}</span>`:''}</div></div><div class="idc-chips">${idHc(c.index,c.verified,true)}${idStatus(ST.i,lvl,true)}</div></div>`})}${(S._popHtml=S.pexp?`<div class="pop-wrap" role="dialog" aria-label="${S.pexp==='st'?'Golfer status':'Handicap'}"><div class="pop-back" data-act="pexp" data-k="${S.pexp}"></div><div class="pop"><div class="pop-grab"></div><button class="pop-x" data-act="pexp" data-k="${S.pexp}" aria-label="Close">✕</button>${S.pexp==='st'?stPanel:`<div class="pop-hc"><span class="eyebrow">Handicap to show</span>${hcPick}</div>`}</div></div>`:'','')}
+      ${S.profileEdit?'':idCard(c.pb.builds,{locked:c.pb.locked,early:c.pb.early,head:`<div class="idc-head"><div class="idc-who">${av(56)}<div><h2 class="pname">${S.profile.username?'@'+esc(S.profile.username):'My profile'}</h2>${[S.profile.first,S.profile.last].filter(Boolean).length?`<span class="small muted">${esc([S.profile.first,S.profile.last].filter(Boolean).join(' '))}</span>`:''}</div></div><div class="idc-chips">${idHc(c.index!=null?c.index:c.estQ,c.verified,true,c.index==null&&c.estQ!=null)}${idStatus(ST.i,lvl,true)}</div></div>`})}${(S._popHtml=S.pexp?`<div class="pop-wrap" role="dialog" aria-label="${S.pexp==='st'?'Golfer status':'Handicap'}"><div class="pop-back" data-act="pexp" data-k="${S.pexp}"></div><div class="pop"><div class="pop-grab"></div><button class="pop-x" data-act="pexp" data-k="${S.pexp}" aria-label="Close">✕</button>${S.pexp==='st'?stPanel:`<div class="pop-hc"><span class="eyebrow">Handicap to show</span>${hcPick}</div>`}</div></div>`:'','')}
       ${S.profileEdit?hcPick:''}<div class="pmeta"><span class="mono">${c.rs.length}</span><span class="muted">rounds</span>${home?`<i></i><span>${esc(home.name)}${S.profile.state?', '+esc(S.profile.state):''}</span>`:''}</div>
       ${socialOk()&&!S.profileEdit?(()=>{initSocial();const n=friendIds().filter(u=>SOC.players[u]).length;const pend=pendingIn().length;return `<div class="frow"><button class="plain frcount" data-act="showFriends"><b>${n}</b> friend${n===1?'':'s'}${pend?` · <span style="color:var(--volt)">${pend} request${pend===1?'':'s'}</span>`:''}</button><button class="btn small" data-act="nav" data-view="findfriends">Find friends</button><button class="btn small ghost" data-act="invite">Invite</button></div>`})():''}
       ${S.profile.username&&S.profileEdit?`<div class="row" style="justify-content:center;gap:6px"><button class="btn small ghost" data-act="renameStart">Change username</button>${S.profile.avatar?`<button class="btn small ghost" data-act="rmPhoto">Remove photo</button>`:''}</div>
@@ -3160,7 +3170,7 @@ function openGroupChat(gid){S.cardUid=null;SOC.group=gid;SOC.gchat=gid;SOC.gmsgs
 function closeGroupChat(){if(SOC.gmUnsub){SOC.gmUnsub();SOC.gmUnsub=null}SOC.gchat=null}
 function viewGroupChat(c){const gid=SOC.gchat;const g=myGroups().find(x=>x.id===gid);if(!g){S.view='groups';return viewGroups(c)}
   const x=SOC.gdocs[gid]||{};const mem=groupMembers(gid);const own=groupOwner(gid)===me;let prev='';
-  return `<div class="row between" style="flex-wrap:nowrap"><button class="btn ghost" data-act="gchatBack">◀ Groups</button>
+  return `<div class="row between" style="flex-wrap:nowrap"><button class="btn ghost" data-act="gchatBack" style="white-space:nowrap;flex:0 0 auto">◀ Groups</button>
     <button class="plain row ghead" data-act="ginfo" aria-expanded="${!!SOC.ginfo}" style="gap:10px;flex-wrap:nowrap;min-width:0;text-align:left">${groupAvatar(gid,36)}<span style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.name||g.name)}</b><span class="small muted">${mem.length} golfer${mem.length===1?'':'s'} · ${SOC.ginfo?'hide info':'group info'} ›</span></span></button></div>
   ${SOC.ginfo?groupInfo(gid):''}
   ${SOC.ginfo&&SOC.grecap?recapView():''}
@@ -3370,6 +3380,7 @@ function revealView(){const R=S.reveal;if(!R)return '';
       <div class="rv3-in">
         <div class="rv3-card ${ready?'on':''}">${ready?`<img src="${S.revealImg.url}" alt="${esc(label.toLowerCase())}: ${esc(name)}"><i class="rv3-scan"></i>`:`<div class="rv3-load"><span>Drafting your BluPrint…</span></div>`}</div>
         ${prev&&prev!==name?`<span class="rv2-was">was <s>${esc(prev)}</s></span>`:''}
+        ${R.early?`<p class="small muted" style="margin:0;text-align:center">Early read from your first rounds. It sharpens with every round you log.</p>`:''}
         ${(()=>{const hyp=ls('bp_hyp');const hl=(HYP.find(h=>h[0]===hyp)||[])[1];if(!hl||!first||!bs[0])return '';const hit=bs.slice(0,3).some(b=>b.code===hyp);return `<p class="rv3-hyp"><span>Hypothesis</span> ${esc(hl)} <span>·</span> ${hit?'Confirmed in your top three':`Revised. Your data points to ${esc(bs[0].name)}`}</p>`})()}
         <div class="rv3-act"><button class="btn primary rv3-share" data-act="revealStory" ${ready?'':'disabled'}>${IG_IC} Share to story</button><button class="btn" data-act="revealFriend">Send to a friend</button></div>
         <div class="row" style="gap:10px;justify-content:center">${socialOk()?`<button class="btn small" data-act="revealShare">Post to Clubhouse</button>`:''}<button class="btn small ghost" data-act="revealProfile">See my profile</button><button class="btn small ghost" data-act="revealClose">Close</button></div>
@@ -3385,7 +3396,7 @@ const BUILD_COACH={BB:'Your length is a weapon. The fastest strokes for you come
 function buildCoach(c){if(!c.pb||c.pb.locked||!c.pb.builds.length)return '';const bs=c.pb.builds.slice(0,3);const id=buildIdentity(bs);const p=bs[0];
   return `<section class="sect panel bcoach"><div class="sect-head"><h3>Coaching for ${/^[AEIOU]/i.test(id.name)?'an':'a'} ${esc(bs.length>1?id.name:p.name)}</h3></div>
     <div class="bc-row"><div class="bc-ic">${bs.map((x,i)=>hexBuild(x,i?34:44)).join('')}</div><p>${esc(BUILD_COACH[p.code]||'')}</p></div></section>`}
-function idHc(v,ver,act){return `<${act?'button':'div'} class="idc-hc${act?' tap':''}" ${act?`data-act="pexp" data-k="hc" aria-expanded="${S.pexp==='hc'}"`:''}><b>${v!=null?(ver?VCHECK:'')+hcTxt(v,1):'—'}</b><span>${v==null?'Handicap':ver?'Verified':'Self-rep.'}${act?' <i>▾</i>':''}</span></${act?'button':'div'}>`}
+function idHc(v,ver,act,est){return `<${act?'button':'div'} class="idc-hc${act?' tap':''}" ${act?`data-act="pexp" data-k="hc" aria-expanded="${S.pexp==='hc'}"`:''}><b>${v!=null?(est?'~':ver?VCHECK:'')+hcTxt(v,1):'—'}</b><span>${v==null?'Handicap':est?'Estimated':ver?'Verified':'Self-rep.'}${act?' <i>▾</i>':''}</span></${act?'button':'div'}>`}
 const STC=['#9AA4A1','#C77A45','#C9D3D8','#E8C15A','#A9CBEA','#2FD073'];
 function idStatus(i,lvl,act){const c=STC[i]||STC[0];return `<${act?'button':'div'} class="idc-st${act?' tap':''}" ${act?`data-act="pexp" data-k="st" aria-expanded="${S.pexp==='st'}"`:''} style="--stc:${c}"><span class="idc-ring">${lvl}</span><span class="idc-stt"><b>${esc(STATUS[i][0])}</b><span>Status${act?' <i>▾</i>':''}</span></span></${act?'button':'div'}>`}
 function idCard(builds,opts){opts=opts||{};const id=buildIdentity(builds||[]);
@@ -3393,8 +3404,8 @@ function idCard(builds,opts){opts=opts||{};const id=buildIdentity(builds||[]);
   if(opts.locked||!id.builds.length)return `<div class="idcard locked">${opts.head||''}<div class="idc-badges">${hexBuild({code:'?'},96)}</div><span class="kicker">My BluPrint</span><b class="idc-name">${opts.locked?'Still drafting':'No BluPrint yet'}</b><p class="idc-story">${opts.locked?'Log 3 rounds and your BluPrint is revealed, based on what you do better than golfers at your handicap.':'This golfer is still building their game.'}</p>${near}</div>`;
   const bs=id.builds.slice(0,3);
   return `<div class="idcard">${opts.head||''}<div class="idc-dna"><div class="idc-tri2 ${bs.length===1?'one':''}"><span class="t0" title="${esc(bs[0].name)}">${hexBuild(bs[0],140)}</span>${bs.length>1?`<div class="tri-row">${bs.slice(1).map(x=>`<span class="ts" title="${esc(x.name)}">${hexBuild(x,88)}</span>`).join('')}</div>`:''}</div>
-    <div class="idc-dtxt"><span class="kicker">My BluPrint</span><b class="idc-name">${esc(bs.length>1?id.name:bs[0].name)}</b>
-    <p class="idc-story">${esc(buildStory(bs,opts.other))}</p>${opts.other?'':`<button class="btn small bp-share" data-act="shareBP">Share my BluPrint</button>`}</div></div>
+    <div class="idc-dtxt"><span class="kicker">My BluPrint${opts.early?' · early read':''}</span><b class="idc-name">${esc(bs.length>1?id.name:bs[0].name)}</b>
+    <p class="idc-story">${opts.early?'Your relative strengths so far. Nothing beats golfers at your level by a clear margin yet, so this sharpens with every round you log.':esc(buildStory(bs,opts.other))}</p>${opts.other?'':`<button class="btn small bp-share" data-act="shareBP">Share my BluPrint</button>`}</div></div>
     <div class="idc-list">${bs.map((x,i)=>`<div class="idc-row">${hexBuild(x,54)}<div><b>${esc(x.name)}</b><span>${esc(x.desc||'')}</span><i class="idc-prim ${i?'sec':''}">${i?'Spec 0'+(i+1):'Primary spec'}</i></div></div>`).join('')}</div>${near}</div>`}
 
 function identityTag(builds){const id=buildIdentity(builds||[]);if(!id.builds.length)return '';return `<span class="buildtag idtag" title="${esc(id.builds.map(b=>b.name).join(' · '))}"><span class="idt-ic">${id.builds.map((bd,i)=>hexBuild(bd,i?22:26)).join('')}</span><span><b>${esc(id.name)}</b></span></span>`}
@@ -3485,6 +3496,12 @@ function reqCards(){const fr=pendingIn(),gr=pendingGroupIn();if(!fr.length&&!gr.
     ${fr.map(r=>`<div class="row between"><button class="plain row" style="gap:10px" data-act="openUid" data-uid="${esc(r.from)}">${avatar(r.from,32)}<span><b>@${esc(pname(r.from))}</b> <span class="small muted">wants to be friends</span></span></button><div class="row" style="gap:6px"><button class="btn small primary" data-act="acceptReq" data-uid="${esc(r.from)}">Accept</button><button class="btn small" data-act="declineReq" data-uid="${esc(r.from)}">Decline</button></div></div>`).join('')}</section>`}
 // invite / group popups (rendered into the overlay layer)
 function socialPop(){const k=SOC.pop;if(!k)return '';let body='';
+  if(k==='members'){const gid=SOC.gchat||(curGroup()||{}).id;const own=groupOwner(gid)===me;const q=norm(SOC.mq||'');const all=groupMembers(gid);
+    const list=all.filter(u=>!q||norm(u===me?S.profile.username||'':pname(u)).includes(q)).sort((x,y)=>(groupOwner(gid)===y)-(groupOwner(gid)===x)||(x===me?-1:y===me?1:pname(x).localeCompare(pname(y))));
+    body=`<div class="gp"><span class="eyebrow">Members</span><h3>${all.length} golfer${all.length===1?'':'s'}</h3>
+      ${all.length>8?`<input class="t" id="gm_q" data-field="gm.q" value="${esc(SOC.mq||'')}" placeholder="Search members" autocomplete="off" autocapitalize="off">`:''}
+      <div class="mlist">${list.map(u=>`<div class="row between" style="flex-wrap:nowrap;gap:8px"><button class="plain row" style="gap:10px;min-width:0" data-act="openUid" data-uid="${esc(u)}">${avatar(u,36)}<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${u===me?'You':'@'+esc(pname(u))}${groupOwner(gid)===u?' <span class="small muted">· owner</span>':''}</span></button>${own&&SOC.gmanage&&u!==me?`<button class="btn small danger" data-act="grpRemove" data-uid="${esc(u)}">${SOC.rmAsk===u?'Confirm':'Remove'}</button>`:''}</div>`).join('')||'<p class="small muted">No members match.</p>'}</div>
+      <div class="row" style="gap:8px"><button class="btn primary" style="flex:1" data-act="grpInvite">Invite friends</button>${own?`<button class="btn" data-act="grpManage">${SOC.gmanage?'Done':'Edit'}</button>`:''}</div></div>`}
   if(k==='inv')body=`<div class="gp"><span class="eyebrow">Invite</span><h3>Bring your group in</h3>
     <button class="addrow" data-act="grpInvite"><span class="pt-ic">${IC.addUser}</span><span class="pt-txt"><b>Invite friends to your group</b><span class="small muted">${curGroup()?`Add friends to ${esc(curGroup().name)}`:'Create a group, then add your friends'}</span></span><span class="ar-chev">›</span></button>
     <button class="addrow" data-act="invite"><span class="pt-ic">${IC.mail}</span><span class="pt-txt"><b>Invite friends to BluPrint Golf</b><span class="small muted">Send a link by text or anywhere</span></span><span class="ar-chev">›</span></button></div>`;
@@ -3593,8 +3610,8 @@ function viewGroups(c){
 function groupInfo(gid){const x=SOC.gdocs[gid]||{};const g=myGroups().find(y=>y.id===gid)||{};const own=groupOwner(gid)===me;const mem=groupMembers(gid);
   return `<section class="card ginfo"><div class="row" style="gap:14px;flex-wrap:nowrap">${groupAvatar(gid,64)}<div style="min-width:0"><b style="font-size:1.2rem;display:block">${esc(x.name||g.name)}</b><span class="small muted">${mem.length} golfer${mem.length===1?'':'s'}${groupOwner(gid)?` · owner @${esc(groupOwner(gid)===me?S.profile.username:pname(groupOwner(gid)))}`:''}</span></div></div>
     ${own?`<label class="btn small ghost" for="gphoto_file" style="cursor:pointer;align-self:flex-start">${x.photo?'Change group photo':'Add a group photo'}</label><input type="file" id="gphoto_file" accept="image/*" data-field="gphoto.file" hidden>`:''}
-    <div class="gmembers">${mem.map(u=>`<div class="row between" style="flex-wrap:nowrap"><button class="plain row" style="gap:10px" data-act="openUid" data-uid="${esc(u)}">${avatar(u,34)}<span>${u===me?'You':'@'+esc(pname(u))}${groupOwner(gid)===u?' <span class="small muted">· owner</span>':''}</span></button>${SOC.gmanage&&own&&u!==me?`<button class="btn small danger" data-act="grpRemove" data-uid="${esc(u)}">Remove</button>`:''}</div>`).join('')}</div>
-    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn small primary" data-act="grpInvite">Invite friends</button><button class="btn small" data-act="grecap">${SOC.grecap?'Hide weekly recap':'Weekly recap'}</button>${own?`<button class="btn small" data-act="grpManage">${SOC.gmanage?'Done':'Manage members'}</button>`:''}</div>
+    <button class="gstack" data-act="gmembers" aria-label="View all ${mem.length} members"><span class="gs-faces">${mem.slice(0,6).map(u=>avatar(u,32)).join('')}${mem.length>6?`<span class="gs-more">+${mem.length-6}</span>`:''}</span><span class="gs-txt">View all ›</span></button>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn small primary" data-act="grpInvite">Invite friends</button><button class="btn small" data-act="grecap">${SOC.grecap?'Hide weekly recap':'Weekly recap'}</button></div>
     ${SOC.gconfirm?`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span class="small">${SOC.gconfirm==='delete'?`Delete ${esc(x.name||g.name)} and its chat for everyone?`:`Leave ${esc(x.name||g.name)}?`}</span><button class="btn small danger" data-act="${SOC.gconfirm==='delete'?'grpDelete':'grpLeave'}">${SOC.gconfirm==='delete'?'Delete group':'Leave'}</button><button class="btn small" data-act="grpCancel">Cancel</button></div>`
       :`<div>${own?`<button class="plain link small" style="color:var(--loss)" data-act="grpDelete">Delete group</button>`:`<button class="plain link small" style="color:var(--loss)" data-act="grpLeave">Leave group</button>`}</div>`}</section>`}
 function groupFeedBar(){const gs=myGroups();if(!gs.length)return `<section class="card"><p class="small muted" style="margin:0">You're not in a group yet. <button class="plain link small" data-act="nav" data-view="groups">Start one in Groups</button> to see your group's activity here.</p></section>`;
@@ -3747,8 +3764,8 @@ async function onbSaveRounds(){onbSnap();const R=onbRounds();const num=x=>x===''
       totals:{holes:n,score:num(r.score),par:n===9?36:72,putts:num(r.putts),gir:num(r.gir),fir:num(r.fir),firOpp:num(r.fir)!=null?(n===9?7:14):null,threePutts:null,penalties:null}}});
   S.onbBusy=true;try{for(const r of rounds)await putRound(r);await putProfile({onboarded:true})}catch(e){S.onbBusy=false;toast(writeErr(e));return}
   S.onbBusy=false;S.onbR=null;
-  try{const all=[...rounds,...S.rounds.filter(x=>!rounds.some(y=>y.id===x.id))].sort((a,b)=>String(b.date).localeCompare(String(a.date)));const v=verifiedIndex(all);const ix=v.index!=null?v.index:(S.profile.index!=null?Number(S.profile.index):18);
-    const pb=playerBuilds(all,ix,v.diffs);if(!pb.locked&&pb.builds.length)S.reveal={kind:'build',builds:pb.builds,fresh:pb.builds.map(b=>b.code)};else setTimeout(()=>toast('Rounds saved. Add putts, fairways and greens to sharpen your BluPrint.'),300)}catch(e){}
+  try{const all=[...rounds,...S.rounds.filter(x=>!rounds.some(y=>y.id===x.id))].sort((a,b)=>String(b.date).localeCompare(String(a.date)));const v=verifiedIndex(all);const ix=v.index!=null?v.index:(S.profile.index!=null&&S.profile.index!==''?Number(S.profile.index):(estIndex(all)??18));
+    const pb=playerBuilds(all,ix,v.diffs);if(!pb.locked&&pb.builds.length)S.reveal={kind:'build',builds:pb.builds,fresh:pb.builds.map(b=>b.code),early:pb.early};else setTimeout(()=>toast('Rounds saved. Add putts, fairways and greens to sharpen your BluPrint.'),300)}catch(e){}
   if(socialOk())syncPlayer().catch(()=>{});S.view='profile';render();window.scrollTo(0,0)}
 function needsOnboard(){return !!(S.profile.username&&!S.profile.onboarded&&!S.rounds.length&&!S.readOnly&&S.view!=='photo'&&S.view!=='text'&&S.view!=='setup'&&S.view!=='live'&&S.view!=='report')}
 function viewOnboard(c){
@@ -3919,6 +3936,7 @@ async function socialAct(act,a){
   if(act==='grpAccept'){const r=SOC.reqsIn.find(x=>x.id===a.dataset.id);if(!r)return true;try{await db.doc('friendreqs/'+r.id).update({status:'accepted',decided:nowIso()});const gd=await db.doc('groups/'+r.gid).get();if(gd.exists){const x=gd.data();if(!(x.members||[]).includes(me))await db.doc('groups/'+r.gid).set({...x,members:[...(x.members||[]),me]})}await putProfile({groups:[...myGroups().filter(y=>y.id!==r.gid),{id:r.gid,name:(gd.exists&&gd.data().name)||r.gname||'Group',owner:gd.exists?gd.data().owner:r.from}]});watchGroups();SOC.group=r.gid;await syncPlayer().catch(()=>{});toast('You joined '+(r.gname||'the group'))}catch(e){toast(writeErr(e))}render();return true}
   if(act==='gchatOpen'){openGroupChat(a.dataset.id||(curGroup()||{}).id);return true}
   if(act==='gchatBack'){closeGroupChat();SOC.ginfo=false;S.view='groups';render();return true}
+  if(act==='gmembers'){SOC.pop='members';SOC.mq='';SOC.gmanage=false;render();return true}
   if(act==='grecap'){SOC.grecap=!SOC.grecap;render();return true}
   if(act==='ginfo'){SOC.ginfo=!SOC.ginfo;SOC.gmanage=false;SOC.gconfirm=null;render();return true}
   if(act==='grpNewFromList'){SOC.pop='new';render();setTimeout(()=>{const i=document.getElementById('grp_name');if(i)i.focus()},50);return true}
@@ -3926,7 +3944,7 @@ async function socialAct(act,a){
     SOC.gmsgs=[...(SOC.gmsgs||[]),{from:me,text:t,at,id:'tmp'}];render();const box=document.getElementById('gmsgs');if(box)box.scrollTop=box.scrollHeight;document.getElementById('gm_draft')?.focus();
     try{await db.collection('groups/'+gid+'/msgs').doc(uid('m')).set({from:me,text:t.slice(0,1000),at});const x=await freshGroup(gid);if(x)await db.doc('groups/'+gid).set({...x,last:{from:me,text:t.slice(0,120),at}});ls('gread_'+gid,at)}catch(e){toast(writeErr(e))}return true}
   if(act==='grpManage'){SOC.gmanage=!SOC.gmanage;render();return true}
-  if(act==='grpRemove'){const g=curGroup();if(!g||u===me)return true;
+  if(act==='grpRemove'){const g=curGroup();if(!g||u===me)return true;if(SOC.rmAsk!==u){SOC.rmAsk=u;render();return true}SOC.rmAsk=null;
     try{const x=await freshGroup(g.id);if(!x||x.owner!==me)return true;await db.doc('groups/'+g.id).set({...x,members:(x.members||[]).filter(m=>m!==u)});await db.doc('friendreqs/g~'+g.id+'~'+u).delete().catch(()=>{});toast('Removed @'+pname(u)+' from '+g.name)}catch(e){toast(writeErr(e))}render();return true}
   if(act==='grpLeave'){const g=curGroup();if(!g)return true;if(SOC.gconfirm!=='leave'){SOC.gconfirm='leave';render();return true}SOC.gconfirm=null;
     try{const x=await freshGroup(g.id);if(x&&(x.members||[]).includes(me))await db.doc('groups/'+g.id).set({...x,members:(x.members||[]).filter(m=>m!==me)});await dropGroup(g.id);toast('You left '+g.name)}catch(e){toast(writeErr(e))}return true}
@@ -3962,6 +3980,7 @@ function socialInput(f,el){
   if(f==='cdraft'){SOC.cdraft[el.dataset.key]=v;return true}
   if(f==='pa.date'){S.paDate=v;return true}
   if(f==='post.file'){const file=el.files&&el.files[0];if(!file)return true;if(SOC.dimg)URL.revokeObjectURL(SOC.dimg.preview);SOC.dimg={file,video:String(file.type).startsWith('video/'),preview:URL.createObjectURL(file)};el.value='';render();return true}
+  if(f==='gm.q'){SOC.mq=v;render();const i=document.getElementById('gm_q');if(i){i.focus();i.setSelectionRange(v.length,v.length)}return true}
   if(f==='ff.q'){S.ffQ=v;render();return true}
   if(f==='sb.caption'){SOC.sbCaption=v;return true}
   if(f==='m.draft'){SOC.mdraft=v;return true}
@@ -3972,7 +3991,7 @@ function socialInput(f,el){
   return false;
 }
 
-const SOCIAL_ACTS=new Set(['grecap','ginfo','grpNewFromList','gchatOpen','gchatBack','gmSend','grpManage','grpRemove','grpLeave','grpDelete','grpCancel','invMenu','spClose','grpNew','grpPick','grpInvite','grpCreate','grpSend','grpAccept','grpDecline','revealClose','revealShare','dimgRemove','storySound','chSearch','compOpen','compClose','shareBadge','closeShareBadge','postBadge','openFull','closeCard','openUid','openUser','clubFeed','feed','follow','unfollow','friendReq','acceptReq','declineReq','message','teeWith','openThread','leaveThread','sendMsg','teeOpen','teeCancel','sendTee','teeIn','like','toggleC','sendC','pickMention','postStatus']);
+const SOCIAL_ACTS=new Set(['gmembers','grecap','ginfo','grpNewFromList','gchatOpen','gchatBack','gmSend','grpManage','grpRemove','grpLeave','grpDelete','grpCancel','invMenu','spClose','grpNew','grpPick','grpInvite','grpCreate','grpSend','grpAccept','grpDecline','revealClose','revealShare','dimgRemove','storySound','chSearch','compOpen','compClose','shareBadge','closeShareBadge','postBadge','openFull','closeCard','openUid','openUser','clubFeed','feed','follow','unfollow','friendReq','acceptReq','declineReq','message','teeWith','openThread','leaveThread','sendMsg','teeOpen','teeCancel','sendTee','teeIn','like','toggleC','sendC','pickMention','postStatus']);
 
 // ---------- Club directory ----------
 // Verified clubs come from the OpenGolf course database (bundled as courses.json beside the page).
@@ -4234,7 +4253,7 @@ document.addEventListener('click',async e=>{
   if(act==='hcEdit'){S.hcEdit=true;render();return}
   if(act==='toggleGoal'){S.goalEdit=!S.goalEdit;render();if(S.goalEdit)setTimeout(()=>{const sh=document.getElementById('sheet');if(sh)enhanceDates(sh)},0);return}
   if(act==='goalQuick'){const i=document.getElementById('gl_index');if(i)i.value=a.dataset.v;document.querySelectorAll('.gp-quick .pill').forEach(b=>b.classList.toggle('good',b===a));return}
-  if(act==='saveGoal'){const t=document.getElementById('gl_index').value.trim(),by=document.getElementById('gl_by').value;const n=parseHc(t);if(t===''||isNaN(n)){toast('Enter a target index.');return}const c=ctx();const cur=c.index!=null?c.index:c.est;
+  if(act==='saveGoal'){const t=document.getElementById('gl_index').value.trim(),by=document.getElementById('gl_by').value;const n=parseHc(t);if(t===''||isNaN(n)){toast('Enter a target index.');return}const c=ctx();const cur=c.index!=null?c.index:c.est!=null?c.est:c.estQ;
     try{await putProfile({goal:{index:n,by,start:cur,set:today()}})}catch(err){toast(writeErr(err));return}S.goalEdit=false;toast('Goal set');render();if(socialOk()){syncPlayer().catch(()=>{});createPost({type:'goal',text:`set a goal: ${n} index${by?' by '+by:''}. Hold me to it.`}).catch(()=>{})}return}
   if(act==='clearExamples'){const ex=S.rounds.filter(r=>r.example);for(const r of ex){try{await delRound(r.id)}catch(err){}}toast('Sample rounds removed');return}
   if(act==='copyGame'){const t=S.gameText||'';try{await navigator.clipboard.writeText(t);toast('Copied')}catch(err){const ta=document.getElementById('gameTxt');ta&&ta.select();toast('Select and copy the text below')}return}
