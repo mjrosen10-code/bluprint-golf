@@ -1193,6 +1193,17 @@ input.t:focus,select.t:focus,textarea.t:focus{border-color:rgba(47,208,115,.6);b
 .idc-ev{color:var(--volt);opacity:.9;display:block;margin-top:2px}
 
 mark.hl{all:unset;display:inline!important;color:var(--volt);font-weight:800}
+
+#sheet.still .pop,#sheet.still .pop-back,#sheet.still .sheet,#sheet.still .sheet-back,#sheet.still .pop-wrap{animation:none!important}
+
+.cread{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:14px;background:rgba(47,208,115,.06);border:1px solid rgba(47,208,115,.22)}
+
+.gtrack{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.02);width:100%}
+.gt-bar{position:relative;height:8px;border-radius:9px;background:rgba(255,255,255,.08)}.gt-bar i{position:absolute;inset:0 auto 0 0;border-radius:9px;background:var(--volt)}
+.gt-bar b{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:var(--ivory);border:3px solid var(--volt);transform:translate(-50%,-50%)}
+.gt-bar u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--sage);transform:translateX(-1px)}
+.gt-lbls{display:grid;grid-template-columns:1fr 1fr 1fr}.gt-lbls i{display:block;font-style:normal;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--sage)}.gt-lbls b{font-size:1.05rem}
+.lean-goal .btn{align-self:flex-start}
 </style>
 
 <div class="ambient" aria-hidden="true"><i class="glow g1"></i><i class="glow g2"></i><i class="glow g3"></i><div class="topo"></div><div class="topo2"></div><svg class="golfart bp" viewBox="740 170 420 1160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -1789,6 +1800,22 @@ function goBack(){
   render();window.scrollTo(0,0);
 }
 // ---------- Render ----------
+// ----- Patch the screen in place: only nodes that changed are touched, so the box you're typing in,
+// open sections, scroll positions and animations stay put on every redraw. -----
+function morph(el,html){const t=document.createElement(el.tagName);t.innerHTML=html;patchKids(el,t)}
+function patchKids(a,b){const an=[...a.childNodes],bn=[...b.childNodes];
+  for(let i=0;i<bn.length;i++){const x=an[i],y=bn[i];if(!x){a.appendChild(y);continue}patchNode(x,y)}
+  for(let i=bn.length;i<an.length;i++)an[i].remove()}
+function patchNode(x,y){
+  if(x.nodeType!==y.nodeType||x.nodeName!==y.nodeName||(x.nodeType===1&&(x.id||'')!==(y.id||''))){x.replaceWith(y);return}
+  if(x.nodeType!==1){if(x.nodeValue!==y.nodeValue)x.nodeValue=y.nodeValue;return}
+  const focused=x===document.activeElement;
+  for(const at of [...x.attributes])if(!y.hasAttribute(at.name)&&!(x.tagName==='DETAILS'&&at.name==='open'))x.removeAttribute(at.name);
+  for(const at of [...y.attributes]){if(x.getAttribute(at.name)!==at.value){if(focused&&at.name==='value')continue;x.setAttribute(at.name,at.value)}}
+  if(x.tagName==='INPUT'){if(x.type==='checkbox'||x.type==='radio'){if(x.checked!==y.checked)x.checked=y.checked}else if(!focused&&x.type!=='file'&&x.value!==y.value)x.value=y.value;return}
+  if(x.tagName==='TEXTAREA'){if(!focused&&x.value!==y.value)x.value=y.value;return}
+  if(x.tagName==='SELECT'){patchKids(x,y);if(!focused&&x.value!==y.value)x.value=y.value;return}
+  patchKids(x,y)}
 function render(){S._popHtml="";
   const c=ctx();
   {const sti=myStatusI();let lv=0;try{lv=badgeState(S.rounds,{index:c.index!=null?c.index:c.est,diffs:c.diffs,goal:S.profile.goal}).lvl}catch(e){}
@@ -1834,10 +1861,12 @@ function render(){S._popHtml="";
   const fk=v+'|'+(S.onb||'')+'|'+(S.profileEdit?1:0)+'|'+(S.goalEdit?1:0);const FSEL='input[id],textarea[id],select[id]';
   if(S._fcKey!==fk){S._fc={};S._fcKey=fk}else{el.querySelectorAll(FSEL).forEach(i=>{if(i.dataset.field||i.type==='file'||i.readOnly)return;S._fc[i.id]=i.type==='checkbox'?{c:i.checked}:{v:i.value}})}
   const same=html===S._lastHtml&&S._lastView===v;S._lastHtml=html;S._lastView=v;
-  if(!same){requestAnimationFrame(()=>enhanceDates(el));const _st=el.querySelector('.strip'),_sl=_st?_st.scrollLeft:0;el.innerHTML=html;if(_st){const n=el.querySelector('.strip');if(n)n.scrollLeft=_sl}if(v==='home')requestAnimationFrame(()=>dcarSync(true))}
+  if(!same){requestAnimationFrame(()=>enhanceDates(el));const _st=el.querySelector('.strip'),_sl=_st?_st.scrollLeft:0;(S._lv===v&&el.firstChild?morph(el,html):(el.innerHTML=html));if(_st){const n=el.querySelector('.strip');if(n)n.scrollLeft=_sl}if(v==='home')requestAnimationFrame(()=>dcarSync(true))}
   el.querySelectorAll(FSEL).forEach(i=>{const x=S._fc[i.id];if(!x||i.dataset.field||i.type==='file')return;if('c' in x)i.checked=x.c;else i.value=x.v});
   if(S._lv!==v){S._lv=v;el.classList.remove('enter');void el.offsetWidth;[...el.children].forEach((ch,i)=>ch.style.setProperty('--i',Math.min(i,8)));el.classList.add('enter');clearTimeout(S._et);S._et=setTimeout(()=>el.classList.remove('enter'),1100);countUp(el)}
-  const sh=document.getElementById('sheet');if(sh)sh.innerHTML=S.reveal?revealView():S._popHtml&&(S.view==='profile'||S.view==='progress'||S.view==='home')?S._popHtml:typeof SOC!=='undefined'&&SOC.pop&&(S.view==='clubhouse'||S.view==='player'||S.view==='groups'||S.view==='gchat')?socialPop():S.showFriends&&typeof SOC!=='undefined'?`<div class="sheet-back" data-act="hideFriends"></div><section class="sheet" role="dialog" aria-label="Friends"><div class="sheet-grab"></div>${friendsSection()}<button class="btn ghost" data-act="hideFriends">Close</button></section>`:S.cardImg?scorecardSheet():S.inviteText?inviteSheet():(S.shareBadge&&typeof SOC!=='undefined')?shareBadgeSheet():(S.cchat&&S.cchat.mode==='course'&&S.view==='live')?courseCaddieSheet():(S.cardUid&&typeof SOC!=='undefined'?playerCard(S.cardUid):'');
+  const sh=document.getElementById('sheet');if(sh){const nh=S.reveal?revealView():S._popHtml&&(S.view==='profile'||S.view==='progress'||S.view==='home')?S._popHtml:typeof SOC!=='undefined'&&SOC.pop&&(S.view==='clubhouse'||S.view==='player'||S.view==='groups'||S.view==='gchat')?socialPop():S.showFriends&&typeof SOC!=='undefined'?`<div class="sheet-back" data-act="hideFriends"></div><section class="sheet" role="dialog" aria-label="Friends"><div class="sheet-grab"></div>${friendsSection()}<button class="btn ghost" data-act="hideFriends">Close</button></section>`:S.cardImg?scorecardSheet():S.inviteText?inviteSheet():(S.shareBadge&&typeof SOC!=='undefined')?shareBadgeSheet():(S.cchat&&S.cchat.mode==='course'&&S.view==='live')?courseCaddieSheet():(S.cardUid&&typeof SOC!=='undefined'?playerCard(S.cardUid):'');
+    // Re-rendering an open sheet (typing in its search box, live updates) must not replay its slide-up animation or reset its scroll
+    const had=sh.innerHTML.trim()!=='';if(nh!==S._sheetHtml){const scr=[...sh.querySelectorAll('.mlist,.addlist,.pop,.sheet')].map(e=>e.scrollTop);sh.classList.toggle('still',had&&!!nh&&!S.reveal);(had&&nh&&!S.reveal?morph(sh,nh):(sh.innerHTML=nh));S._sheetHtml=nh;[...sh.querySelectorAll('.mlist,.addlist,.pop,.sheet')].forEach((e,k)=>{if(scr[k])e.scrollTop=scr[k]})}}
   const fab=document.getElementById('fab');if(fab)fab.hidden=!(S.view==='live'&&S.draft)||!!(S.cchat&&S.cchat.mode==='course');
   if(active){const n=document.getElementById(active);if(n&&n!==document.body){n.focus();try{if(sel!=null)n.setSelectionRange(sel,sel)}catch(e){}}}
 }
@@ -1968,7 +1997,7 @@ function viewHome(c){
   let caddie=caddieStatic;
   if(sampleFn&&c.rs.length){const key=statsKey(c);
     if(S.sumKey!==key&&S.profile.statsKey===key&&S.profile.statsNote){S.sum=S.profile.statsNote;S.sumKey=key}
-    if(S.sumKey!==key&&!S.sumBusy&&S.sumTried!==key){S.sumTried=key;setTimeout(askStatsSummary,0)}
+    if(!S.lean&&S.sumKey!==key&&!S.sumBusy&&S.sumTried!==key){S.sumTried=key;setTimeout(askStatsSummary,0)}
     caddie=`<section class="sect panel"><div class="sect-head"><h3>Caddie's Corner</h3>${S.sumBusy?'<span class="small muted">Reading…</span>':`<button class="plain link small" data-act="statsSum">Refresh</button>`}</div>
       <div class="cc" id="sumOut">${S.sum?ccBody(S.sum):`<span class="small muted">Your caddie is reading your numbers…</span><div class="skel"><i></i><i></i><i></i></div>`}</div></section>`}
   // overview metrics with arrows
@@ -2012,8 +2041,7 @@ function viewHome(c){
   ${nums}
   ${chart}
   <details class="more"><summary><span>Recent rounds</span><span class="small muted">${c.rs.length} round${c.rs.length===1?'':'s'} logged</span><span class="more-cta">See rounds</span></summary><div>${c.rs.slice(0,50).map(r=>roundRow(r)).join('')}</div></details>
-  <details class="more"><summary><span>All stats</span><span class="small muted">Scoring mix and every stat vs your level and goal</span><span class="more-cta">Open</span></summary>${mix}${drillPanel(c)}</details>
-  ${caddie}`}
+  <details class="more"><summary><span>All stats</span><span class="small muted">Scoring mix and every stat vs your level and goal</span><span class="more-cta">Open</span></summary>${mix}${drillPanel(c)}</details>`}
   return `${storeNote()}${resumeBanner()}
   <section class="hero">${heroHead.replace(/<\/div>$/,meta+'</div>')}<div class="hero-right">${heroBuild(c.pb&&c.pb.builds)}</div></section>
   ${c.rs.length<3?startList(c):''}
@@ -2641,7 +2669,10 @@ function monthTargets(c,aim){
     <p class="small muted" style="margin:0">Goal handicap is a typical ${A} handicap. Next step is this month's target.</p></section>`;
 }
 function leanPlan(c){const g=S.profile.goal||{};const cur=c.index!=null?c.index:c.est!=null?c.est:c.estQ;const tgt=Number(g.index);const reached=cur!=null&&cur<=tgt;
-  const aim=reached?Math.max(0,Math.floor(cur)-2):tgt;const aimTxt=hcTxt(aim,0);const anA=/^(8|11|18|8\d)$/.test(aimTxt)?'an':'a';
+  let aim=reached?Math.max(0,Math.floor(cur)-2):tgt;let stretch=reached;
+  // already at goal level everywhere: keep improving toward the next level, so there is always something to work on
+  for(let k=0;k<4&&!goalPlan(c,aim).length&&aim>0;k++){aim=Math.max(0,aim-2);stretch=true}
+  const aimTxt=hcTxt(aim,0);const anA=/^(8|11|18|8\d)$/.test(aimTxt)?'an':'a';const lvl=aim<=0?'scratch':`${anA} ${aimTxt}`; // "for scratch", "for a 12"
   const gb=bench(aim),you=c.you;const items=goalPlan(c,aim);const picks=pickDrills(you,gb,c.hc,leverage(you,gb));
   const yt=q=>`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
   const inPlan=new Set(items.map(x=>x.key));const rq=(x,d)=>Math.round(x*Math.pow(10,d));
@@ -2650,7 +2681,9 @@ function leanPlan(c){const g=S.profile.goal||{};const cur=c.index!=null?c.index:
   const gl0=S.profile.goal||{};const monthsLeft=gl0.by?Math.max(1,(new Date(gl0.by+'T12:00:00')-new Date())/(30.4*864e5)):3;const ff=clamp(1/monthsLeft,.25,1);
   if(!items.length)return `<section class="caddie"><p class="big">You're already playing <em>like ${anA} ${aimTxt}</em> in every logged category.</p><p class="small muted">Keep posting scores so your index catches up, or set a lower goal.</p></section>`;
   const tot=items.reduce((t,x)=>t+x.gap,0);
-  return `<section class="sect panel"><div class="sect-head"><h3>Your plan to ${anA} ${aimTxt}</h3><span class="small muted">~${fmt(tot,1)} strokes a round in ${items.length} area${items.length===1?'':'s'}</span></div>
+  return `<section class="sect panel"><div class="sect-head"><h3>Your BluPrint for ${lvl}</h3><span class="small muted">~${fmt(tot,1)} strokes a round in ${items.length} area${items.length===1?'':'s'}</span></div>
+    ${stretch?`<p class="small" style="margin:0"><b style="color:var(--volt)">${reached?`You've reached your goal of ${hcTxt(tgt,0)}.`:`You're already playing like ${anA==='an'?'an':'a'} ${hcTxt(tgt,0)} in every area.`}</b> Next level: ${lvl}.</p>`:''}
+    ${caddieRead(c,aim,items,ok)}
     <div class="lplan">${items.map((x,i)=>{const d=picks.find(p=>norm(p.fix)===norm(x.title))||picks[i];const lower=x.key==='putting'||x.key==='scoring';const v=x.t[0],gl=x.t[1];
       const lo=Math.min(v,gl),hi=Math.max(v,gl),span=(hi-lo)||1;const pct=lower?100*(1-(v-gl)/(Math.abs(v)||1)):100*(v/(gl||1));
       return `<article class="lp"><div class="lp-h"><span class="planno mono">${i+1}</span><h4>${esc(x.title)}</h4><span class="pill bad mono">~${fmt(x.gap,1)}</span></div>
@@ -2709,7 +2742,17 @@ function viewProgress(c){
   hero=hero.replace('GOALFORM',goalForm);if(S._popHtml)S._popHtml=S._popHtml.replace('GOALFORM',goalForm);
   if(S.lean&&has&&c.rs.length&&typeof leanPlan==='function'){
     // trimmed hero: drop the target card that repeats the goal, keep a compact Change goal button
-    const h=hero.replace(/<div class="hero-right"><div class="goalcard">[\s\S]*?<\/div><\/div><\/div><\/section>/,'<div class="hero-right lean-goal"><button class="btn small" data-act="toggleGoal">Change goal</button></div></section>');
+    const g2=S.profile.goal||{};const cur2=c.index!=null?c.index:c.est!=null?c.est:c.estQ;const st2=g2.start!=null?Number(g2.start):cur2,tg2=Number(g2.index);
+    const pc=st2===tg2?100:clamp(100*(st2-cur2)/(st2-tg2),0,100);
+    const t0=g2.set?new Date(g2.set+'T12:00:00'):null,t1=g2.by?new Date(g2.by+'T12:00:00'):null;const ex=t0&&t1&&t1>t0?clamp(100*(Date.now()-t0)/(t1-t0),0,100):null;
+    const pace=cur2<=tg2?['good','Goal reached']:ex==null?['neutral','']:pc>=ex-5?['good','On pace']:['bad','Behind pace'];
+    const ms=cur2>tg2?Math.max(tg2,Math.ceil(cur2)-1):null;
+    const track=`<div class="hero-right lean-goal"><div class="gtrack"><div class="row between"><span class="kicker">Progress</span>${pace[1]?`<span class="pill ${pace[0]}">${pace[1]}</span>`:''}</div>
+      <div class="gt-bar"><i style="width:${pc}%"></i>${ex!=null&&cur2>tg2?`<u style="left:${ex}%" title="Where you'd be on an even pace"></u>`:''}<b style="left:${pc}%"></b></div>
+      <div class="gt-lbls"><span><i>Start</i><b class="mono">${hcTxt(st2,1)}</b></span><span style="text-align:center"><i>Now</i><b class="mono">${hcTxt(cur2,1)}</b></span><span style="text-align:right"><i>Goal</i><b class="mono" style="color:var(--volt)">${hcTxt(tg2,1)}</b></span></div>
+      ${ms!=null?`<p class="small muted" style="margin:0">Next milestone <b class="mono" style="color:var(--ivory)">${hcTxt(ms,1)}</b>${ex!=null?' · the tick marks an even pace to your date':''}</p>`:''}
+      <button class="btn small" data-act="toggleGoal">Change goal</button></div></div></section>`;
+    const h=hero.replace(/<div class="hero-right"><div class="goalcard">[\s\S]*?<\/div><\/div><\/div><\/section>/,track);
     return `${h}${leanPlan(c)}`}
   return `${has?hero:`<section class="welcome"><span class="kicker">My coach</span><h2>Set a handicap goal. Get a plan to reach it.</h2><p class="muted">BluPrint Golf compares your stats to golfers at your target handicap and builds your action plan from the biggest gaps.</p>${cur==null?`<div class="notice">Add a self-reported index on your profile, or log 3 rounds first.</div>`:''}<div class="grid2">${goalForm}</div><button class="btn primary" data-act="saveGoal">Set my goal</button></section>`}
   ${has&&!c.rs.length?`<div class="notice">Log a few rounds to unlock your action plan.</div>`:''}
@@ -3166,6 +3209,25 @@ Write 4 short labeled lines, each starting with the label and a colon: "Big pict
   catch(e){S.sum=''}
   S.sumBusy=false;render();
 }
+function caddiePlanKey(c,aim,items){return [statsKey(c),aim,items.map(x=>x.key).join(',')].join('|')}
+async function askCaddiePlan(c,aim,items,ok){if(!sampleFn)return;const key=caddiePlanKey(c,aim,items);const you=c.you,gb=bench(aim);const aimTxt=hcTxt(aim,0);
+  const plan=items.map((x,i)=>`${i+1}. ${x.title}: you ${fmt(x.t[0],x.t[3])}${x.t[2]}, a ${aimTxt} ${fmt(x.t[1],x.t[3])}${x.t[2]} (worth about ${fmt(x.gap,1)} strokes a round)`).join('\n');
+  const prompt=`You are the golfer's caddie in a golf stats app, writing the opening read of their improvement plan. Use ONLY the numbers below, exactly as written, and do not introduce other stats or reorder the priorities.
+Handicap now: ${hcTxt(c.hc,1)} (${c.verified?'verified':c.index!=null?'self-reported':'estimated from scores'}). Target: play like a ${aimTxt}. ${c.rs.length} rounds logged; numbers are per 18 over the last ${Math.min(10,c.rs.length)} rounds.
+Score to par: you ${parTxt(you.toPar,1)}, a ${aimTxt} ${parTxt(gb.toPar,1)}.
+The plan, biggest lever first:
+${plan}
+${ok.length?`Already at ${aimTxt} level: ${ok.join(', ')}.`:''}
+Write 3 short labeled lines, each starting with the label and a colon: "Where you stand", "Why #1 matters most", "What's working". One or two sentences each, quoting the numbers above. Direct, analytical, encouraging but honest. No markdown symbols. Under 90 words.`;
+  S.cplanBusy=true;S.cplan='';S.cplanKey=key;render();
+  try{await sampleFn(prompt,{onText:({text})=>{S.cplan=text;const o=document.getElementById('cplanOut');if(o)o.innerHTML=ccBody(text)}});if(S.cplan)putProfile({coachNote:S.cplan,coachNoteKey:key}).catch(()=>{})}catch(e){S.cplan=''}
+  S.cplanBusy=false;render()}
+function caddieRead(c,aim,items,ok){const key=caddiePlanKey(c,aim,items);
+  if(S.cplanKey!==key&&S.profile.coachNoteKey===key&&S.profile.coachNote){S.cplan=S.profile.coachNote;S.cplanKey=key}
+  if(S.cplanKey!==key&&!S.cplanBusy&&sampleFn){setTimeout(()=>askCaddiePlan(c,aim,items,ok),0)}
+  if(!sampleFn)return '';
+  return `<div class="cread"><div class="row between"><span class="kicker" style="color:var(--volt)">Caddie's read</span>${S.cplanBusy?'<span class="small muted">Reading…</span>':`<button class="plain link small" data-act="cplanRefresh">Refresh</button>`}</div>
+    <div class="cc" id="cplanOut">${S.cplan?ccBody(S.cplan):'<div class="skel"><i></i><i></i><i></i></div>'}</div></div>`}
 function coachKey(c){const g=S.profile.goal&&S.profile.goal.index;return [c.rs.length,g??'',hcTxt(c.hc,1)].join('|')}
 async function askCoach(){
   const c=ctx();const you=c.you,b=c.b;const goal=S.profile.goal&&S.profile.goal.index!=null?Number(S.profile.goal.index):null;const gb=goal!=null?bench(goal):null;
@@ -4067,6 +4129,7 @@ async function socialAct(act,a){
   if(act==='gchatBack'){closeGroupChat();SOC.ginfo=false;S.view='groups';render();return true}
   if(act==='afOpen'){SOC.pop='addfriend';SOC.afq='';render();setTimeout(()=>{const i=document.getElementById('af_q');if(i)i.focus()},60);return true}
   if(act==='gmembers'){SOC.pop='members';SOC.mq='';SOC.gmanage=false;render();return true}
+  if(act==='cplanRefresh'){S.cplanKey=null;S.profile.coachNoteKey=null;render();return true}
   if(act==='grecap'){SOC.grecap=!SOC.grecap;render();return true}
   if(act==='ginfo'){SOC.ginfo=!SOC.ginfo;SOC.gmanage=false;SOC.gconfirm=null;render();return true}
   if(act==='grpNewFromList'){SOC.pop='new';render();setTimeout(()=>{const i=document.getElementById('grp_name');if(i)i.focus()},50);return true}
@@ -4123,7 +4186,7 @@ function socialInput(f,el){
   return false;
 }
 
-const SOCIAL_ACTS=new Set(['afOpen','gmembers','grecap','ginfo','grpNewFromList','gchatOpen','gchatBack','gmSend','grpManage','grpRemove','grpLeave','grpDelete','grpCancel','invMenu','spClose','grpNew','grpPick','grpInvite','grpCreate','grpSend','grpAccept','grpDecline','revealClose','revealShare','dimgRemove','storySound','chSearch','compOpen','compClose','shareBadge','closeShareBadge','postBadge','openFull','closeCard','openUid','openUser','clubFeed','feed','follow','unfollow','friendReq','acceptReq','declineReq','message','teeWith','openThread','leaveThread','sendMsg','teeOpen','teeCancel','sendTee','teeIn','like','toggleC','sendC','pickMention','postStatus']);
+const SOCIAL_ACTS=new Set(['cplanRefresh','afOpen','gmembers','grecap','ginfo','grpNewFromList','gchatOpen','gchatBack','gmSend','grpManage','grpRemove','grpLeave','grpDelete','grpCancel','invMenu','spClose','grpNew','grpPick','grpInvite','grpCreate','grpSend','grpAccept','grpDecline','revealClose','revealShare','dimgRemove','storySound','chSearch','compOpen','compClose','shareBadge','closeShareBadge','postBadge','openFull','closeCard','openUid','openUser','clubFeed','feed','follow','unfollow','friendReq','acceptReq','declineReq','message','teeWith','openThread','leaveThread','sendMsg','teeOpen','teeCancel','sendTee','teeIn','like','toggleC','sendC','pickMention','postStatus']);
 
 // ---------- Club directory ----------
 // Verified clubs come from the OpenGolf course database (bundled as courses.json beside the page).
