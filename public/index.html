@@ -3553,7 +3553,7 @@ function buildCoach(c){if(!c.pb||c.pb.locked||!c.pb.builds.length)return '';cons
     <div class="bc-row"><div class="bc-ic">${bs.map((x,i)=>hexBuild(x,i?34:44)).join('')}</div><p>${esc(BUILD_COACH[p.code]||'')}</p></div></section>`}
 function idHc(v,ver,act,est){return `<${act?'button':'div'} class="idc-hc${act?' tap':''}" ${act?`data-act="pexp" data-k="hc" aria-expanded="${S.pexp==='hc'}"`:''}><b>${v!=null?(est?'~':ver?VCHECK:'')+hcTxt(v,1):'—'}</b><span>${v==null?'Handicap':est?'Estimated':ver?'Verified':'Self-rep.'}${act?' <i>▾</i>':''}</span></${act?'button':'div'}>`}
 const STC=['#9AA4A1','#C77A45','#C9D3D8','#E8C15A','#A9CBEA','#2FD073'];
-function idStatus(i,lvl,act){const c=STC[i]||STC[0];return `<${act?'button':'div'} class="idc-st${act?' tap':''}" ${act?`data-act="pexp" data-k="st" aria-expanded="${S.pexp==='st'}"`:''} style="--stc:${c}"><span class="idc-ring">${STICON}</span><span class="idc-stt"><b>${esc(STATUS[i][0])}</b><span>Status${act?' <i>▾</i>':''}</span></span></${act?'button':'div'}>`}
+function idStatus(i,lvl,act){const c=STC[i]||STC[0];return `<${act?'button':'div'} class="idc-st${act?' tap':''}" ${act?`data-act="pexp" data-k="st" aria-expanded="${S.pexp==='st'}"`:''} style="--stc:${c}"><span class="idc-stt"><b style="color:var(--stc)">${esc(STATUS[i][0])}</b><span>Status${act?' <i>▾</i>':''}</span></span></${act?'button':'div'}>`}
 // The number that earned each spec, so a BluPrint is never a mystery
 function specEvidence(code,c){const y=c.you||{},b=c.b||{};const f=(v,d)=>fmt(v,d);
   switch(code){case 'FF':return y.fir!=null?`${f(y.fir,0)}% fairways vs ${f(b.fir,0)}% typical`:'';
