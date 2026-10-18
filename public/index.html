@@ -1337,7 +1337,7 @@ mark.hl{all:unset;display:inline!important;color:var(--volt);font-weight:800}
 <button class="fab" id="fab" data-act="askCaddie" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H8l-4 4z"/></svg>Ask caddie</button>
 <nav class="bar" id="nav">
   <button data-act="nav" data-view="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="nl">Stats</span></button>
-  <button data-act="nav" data-view="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="6"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/></svg><span class="nl">Coach</span></button>
+  <button data-act="nav" data-view="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg><span class="nl">Goals</span></button>
   <button data-act="nav" data-view="log" class="log-btn"><span class="plus">+</span><span class="nl">Play now</span></button>
   <button data-act="nav" data-view="clubhouse" class="ch-btn"><span class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7M5 10v10h14V10M10 20v-5h4v5"/></svg><span class="nbadge" id="chBadge" hidden>0</span></span><span class="nl">Clubhouse</span></button>
   <button data-act="nav" data-view="groups" class="gr-btn"><span class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.6 6-5.6s6 2.3 6 5.6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.6 14.6c.5-.1.9-.2 1.4-.2 2.6 0 4.5 1.8 4.5 4.6"/></svg><span class="nbadge" id="grBadge" hidden>0</span></span><span class="nl">Groups</span></button>
@@ -2771,7 +2771,7 @@ function viewProgress(c){
       <button class="btn small" data-act="toggleGoal">Change goal</button></div></div></section>`;
     const h=hero.replace(/<div class="hero-right"><div class="goalcard">[\s\S]*?<\/div><\/div><\/div><\/section>/,track);
     return `${h}${leanPlan(c)}`}
-  return `${has?hero:`<section class="welcome"><span class="kicker">My coach</span><h2>Set a handicap goal. Get a plan to reach it.</h2><p class="muted">BluPrint Golf compares your stats to golfers at your target handicap and builds your action plan from the biggest gaps.</p>${cur==null?`<div class="notice">Add a self-reported index on your profile, or log 3 rounds first.</div>`:''}<div class="grid2">${goalForm}</div><button class="btn primary" data-act="saveGoal">Set my goal</button></section>`}
+  return `${has?hero:`<section class="welcome"><span class="kicker">My goals</span><h2>Set a handicap goal. Get a plan to reach it.</h2><p class="muted">BluPrint Golf compares your stats to golfers at your target handicap and builds your action plan from the biggest gaps.</p>${cur==null?`<div class="notice">Add a self-reported index on your profile, or log 3 rounds first.</div>`:''}<div class="grid2">${goalForm}</div><button class="btn primary" data-act="saveGoal">Set my goal</button></section>`}
   ${has&&!c.rs.length?`<div class="notice">Log a few rounds to unlock your action plan.</div>`:''}
   ${rings}
   ${has&&c.rs.length?monthTargets(c,(()=>{const cur=c.index!=null?c.index:c.est!=null?c.est:c.estQ;const g=S.profile.goal||{};const t=Number(g.index);return cur!=null&&cur<=t?Math.max(0,Math.floor(cur)-2):t})()):''}
